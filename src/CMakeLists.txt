@@ -158,5 +158,5 @@ if (BUILD_LIBWB_LIBRARY)
   set_property(TARGET ${WBLIB} PROPERTY CXX_STANDARD 11)
 endif (BUILD_LIBWB_LIBRARY)
 
-include(hamc/sources.cmake)
 include(tests/sources.cmake)
+include(hamc/sources.cmake)

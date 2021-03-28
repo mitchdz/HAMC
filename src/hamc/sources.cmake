@@ -1,3 +1,3 @@
 add_lab("hamc")
-add_lab_solution("hamc" ${CMAKE_CURRENT_LIST_DIR}/main.cu)
-#add_generator("HAMC" ${CMAKE_CURRENT_LIST_DIR}/dataset_generator.cpp)
+file( GLOB HAMC_SRCS ${CMAKE_CURRENT_LIST_DIR}/*.cu ${CMAKE_CURRENT_LIST_DIR}/*.h ${CMAKE_CURRENT_LIST_DIR}/*.c )
+add_lab_solution("hamc" ${HAMC_SRCS})
