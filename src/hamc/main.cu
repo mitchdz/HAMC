@@ -1,12 +1,36 @@
 #include <cuda_runtime.h>
-#include<stdlib.h>
+#include <stdlib.h>
 #include <wb.h>
 #include <stdint.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <unistd.h>
 
-#define CUDA_CHECK(ans)                                                   \
+#include "hamc_cpu_code.c"
+
+#include "decrypt.cu"
+#include "encrypt.cu"
+#include "hamc_common.cu"
+#include "HAMC_decrypt.cu"
+#include "HAMC_encrypt.cu"
+#include "HAMC_key_gen.cu"
+#include "InverseMatrix.cu"
+#include "keygen.cu"
+#include "MatrixAdd.cu"
+#include "matrix.cu"
+#include "mceliece.cu"
+#include "MultiplyMatrix.cu"
+#include "qc_mdpc.cu"
+#include "TransposeMatrix.cu"
+
+
+#define RED "\033[0;31m"
+#define YELLOW "\033[0;33m"
+#define GREEN "\033[0;32m"
+#define NC "\033[0;0m"
+
+
+#define CUDA_CHECK(ans) \
   { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char *file, int line,
                       bool abort = true) {
@@ -17,33 +41,117 @@ inline void gpuAssert(cudaError_t code, const char *file, int line,
       exit(code);
   }
 }
-void run_keygen()
-{
-    //TODO: initialize parity check matrix
-    //TODO: initialize generator matrix
 
-    /* Private key */
-    // generate parity check matrix
-    FILE *fp1, *fp2;
-    fp1 = fopen("Private_Key.txt", "a");
-    fprintf(fp1, "Private Key: Parity Check Matrix: \n");
+void printHelp();
 
-    fclose(fp1);
+int main(int argc, char *argv[]) {
+    /* variables for timing operations */
+    cudaEvent_t astartEvent, astopEvent;
+    float aelapsedTime;
 
-    // create generator matrix
+    /* input parameters */
+    int action = -1, n = 2, p = 4800, w = 90, t = -1, seed = -1;
+    char *outputFileName = NULL, *inputFileName = NULL;
+    /* determines whether to run CPU based implementation */
+    bool cpu = false;
+
+    printf("HAMC Version 0.1\n");
+
+    int c;
+    opterr = 0;
+    while ((c = getopt (argc, argv, "a:n:p:w:t:i:o:hs:cs:")) != -1)
+        switch(c)
+        {
+            case 'c':
+                cpu = true;
+                break;
+            case 'n':
+                n = atoi(optarg);
+                break;
+            case 's':
+                seed = atoi(optarg);
+                break;
+            case 'p':
+                p = atoi(optarg);
+                break;
+            case 'w':
+                w = atoi(optarg);
+                break;
+            case 't':
+                t = atoi(optarg);
+                break;
+            case 'i':
+                inputFileName = strdup(optarg);
+                //strcpy(inputFileName, (const char*)optarg);
+                break;
+            case 'o':
+                outputFileName = strdup(optarg);
+                //strcpy(outputFileName, (const char*)optarg);
+                break;
+            case 'a':
+                action = atoi(optarg);
+                break;
+            case 'h':
+                printHelp();
+                return(1);
+            default:
+                abort();
+
+        }
+
+    int k = (n - 1) * p;
+
+    /* print input parameters */
+    printf("Input Parameters:\n");
+    printf("Input file: %s%s%s\n", YELLOW, inputFileName, NC);
+    printf("Output file: %s%s%s\n", YELLOW, outputFileName, NC);
+    printf("cpu based execution: ");
+    if (cpu) printf("%son%s\n", GREEN, NC);
+    else printf("%soff%s\n", RED, NC);
+    printf("n: %s%d%s\n", YELLOW, n, NC);
+    printf("p: %s%d%s\n", YELLOW, p, NC);
+    printf("w: %s%d%s\n", YELLOW, w, NC);
+    printf("t: %s%d%s\n", YELLOW, t, NC);
+    printf("k: %s%d%s\n", YELLOW, k, NC);
+    printf("seed: %s%d%s\n", YELLOW, seed, NC);
+    printf("action: %s", YELLOW);
+    if (action == 1)
+        printf("keygen\n");
+    else if (action == 2)
+        printf("encrypt\n");
+    else if (action == 3)
+        printf("decrypt\n");
+    else
+        printf("unkown\n");
+    printf("%s", NC);
 
 
-    /* Public Key */
-    fp2 = fopen("Public_Key.txt", "a");
-    fprintf(fp2, "Public Key: Generator Matrix: \n");
 
 
-    fclose(fp2);
-    //
-
+    /* 1)keygen 2) encrypt 3)decrypt */
+    switch(action)
+    {
+        case 1: //keygen
+            if (cpu) run_keygen_cpu(outputFileName, n, p, t, w, seed);
+            else run_keygen_gpu(outputFileName, n, p, t, w, seed);
+            break;
+        case 2: //encrypt
+            if (cpu)
+                run_encryption_cpu(inputFileName, outputFileName, n, p, t, w,
+                        seed);
+            else run_encryption_gpu(inputFileName, outputFileName, n, p, t, w,
+                    seed);
+            break;
+        case 3: //decrypt
+            if (cpu) run_decryption_cpu(outputFileName, n, p, t, w, seed);
+            else run_decryption_gpu(outputFileName, n, p, t, w, seed);
+            break;
+        default:
+            printf("Wrong action given to system.\n");
+            printHelp();
+            return(1);
+    }
 }
-void run_encryption(){}
-void run_decryption(){}
 
 void printHelp(){
     printf("HAMC - Hardware Accelerated Mceliece Cryptosystem\n");
@@ -70,72 +178,4 @@ void printHelp(){
 
     printf("\to\n");
     printf("\t\t - output filename\n");
-}
-
-int main(int argc, char *argv[]) {
-    wbArg_t args;
-    int inputLength;
-    unsigned int *hostInput;
-    unsigned int *hostBins;
-    unsigned int *deviceInput;
-    unsigned int *deviceBins;
-
-    cudaEvent_t astartEvent, astopEvent;
-    float aelapsedTime;
-
-    int action, n, p, w, t;
-    char *outputFileName, *inputFileName;
-
-    int c;
-    opterr = 0;
-    while ((c = getopt (argc, argv, "a:npwtioh")) != -1)
-        switch(c)
-        {
-            case 'n':
-                n = *optarg;
-                break;
-            case 'p':
-                p = *optarg;
-                break;
-            case 'w':
-                w = *optarg;
-                break;
-            case 't':
-                t = *optarg;
-                break;
-            case 'i':
-                strcpy(inputFileName, (const char*)optarg);
-                break;
-            case 'o':
-                strcpy(outputFileName, (const char*)optarg);
-                break;
-            case 'a':
-                action = *optarg;
-                break;
-            case 'h':
-                printHelp();
-                return(1);
-            default:
-                abort();
-
-        }
-
-    int k = (n - 1) * p;
-
-
-    // 1)kegen 2) encrypt 3)decrypt
-    switch(action)
-    {
-        case 1: //keygen
-            run_keygen();
-            break;
-        case 2: //encrypt
-            run_encryption();
-        case 3: //decrypt
-            run_decryption();
-        default:
-            printf("Wrong action given to system.\n");
-            printHelp();
-            return(1);
-    }
 }

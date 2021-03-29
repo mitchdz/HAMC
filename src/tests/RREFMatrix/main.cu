@@ -28,18 +28,94 @@ void printHelp()
     printf("run this executable with the following flags\n");
     printf("\n");
     printf("\t-i <input file name>\n");
-    printf("\t-o <output file name>\n");
+    printf("\t  input filename to run the code against\n");
+
     printf("\t-s <solution file name>\n");
+    printf("\t  filename for the solution file to check against\n");
+
+    printf("\t-c\n");
+    printf("\t  runs the CPU based execution with timing\n");
+
+    printf("\t-h\n");
+    printf("\t  prints this help menu\n");
 }
 
 
-void run_cpu(const char *in, const char*sol)
+void run_cpu(char *in, char*sol, bool verbose)
 {
-    int numARows, numAColumns;
-    ushort *hostA = (ushort *)wbImport(in, &numARows, &numAColumns);
-    ushort *hostC = (ushort *)malloc(numARows*numAColumns * sizeof(ushort));
+    cudaEvent_t astartEvent, astopEvent;
 
-    matrix_rref(hostA, hostC, numARows, numAColumns);
+    int numARows, numAColumns;
+    float aelapsedTime;
+    cudaEventCreate(&astartEvent);
+    cudaEventCreate(&astopEvent);
+
+    printf("input file: %s\n",in );
+    printf("solution file: %s\n",sol );
+
+    /* wbImport only reads and writes float, so we need to convert that */
+    float *hostAFloats = (float *)wbImport(in, &numARows, &numAColumns);
+    ushort *hostA = (ushort *)malloc(numARows*numAColumns * sizeof(ushort));
+    for (int i = 0; i < numARows*numAColumns; i++)
+        hostA[i] = (ushort)hostAFloats[i];
+
+    //ushort *hostC = (ushort *)malloc(numARows*numAColumns * sizeof(ushort));
+
+    if (verbose) {
+        /* print input array */
+        printf("Input Array:\n");
+        for( int i = 0; i < numARows; i++) {
+            for (int j = 0; j < numAColumns; j++) {
+                printf("%u ", hostA[i*numAColumns + j]);
+            }
+            printf("\n");
+        }
+    }
+
+    bin_matrix hostABin = mat_init(numARows, numAColumns);
+    for (int i = 0; i < numARows*numAColumns; i++) {
+        hostABin->data[i] = hostA[i];
+    }
+    if (verbose) {
+        /* print input array */
+        printf("Input Array:\n");
+        for( int i = 0; i < numARows; i++) {
+            for (int j = 0; j < numAColumns; j++) {
+                printf("%u ", hostABin->data[i*numAColumns + j]);
+            }
+            printf("\n");
+        }
+    }
+
+
+    cudaEventRecord(astartEvent, 0);
+    bin_matrix hostCBin = matrix_rref(hostABin);
+    cudaEventRecord(astopEvent, 0);
+    cudaEventSynchronize(astopEvent);
+    cudaEventElapsedTime(&aelapsedTime, astartEvent, astopEvent);
+
+    if (verbose) {
+        /* print solution array */
+        printf("Solution Array:\n");
+        for( int i = 0; i < numARows; i++) {
+            for (int j = 0; j < numAColumns; j++) {
+                printf("%u ", hostCBin->data[i*numAColumns + j]);
+            }
+            printf("\n");
+        }
+    }
+
+
+    printf("\n");
+    printf("Total compute time (ms) %f for RREF cpu\n",aelapsedTime);
+    printf("\n");
+
+cleanup:
+    free(hostAFloats);
+    free(hostABin);
+    free(hostCBin);
+    free(hostA);
+
 }
 
 
@@ -64,35 +140,40 @@ int main(int argc, char *argv[])
     cudaEventCreate(&astartEvent);
     cudaEventCreate(&astopEvent);
 
+    bool run_cpu_flag = false;
+
     int c;
     opterr = 0;
-    printf("1\n");
-    while ((c = getopt (argc, argv, "i:s:h")) != -1)
+    while ((c = getopt (argc, argv, "i:s:hc")) != -1)
         switch(c)
         {
             case 'i':
-                inputFileName = strdup(optarg);
+                inputFileName = strdup((const char*)optarg);
                 break;
             case 's':
-                solutionFileName = strdup(optarg);
+                solutionFileName = strdup((const char*)optarg);
                 break;
             case 'h':
                 printHelp();
                 return 0;
+            case 'c':
+                run_cpu_flag = true;
+                break;
             default:
                 abort();
         }
 
     args = wbArg_read(argc, argv);
 
+    if (run_cpu_flag){
+        run_cpu(inputFileName, solutionFileName, true);
+        return 0;
+    }
+
 
     printf("input file: %s\n", inputFileName);
     printf("solution file: %s\n", solutionFileName);
 
-
-    wbTime_start(Compute, "Performing CPU computation for RREF");
-    run_cpu(inputFileName, solutionFileName);
-    wbTime_stop(Compute, "Performing CPU computation");
 
 
     /* allocate host data for matrix */
