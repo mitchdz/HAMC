@@ -9,7 +9,7 @@ set(CMAKE_MACOSX_RPATH TRUE)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 
-project(teachingkit-labs)
+project(hamc)
 
 set(BUILD_LIBWB_LIBRARY ON CACHE BOOL "Turn on build of libwb library")
 set(BUILD_SOLUTION ON CACHE BOOL "Turn on build of code solution")
@@ -50,11 +50,11 @@ set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} --gpu-architecture;sm_${COMPUTE_CAPABILI
 
 # Set warning levels for host compilation
 if (UNIX)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unused-function -Wno-unused-parameter -Wextra -std=c++11")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-unused-function -Wno-unused-parameter -Wextra")
-    set(CUDA_PROPAGATE_HOST_FLAGS OFF)
-    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -Wno-unused-function,-Wno-unused-parameter")
-    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -std=c++11")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unused-function -Wno-unused-parameter -Wextra -std=c++11")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-unused-function -Wno-unused-parameter -Wextra")
+	set(CUDA_PROPAGATE_HOST_FLAGS OFF)
+	set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -Wno-unused-function,-Wno-unused-parameter")
+	set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -std=c++11")
 endif ()
 
 # Select the correct host compiler on OS X
@@ -74,7 +74,7 @@ if (APPLE)
         endif ()
         set(CUDA_HOST_COMPILER ${CLANG_EXECUTABLE})
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem ${CUDA_INCLUDE_DIRS}")
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++" )
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++" )
     endif ()
 endif ()
 
@@ -104,14 +104,14 @@ if (UNIX)
 endif ()
 
 macro(add_lab_helper NAME SOURCES)
-    cuda_add_executable(${NAME} ${SOURCES})
-    target_link_libraries(${NAME} ${WBLIB} ${LINK_LIBRARIES})
+	cuda_add_executable(${NAME} ${SOURCES})
+	target_link_libraries(${NAME} ${WBLIB} ${LINK_LIBRARIES})
 endmacro(add_lab_helper)
 
 macro(add_lab_solution NAME SOURCES)
-    if (BUILD_SOLUTION)
-        add_lab_helper("${NAME}" ${SOURCES})
-    endif(BUILD_SOLUTION)
+	if (BUILD_SOLUTION)
+		add_lab_helper("${NAME}" ${SOURCES})
+	endif(BUILD_SOLUTION)
 endmacro(add_lab_solution)
 
 
@@ -120,34 +120,34 @@ macro(add_lab_template NAME SOURCES)
     # so we do not copile it. Enable the BUILD_TEMPLATE
     # flag during cmake generation to override this
     # behavior
-    if (BUILD_TEMPLATE)
-        add_lab_helper("${NAME}_Template" ${SOURCES})
-    endif(BUILD_TEMPLATE)
+	if (BUILD_TEMPLATE)
+		add_lab_helper("${NAME}_Template" ${SOURCES})
+	endif(BUILD_TEMPLATE)
 endmacro(add_lab_template)
 
 macro(add_generator NAME SOURCES)
   if (BUILD_DATASET_GENERATOR)
-        add_executable("${NAME}_DatasetGenerator" ${SOURCES})
+		add_executable("${NAME}_DatasetGenerator" ${SOURCES})
         set_property(TARGET "${NAME}_DatasetGenerator" PROPERTY CXX_STANDARD 11)
     target_link_libraries("${NAME}_DatasetGenerator" ${WBLIB} ${LINK_LIBRARIES})
   endif (BUILD_DATASET_GENERATOR)
 endmacro(add_generator)
 
 macro(add_lab NAME)
-    if (BUILD_DESCRIPTION)
-        find_program(PANDOC pandoc)
-        set(MAKE_LAB_HANDOUT_PY "${PROJECT_SOURCE_DIR}/support/make_lab_handout.py")
-        add_custom_target(
-            "Build${NAME}Description"
-            COMMAND python ${MAKE_LAB_HANDOUT_PY}
-                            ${CMAKE_CURRENT_LIST_DIR}
-                            ${PROJECT_SOURCE_DIR}/support
-                            ${CMAKE_CURRENT_BINARY_DIR}
-        )
-        add_custom_target("${NAME}Description" ALL echo DEPENDS "Build${NAME}Description")
-        set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES ${NAME}.pdf)
-        set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES ${NAME}.docx)
-    endif (BUILD_DESCRIPTION)
+	if (BUILD_DESCRIPTION)
+		find_program(PANDOC pandoc)
+		set(MAKE_LAB_HANDOUT_PY "${PROJECT_SOURCE_DIR}/support/make_lab_handout.py")
+		add_custom_target(
+			"Build${NAME}Description"
+			COMMAND python ${MAKE_LAB_HANDOUT_PY}
+							${CMAKE_CURRENT_LIST_DIR}
+							${PROJECT_SOURCE_DIR}/support
+							${CMAKE_CURRENT_BINARY_DIR}
+		)
+		add_custom_target("${NAME}Description" ALL echo DEPENDS "Build${NAME}Description")
+		set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES ${NAME}.pdf)
+		set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES ${NAME}.docx)
+	endif (BUILD_DESCRIPTION)
 endmacro(add_lab)
 
 include_directories(${PROJECT_SOURCE_DIR}/libwb)
@@ -158,5 +158,5 @@ if (BUILD_LIBWB_LIBRARY)
   set_property(TARGET ${WBLIB} PROPERTY CXX_STANDARD 11)
 endif (BUILD_LIBWB_LIBRARY)
 
-include(tests/sources.cmake)
+
 include(hamc/sources.cmake)

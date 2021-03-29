@@ -6,11 +6,29 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "hamc_common.h"
-#include "qc_mdpc.h"
-#include "keygen.h"
-#include "encrypt.cu"
+#include "hamc_cpu_code.c"
+
 #include "decrypt.cu"
+#include "encrypt.cu"
+#include "hamc_common.cu"
+#include "HAMC_decrypt.cu"
+#include "HAMC_encrypt.cu"
+#include "HAMC_key_gen.cu"
+#include "InverseMatrix.cu"
+#include "keygen.cu"
+#include "MatrixAdd.cu"
+#include "matrix.cu"
+#include "mceliece.cu"
+#include "MultiplyMatrix.cu"
+#include "qc_mdpc.cu"
+#include "TransposeMatrix.cu"
+
+
+#define RED "\033[0;31m"
+#define YELLOW "\033[0;33m"
+#define GREEN "\033[0;32m"
+#define NC "\033[0;0m"
+
 
 #define CUDA_CHECK(ans) \
   { gpuAssert((ans), __FILE__, __LINE__); }
@@ -27,54 +45,53 @@ inline void gpuAssert(cudaError_t code, const char *file, int line,
 void printHelp();
 
 int main(int argc, char *argv[]) {
-    int inputLength;
-    unsigned int *hostInput;
-    unsigned int *hostBins;
-    unsigned int *deviceInput;
-    unsigned int *deviceBins;
-    int seed;
-
+    /* variables for timing operations */
     cudaEvent_t astartEvent, astopEvent;
     float aelapsedTime;
 
-    int action, n, p, w, t;
-    char *outputFileName, *inputFileName;
-
+    /* input parameters */
+    int action = -1, n = 2, p = 4800, w = 90, t = -1, seed = -1;
+    char *outputFileName = NULL, *inputFileName = NULL;
     /* determines whether to run CPU based implementation */
     bool cpu = false;
 
+    printf("HAMC Version 0.1\n");
+
     int c;
     opterr = 0;
-    while ((c = getopt (argc, argv, "a:npwtiohs:c")) != -1)
+    while ((c = getopt (argc, argv, "a:n:p:w:t:i:o:hs:cs:")) != -1)
         switch(c)
         {
             case 'c':
                 cpu = true;
                 break;
             case 'n':
-                n = *optarg;
+                n = atoi(optarg);
                 break;
             case 's':
-                seed = *optarg;
+                seed = atoi(optarg);
                 break;
             case 'p':
-                p = *optarg;
+                p = atoi(optarg);
                 break;
             case 'w':
-                w = *optarg;
+                w = atoi(optarg);
                 break;
             case 't':
-                t = *optarg;
+                t = atoi(optarg);
                 break;
             case 'i':
-                strcpy(inputFileName, (const char*)optarg);
+                inputFileName = strdup(optarg);
+                //strcpy(inputFileName, (const char*)optarg);
                 break;
             case 'o':
-                strcpy(outputFileName, (const char*)optarg);
+                outputFileName = strdup(optarg);
+                //strcpy(outputFileName, (const char*)optarg);
                 break;
             case 'a':
-                action = *optarg;
-                break; case 'h':
+                action = atoi(optarg);
+                break;
+            case 'h':
                 printHelp();
                 return(1);
             default:
@@ -86,17 +103,18 @@ int main(int argc, char *argv[]) {
 
     /* print input parameters */
     printf("Input Parameters:\n");
-    printf("Input file: %s\n", inputFileName);
-    printf("Output file: %s\n", outputFileName);
+    printf("Input file: %s%s%s\n", YELLOW, inputFileName, NC);
+    printf("Output file: %s%s%s\n", YELLOW, outputFileName, NC);
     printf("cpu based execution: ");
-    if (cpu) printf("on\n");
-    else printf("off\n");
-    printf("n: %d\n", n);
-    printf("p: %d\n", p);
-    printf("w: %d\n", w);
-    printf("t: %d\n", t);
-    printf("seed: %d\n", seed);
-    printf("action: ");
+    if (cpu) printf("%son%s\n", GREEN, NC);
+    else printf("%soff%s\n", RED, NC);
+    printf("n: %s%d%s\n", YELLOW, n, NC);
+    printf("p: %s%d%s\n", YELLOW, p, NC);
+    printf("w: %s%d%s\n", YELLOW, w, NC);
+    printf("t: %s%d%s\n", YELLOW, t, NC);
+    printf("k: %s%d%s\n", YELLOW, k, NC);
+    printf("seed: %s%d%s\n", YELLOW, seed, NC);
+    printf("action: %s", YELLOW);
     if (action == 1)
         printf("keygen\n");
     else if (action == 2)
@@ -105,6 +123,10 @@ int main(int argc, char *argv[]) {
         printf("decrypt\n");
     else
         printf("unkown\n");
+    printf("%s", NC);
+
+
+
 
     /* 1)keygen 2) encrypt 3)decrypt */
     switch(action)
