@@ -20,12 +20,12 @@ static void compute(ushort *output, ushort *input0, ushort *input1, int numARows
     C = matrix_mult_cpu(A, B);
     output = C->data;
     std::cout << "AR: " << numARows << ", AC: " << numACols << ", CR: " << numCRows << ", CC: " << numCCols << std::endl;
-    //std::cout << "sol";
+    std::cout << "sol";
     for(int i = 0; i < numCRows * numCCols; i++){
-        //if(i%16 == 0) std::cout << "" << std::endl;
-        //std::cout << C->data[i] << " ";
+        if(i%16 == 0) std::cout << "" << std::endl;
+        std::cout << C->data[i] << " ";
     }
-    //std::cout << std::endl;
+    std::cout << std::endl;
     
     free(A);
     free(B);
@@ -94,7 +94,7 @@ int main()
     base_dir = wbPath_join(wbDirectory_current(), "MatrixMultiply", "Dataset");
 
     create_dataset(0, 16, 16, 16);
-    create_dataset(1, 64, 64, 64);
+    /*create_dataset(1, 64, 64, 64);
     create_dataset(2, 64, 128, 64);
     create_dataset(3, 112, 48, 16);
     create_dataset(4, 84, 84, 84);
@@ -102,6 +102,6 @@ int main()
     create_dataset(6, 128, 128, 128);
     create_dataset(7, 100, 100, 100);
     create_dataset(8, 134, 130, 150);
-    create_dataset(9, 417, 210, 519);
+    create_dataset(9, 417, 210, 519);*/
   return 0;
 }
