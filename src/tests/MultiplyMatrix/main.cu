@@ -167,7 +167,7 @@ int main(int argc, char *argv[])
     //C = (cpu_exec) ? run_cpu(A, B) : run_kernel(A, B);
     
     std::cout << "C->data";
-    for(int i = 0; i < numColsC * numRowsC; i++){
+    for(int i = 0; i < C->cols * C->rows; i++){
         if(i%16 == 0) std::cout << "" << std::endl;
         std::cout << C->data[i] << " ";
     }
