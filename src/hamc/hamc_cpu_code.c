@@ -664,12 +664,6 @@ bin_matrix decrypt_cpu(bin_matrix word, mcc crypt)
 void run_decryption_cpu(const char* inputFileName, const char* outputFileName,
         int n, int p, int t, int w, int seed)
 {
-    cudaEvent_t astartEvent, astopEvent;
-
-    float aelapsedTime;
-    cudaEventCreate(&astartEvent);
-    cudaEventCreate(&astopEvent);
-
     mcc crypt;
     bin_matrix msg, m;
     long f_size;
@@ -774,12 +768,6 @@ bin_matrix encrypt_cpu(bin_matrix msg, mcc crypt)
 void run_encryption_cpu(const char* inputFileName, const char* outputFileName,
         int n, int p, int t, int w, int seed)
 {
-    cudaEvent_t astartEvent, astopEvent;
-
-    float aelapsedTime;
-    cudaEventCreate(&astartEvent);
-    cudaEventCreate(&astopEvent);
-
     mcc crypt;
     bin_matrix msg, m;
     long f_size;
