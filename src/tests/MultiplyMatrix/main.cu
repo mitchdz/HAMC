@@ -145,9 +145,16 @@ int main(int argc, char *argv[])
         sol[i] = (ushort)floatTemp[i];
     }    
     
+    std::cout << "A->data" << std::endl;
     for(int i = 0; i < numColsA * numRowsA; i++){
         if(i%16 == 0) std::cout << "" << std::endl;
         std::cout << hostA[i] << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "B->data" << std::endl;
+    for(int i = 0; i < numColsB * numRowsB; i++){
+        if(i%16 == 0) std::cout << "" << std::endl;
+        std::cout << hostB[i] << " ";
     }
     std::cout << std::endl;
     
