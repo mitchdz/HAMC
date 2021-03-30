@@ -17,7 +17,7 @@ static void compute(ushort *output, ushort *input0, ushort *input1, int numARows
     A->data = input0;
     B->data = input1;
     
-    C = mult_matrix_cpu(A, B);
+    C = matrix_mult_cpu(A, B);
     output = C->data;
     
     free(A);
