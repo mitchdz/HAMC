@@ -83,7 +83,7 @@ static void create_dataset(int datasetNum, int numARows, int numACols, int numBC
     std::cout << "sol";
     for(int i = 0; i < numCRows * numCCols; i++){
         if(i%16 == 0) std::cout << "" << std::endl;
-        std::cout << C->data[i] << " ";
+        std::cout << output_datadata[i] << " ";
     }
     std::cout << std::endl;
     
