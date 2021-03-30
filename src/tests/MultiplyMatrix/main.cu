@@ -132,6 +132,11 @@ int main(int argc, char *argv[])
     B->data = hostB;
     sol = (ushort *)wbImport(expected, &numRowsS, &numColsS);
     
+    for(int i = 0; i < numColsA * numRowsA; i++){
+        std::cout << hostA[i];
+        if(i%16 = 0) std::cout << std::endl;
+    }
+    
     if(cpu_exec){
         C = run_cpu(A, B);
     }
@@ -146,7 +151,7 @@ int main(int argc, char *argv[])
     else{
         for(int i = 0; i < numRowsS * numColsS; i++){
             if(C->data[i] != sol[i]){
-                std::cout << "i: " << i << "C->data[i]: " << C->data[i] << std::endl;
+                std::cout << "i: " << i << " C->data[i]: " << C->data[i] << std::endl;
                 solved = false;
                 break;
             }
