@@ -126,8 +126,6 @@ int main(int argc, char *argv[]) {
     printf("%s", NC);
 
 
-
-
     /* 1)keygen 2) encrypt 3)decrypt */
     switch(action)
     {
@@ -143,7 +141,7 @@ int main(int argc, char *argv[]) {
                     seed);
             break;
         case 3: //decrypt
-            if (cpu) run_decryption_cpu(outputFileName, n, p, t, w, seed);
+            if (cpu) run_decryption_cpu(inputFileName, outputFileName, n, p, t, w, seed);
             else run_decryption_gpu(outputFileName, n, p, t, w, seed);
             break;
         default:
