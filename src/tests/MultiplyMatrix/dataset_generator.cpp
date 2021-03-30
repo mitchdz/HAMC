@@ -2,55 +2,22 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "wb.h"
-#include "Multiply_cpu.c"
+#include "../../hamc/hamc_cpu_code.c"
 
 #define ushort unsigned short
-
-#define mat_element(mat, row_idx, col_idx) \
-    mat->data[row_idx * (mat->cols) + col_idx]
-
-typedef struct matrix
-{
-   int rows;             //number of rows.
-   int cols;             //number of columns.
-   ushort *data;
-}*bin_matrix;
-
-void* safe_malloc(size_t n)
-{
-    void* p = malloc(n);
-    if (!p)
-    {
-        fprintf(stderr, "Out of memory(%lu bytes)\n",(size_t)n);
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
-
-bin_matrix mat_init(int rows, int cols){
-	if(rows <= 0 || cols <= 0)
-		return NULL;
-
-	bin_matrix A;
-	A = (bin_matrix)safe_malloc(sizeof(struct matrix));
-	A->cols = cols;
-	A->rows = rows; 
-	A->data = (ushort *)safe_malloc(rows*cols*sizeof(ushort)); 
-	return A;
-}
 
 static char *base_dir;
 
 static void compute(ushort *output, ushort *input0, ushort *input1, int numARows, int numACols, int numBRows, int numBCols, int numCRows, int numCCols)
 {
-    bin_matrix A = mat_init(numARows, numACols);
-    bin_matrix B = mat_init(numBRows, numBCols);
-    bin_matrix C = mat_init(numCRows, numCCols);
+    bin_matrix A = mat_init_cpu(numARows, numACols);
+    bin_matrix B = mat_init_cpu(numBRows, numBCols);
+    bin_matrix C = mat_init_cpu(numCRows, numCCols);
     
     A->data = input0;
     B->data = input1;
     
-    C = mult_matrix(A, B);
+    C = mult_matrix_cpu(A, B);
     output = C->data;
     
     free(A);
