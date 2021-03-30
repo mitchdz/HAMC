@@ -146,6 +146,7 @@ int main(int argc, char *argv[])
     else{
         for(int i = 0; i < numRowsS * numColsS; i++){
             if(C->data[i] != sol[i]){
+                std::cout << "i: " << i << "C->data[i]: " << C->data[i] << std::endl;
                 solved = false;
                 break;
             }
