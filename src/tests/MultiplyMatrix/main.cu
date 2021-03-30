@@ -149,6 +149,7 @@ int main(int argc, char *argv[])
         if(i%16 == 0) std::cout << "" << std::endl;
         std::cout << hostA[i] << " ";
     }
+    std::cout << std::endl;
     
     if(cpu_exec){
         C = run_cpu(A, B);
@@ -165,7 +166,7 @@ int main(int argc, char *argv[])
         for(int i = 0; i < numRowsS * numColsS; i++){
             if(C->data[i] != sol[i]){
                 std::cout << "i: " << i << std::endl;
-                std::cout << " C->data[i]: " << C->data[i] << std::endl;
+                std::cout << "C->data[i]: " << C->data[i] << std::endl;
                 std::cout << "expected: " << sol[i] << std::endl;
                 solved = false;
                 break;
