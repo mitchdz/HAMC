@@ -78,7 +78,7 @@ static void create_dataset(int datasetNum, int numARows, int numACols, int numBC
     ushort *input1_data = generate_data(numBRows, numBCols);
     ushort *output_data = (ushort *)calloc(sizeof(ushort), numCRows * numCCols);
 
-    compute(output_data, input0_data, input1_data, numARows, numACols, numBRows, numBCols, numCRows, numCCols);
+    compute(&output_data, input0_data, input1_data, numARows, numACols, numBRows, numBCols, numCRows, numCCols);
 
     std::cout << "sol";
     for(int i = 0; i < numCRows * numCCols; i++){
