@@ -652,7 +652,7 @@ bin_matrix mat_splice_cpu(bin_matrix A, int row1, int row2, int col1, int col2)
 bin_matrix decrypt_cpu(bin_matrix word, mcc crypt)
 {
     if(word->cols != crypt->code->n) {
-        printf("Length of message is incorrect.\n");
+        printf("Length of message is incorrect while decrypting.\n");
         exit(0);
     }
     //printf("Decryption started...\n");
@@ -811,11 +811,19 @@ void run_encryption_cpu(const char* inputFileName, const char* outputFileName,
     input_message[icc] = '\0';
 
 
-    printf("Input message:\n");
+    printf("\n");
+    printf("Input message (char):\n");
     for (int i = 0; i < (int)icc; i++)
         printf("%c",  input_message[i]);
     printf("\n");
 
+    printf("Input message (ushort):\n");
+    for (int i = 0; i < (int)icc; i++)
+        printf("%hu ",  (ushort)input_message[i]);
+    printf("\n");
+
+
+    printf("\n");
 
     /* check that input file is within size */
     int k = (n - 1) * p;
@@ -833,8 +841,21 @@ void run_encryption_cpu(const char* inputFileName, const char* outputFileName,
                 (unsigned short)strtoul(input_message, NULL, 0));
     }
 
-    /* run CPU based execution code */
+    printf("\n");
+    /* run CPU based encryption code */
     m = encrypt_cpu(msg, crypt);
+    printf("Encrypted data (ushort):\n");
+    for (int i = 0; i < m->cols; i++)
+        printf("%hu", m->data[i]);
+    printf("\n");
+
+    /* decrypt the ciphertext */
+    bin_matrix d = decrypt_cpu(m, crypt);
+
+    printf("Decrypted text:\n");
+    for(int i = 0; i < d->cols; i++)
+        printf("%c", (char)d->data[i]);
+
 
     /* write cipher.text to file */
     for( int i = 0; i < m->cols; i++) {
@@ -845,3 +866,102 @@ cleanup:
     fclose(in_file);
     fclose(out_file);
 }
+
+
+
+//Checks if two matrices are equal
+int mat_is_equal_cpu(bin_matrix A, bin_matrix B)
+{
+  int flag = 1;
+  if(A->rows != B->rows || A->cols != B->cols)
+  {
+    flag = 0;
+    return flag;
+  }
+  for(int i = 0; i < A->rows; i++)
+  {
+    for(int j = 0; j < A->cols; j++)
+    {
+      if(mat_element(A, i, j) != mat_element(B, i, j))
+      {
+        flag = 0;
+        return flag;
+      }
+    }
+  }
+  return flag;
+}
+
+//Delete the cryptosystem
+void delete_mceliece_cpu(mcc A)
+{
+    free(A->code);
+    free(A->public_key);
+    free(A);
+}
+
+void test_cpu_e2e(int n0, int p, int t, int w, int seed)
+{
+
+    printf("CPU based mceliece cryptosystem test\n");
+
+
+    printf("Starting Encryption...\n");
+    clock_t start, end;
+    double cpu_time_used;
+    start = clock();
+    mcc crypt = mceliece_init_cpu(n0, p, w, t, seed);
+    bin_matrix msg = mat_init_cpu(1, crypt->code->k);
+    //Initializing the message a random message
+    for(int i = 0; i < crypt->code->k; i++)
+    {
+            int z = rand() % 2;
+            set_matrix_element_cpu(msg, 0, i, z);
+    }
+
+    printf("message:\n");
+    for (int i = 0; i < msg->cols; i++)
+        printf("%hu", msg->data[i]);
+    printf("\n");
+
+    printf("public key:\n");
+    for (int i = 0; i < crypt->public_key->cols; i++)
+        printf("%hu", crypt->public_key->data[i]);
+    printf("\n");
+
+    bin_matrix error = get_error_vector_cpu(crypt->code->n, crypt->code->t);
+
+    printf("error vector:\n");
+    for (int i = 0; i < error->cols; i++)
+        printf("%hu", error->data[i]);
+    printf("\n");
+
+
+    bin_matrix v = encrypt_cpu(msg, crypt);
+
+    printf("encrypted data (message * public key + error):\n");
+    for (int i = 0; i < v->cols; i++)
+        printf("%hu", v->data[i]);
+    printf("\n");
+
+
+    bin_matrix s = decrypt_cpu(v, crypt);
+
+    printf("decrypted data:\n");
+    for (int i = 0; i < s->cols; i++)
+        printf("%hu", s->data[i]);
+    printf("\n");
+
+    if(mat_is_equal_cpu(msg, s)) {
+            end = clock();
+            printf("Decryption successful...\n");
+            cpu_time_used = ((double) (end - start))/ CLOCKS_PER_SEC;
+            printf("Time taken by cryptosystem: %f\n", cpu_time_used);
+    } else {
+            printf("Failure....\n");
+    }
+    delete_mceliece_cpu(crypt);
+    return;
+}
+
+

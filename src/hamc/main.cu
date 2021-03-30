@@ -43,19 +43,27 @@ inline void gpuAssert(cudaError_t code, const char *file, int line,
 }
 
 void printHelp();
+void printWelcome()
+{
+    printf("HAMC Version %s0.1%s\n", YELLOW, NC);
+    printf("Developed by Mitchell Dzurick, Mitchell Russel, James Kuban");
+}
+
+
 
 int main(int argc, char *argv[]) {
+    printWelcome();
+
     /* variables for timing operations */
     cudaEvent_t astartEvent, astopEvent;
     float aelapsedTime;
 
     /* input parameters */
-    int action = -1, n = 2, p = 4800, w = 90, t = -1, seed = -1;
-    char *outputFileName = NULL, *inputFileName = NULL;
+    int n = 2, p = 500, w = 30, t = 10, seed = 10;
+    char *outputFileName = NULL, *inputFileName = NULL, *action = NULL;
     /* determines whether to run CPU based implementation */
     bool cpu = false;
 
-    printf("HAMC Version 0.1\n");
 
     int c;
     opterr = 0;
@@ -89,7 +97,7 @@ int main(int argc, char *argv[]) {
                 //strcpy(outputFileName, (const char*)optarg);
                 break;
             case 'a':
-                action = atoi(optarg);
+                action = strdup(optarg);
                 break;
             case 'h':
                 printHelp();
@@ -102,52 +110,41 @@ int main(int argc, char *argv[]) {
     int k = (n - 1) * p;
 
     /* print input parameters */
+    printf("\n");
     printf("Input Parameters:\n");
-    printf("Input file: %s%s%s\n", YELLOW, inputFileName, NC);
-    printf("Output file: %s%s%s\n", YELLOW, outputFileName, NC);
-    printf("cpu based execution: ");
+    printf("\tInput file: %s%s%s\n", YELLOW, inputFileName, NC);
+    printf("\tOutput file: %s%s%s\n", YELLOW, outputFileName, NC);
+    printf("\tcpu based execution: ");
     if (cpu) printf("%son%s\n", GREEN, NC);
     else printf("%soff%s\n", RED, NC);
-    printf("n: %s%d%s\n", YELLOW, n, NC);
-    printf("p: %s%d%s\n", YELLOW, p, NC);
-    printf("w: %s%d%s\n", YELLOW, w, NC);
-    printf("t: %s%d%s\n", YELLOW, t, NC);
-    printf("k: %s%d%s\n", YELLOW, k, NC);
-    printf("seed: %s%d%s\n", YELLOW, seed, NC);
-    printf("action: %s", YELLOW);
-    if (action == 1)
-        printf("keygen\n");
-    else if (action == 2)
-        printf("encrypt\n");
-    else if (action == 3)
-        printf("decrypt\n");
-    else
-        printf("unkown\n");
-    printf("%s", NC);
+    printf("\tn: %s%d%s\n", YELLOW, n, NC);
+    printf("\tp: %s%d%s\n", YELLOW, p, NC);
+    printf("\tw: %s%d%s\n", YELLOW, w, NC);
+    printf("\tt: %s%d%s\n", YELLOW, t, NC);
+    printf("\tk: %s%d%s\n", YELLOW, k, NC);
+    printf("\tseed: %s%d%s\n", YELLOW, seed, NC);
+    printf("\taction: %s%s%s\n", YELLOW, action, NC);
 
 
-    /* 1)keygen 2) encrypt 3)decrypt */
-    switch(action)
-    {
-        case 1: //keygen
-            if (cpu) run_keygen_cpu(outputFileName, n, p, t, w, seed);
-            else run_keygen_gpu(outputFileName, n, p, t, w, seed);
-            break;
-        case 2: //encrypt
-            if (cpu)
-                run_encryption_cpu(inputFileName, outputFileName, n, p, t, w,
-                        seed);
-            else run_encryption_gpu(inputFileName, outputFileName, n, p, t, w,
-                    seed);
-            break;
-        case 3: //decrypt
-            if (cpu) run_decryption_cpu(inputFileName, outputFileName, n, p, t, w, seed);
-            else run_decryption_gpu(outputFileName, n, p, t, w, seed);
-            break;
-        default:
-            printf("Wrong action given to system.\n");
-            printHelp();
-            return(1);
+    //TODO: make sure action is null-terminated before passing into strcmp
+    if (!strcmp(action, (const char*)"keygen")) {
+        if (cpu) run_keygen_cpu(outputFileName, n, p, t, w, seed);
+        else run_keygen_gpu(outputFileName, n, p, t, w, seed);
+    }
+    else if (!strcmp(action, (const char*)"encrypt")) {
+        if (cpu) run_encryption_cpu(inputFileName, outputFileName, n, p, t, w, seed);
+        else run_encryption_gpu(inputFileName, outputFileName, n, p, t, w, seed);
+    }
+    else if (!strcmp(action, (const char*)"decrypt")) {
+        if (cpu) run_decryption_cpu(inputFileName, outputFileName, n, p, t, w, seed);
+        else run_decryption_gpu(outputFileName, n, p, t, w, seed);
+    }
+    else if (!strcmp(action, (const char*)"test")) {
+        if (cpu) test_cpu_e2e(n, p, t, w, seed);
+        //else (outputFileName, n, p, t, w, seed);
+    }
+    else {
+        printf("action %s not recognized\n", action);
     }
 }
 
