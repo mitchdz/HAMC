@@ -62,7 +62,7 @@ static void write_data(char *file_name, ushort *data, int height, int width)
     fclose(handle);
 }
 
-static void create_dataset(int datasetNum, int numARows, int numACols, int numBRows)
+static void create_dataset(int datasetNum, int numARows, int numACols, int numBColsS)
 {
     int numBRows = numACols;
     int numCRows = numARows;
