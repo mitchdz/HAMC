@@ -152,6 +152,10 @@ int main(int argc, char *argv[])
         }
     }
     
+    std::cout << "C->rows: " << C->rows << std::endl;
+    std::cout << "C->cols: " << C->cols << std::endl;
+    std::cout << "numRowsS: " << numRowsS << std::endl;
+    std::cout << "numColsS: " << numColsS << std::endl;
     std::cout << "solved: " << solved << std::endl;
     
     free(A);
