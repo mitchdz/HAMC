@@ -20,6 +20,13 @@ static void compute(ushort *output, ushort *input0, ushort *input1, int numARows
     C = matrix_mult_cpu(A, B);
     output = C->data;
     
+    std::cout << "sol";
+    for(int i = 0; i < numColsC * numRowsC; i++){
+        if(i%16 == 0) std::cout << "" << std::endl;
+        std::cout << C->data[i] << " ";
+    }
+    std::cout << std::endl;
+    
     free(A);
     free(B);
     free(C);
