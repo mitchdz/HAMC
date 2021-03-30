@@ -19,13 +19,13 @@ static void compute(ushort *output, ushort *input0, ushort *input1, int numARows
     
     C = matrix_mult_cpu(A, B);
     output = C->data;
-    
-    std::cout << "sol";
+    std::cout << "AR: " << numARows << ", AC: " << numACols << ", CR: " << numCRows << ", CC: " << numCCols << std::endl;
+    //std::cout << "sol";
     for(int i = 0; i < numCRows * numCCols; i++){
-        if(i%16 == 0) std::cout << "" << std::endl;
-        std::cout << C->data[i] << " ";
+        //if(i%16 == 0) std::cout << "" << std::endl;
+        //std::cout << C->data[i] << " ";
     }
-    std::cout << std::endl;
+    //std::cout << std::endl;
     
     free(A);
     free(B);
