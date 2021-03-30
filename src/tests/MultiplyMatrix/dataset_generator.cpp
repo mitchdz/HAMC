@@ -21,7 +21,7 @@ static void compute(ushort *output, ushort *input0, ushort *input1, int numARows
     output = C->data;
     
     std::cout << "sol";
-    for(int i = 0; i < numColsC * numRowsC; i++){
+    for(int i = 0; i < numCRows * numCCols; i++){
         if(i%16 == 0) std::cout << "" << std::endl;
         std::cout << C->data[i] << " ";
     }
