@@ -571,7 +571,7 @@ void run_decryption_cpu(const char* outputFileName, int n, int p, int t, int w,
 }
 
 
-void run_encryption_cpu(const char* inputFileName, const char* outputFileName,
+/*void run_encryption_cpu(const char* inputFileName, const char* outputFileName,
         int n, int p, int t, int w, int seed)
 {
     cudaEvent_t astartEvent, astopEvent;
@@ -583,7 +583,7 @@ void run_encryption_cpu(const char* inputFileName, const char* outputFileName,
 
     // retrieve message from file
     /* wbImport only reads and writes float, so we need to convert that */
-    float *hostAFloats = (float *)wbImport(inputFileName, &numARows, &numAColumns);
+    /*float *hostAFloats = (float *)wbImport(inputFileName, &numARows, &numAColumns);
     ushort *hostA = (ushort *)malloc(numARows*numAColumns * sizeof(ushort));
     for (int i = 0; i < numARows*numAColumns; i++)
         hostA[i] = (ushort)hostAFloats[i];
@@ -600,9 +600,9 @@ void run_encryption_cpu(const char* inputFileName, const char* outputFileName,
     /* add message, public key, and error */
 
     /* determine error length and weight */
-    int error_length = 0;
+    /*int error_length = 0;
     int error_weight = 0;
 
     ushort *error = get_error_vector_cpu(error_length, error_weight)->data;
 
-}
+}*/
