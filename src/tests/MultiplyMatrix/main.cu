@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
     float *floatTemp = (float *)wbImport(input0, &numRowsA, &numColsA);
     hostA = (ushort *)malloc(numRowsA*numColsA * sizeof(ushort));
     for(int i = 0; i < numColsA * numRowsA; i++){
-        hostA[i] = (ushort *)floatTemp[i];
+        hostA[i] = (ushort)floatTemp[i];
     }
     A = mat_init_cpu(numRowsA, numColsA);
     A->data = hostA;
@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
     floatTemp = (float *)wbImport(input1, &numRowsB, &numColsB);
     hostB = (ushort *)malloc(numRowsB*numColsB * sizeof(ushort));
     for(int i = 0; i < numColsB * numRowsB; i++){
-        hostB[i] = (ushort *)floatTemp[i];
+        hostB[i] = (ushort)floatTemp[i];
     }    
     B = mat_init_cpu(numRowsB, numColsB);
     B->data = hostB;
@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
     floatTemp = (float *)wbImport(expected, &numRowsS, &numColsS);
     sol = (ushort *)malloc(numRowsS*numColsS * sizeof(ushort));
     for(int i = 0; i < numColsB * numRowsB; i++){
-        sol[i] = (ushort *)floatTemp[i];
+        sol[i] = (ushort)floatTemp[i];
     }    
     
     for(int i = 0; i < numColsA * numRowsA; i++){
