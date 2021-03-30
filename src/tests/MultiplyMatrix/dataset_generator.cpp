@@ -18,12 +18,13 @@ static void compute(ushort *output, ushort *input0, ushort *input1, int numARows
     B->data = input1;
     
     C = matrix_mult_cpu(A, B);
-    output = C->data;
-    std::cout << "AR: " << numARows << ", AC: " << numACols << ", CR: " << numCRows << ", CC: " << numCCols << std::endl;
-    std::cout << "sol";
+    //output = C->data;
+    //std::cout << "AR: " << numARows << ", AC: " << numACols << ", CR: " << numCRows << ", CC: " << numCCols << std::endl;
+    //std::cout << "sol";
     for(int i = 0; i < numCRows * numCCols; i++){
-        if(i%16 == 0) std::cout << "" << std::endl;
-        std::cout << output[i] << " ";
+        //if(i%16 == 0) std::cout << "" << std::endl;
+        //std::cout << output[i] << " ";
+        output[i] = C->data[i];
     }
     std::cout << std::endl;
     
@@ -78,7 +79,7 @@ static void create_dataset(int datasetNum, int numARows, int numACols, int numBC
     ushort *input1_data = generate_data(numBRows, numBCols);
     ushort *output_data = (ushort *)calloc(sizeof(ushort), numCRows * numCCols);
 
-    compute(&output_data, input0_data, input1_data, numARows, numACols, numBRows, numBCols, numCRows, numCCols);
+    compute(output_data, input0_data, input1_data, numARows, numACols, numBRows, numBCols, numCRows, numCCols);
 
     std::cout << "sol";
     for(int i = 0; i < numCRows * numCCols; i++){
