@@ -81,12 +81,12 @@ static void create_dataset(int datasetNum, int numARows, int numACols, int numBC
 
     compute(output_data, input0_data, input1_data, numARows, numACols, numBRows, numBCols, numCRows, numCCols);
 
-    std::cout << "sol";
+    /*std::cout << "sol";
     for(int i = 0; i < numCRows * numCCols; i++){
         if(i%16 == 0) std::cout << "" << std::endl;
         std::cout << output_data[i] << " ";
     }
-    std::cout << std::endl;
+    std::cout << std::endl;*/
     
     write_data(input0_file_name, input0_data, numARows, numACols);
     write_data(input1_file_name, input1_data, numBRows, numBCols);
