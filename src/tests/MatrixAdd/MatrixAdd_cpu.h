@@ -8,9 +8,8 @@ extern "C" {
 #define ushort unsigned short
 
 //FUNCTIONS go in here
-ushort mat_init(int rows, int cols);
-void set_matrix_element(ushort A, int row_idx, int col_idx, ushort val);
-ushort add_matrix(ushort *A, ushort *B);
+void set_matrix_element(bin_matrix A, int row_idx, int col_idx, bin_matrix val);
+bin_matrix MatrixAdd_cpu(bin_matrix *A, bin_matrix *B);
 
 
 #ifdef __cplusplus
