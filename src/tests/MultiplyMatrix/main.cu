@@ -146,8 +146,8 @@ int main(int argc, char *argv[])
     }    
     
     for(int i = 0; i < numColsA * numRowsA; i++){
-        std::cout << hostA[i] << " ";
         if(i%16 == 0) std::cout << "" << std::endl;
+        std::cout << hostA[i] << " ";
     }
     
     if(cpu_exec){
@@ -164,17 +164,19 @@ int main(int argc, char *argv[])
     else{
         for(int i = 0; i < numRowsS * numColsS; i++){
             if(C->data[i] != sol[i]){
-                std::cout << "i: " << i << " C->data[i]: " << C->data[i] << std::endl;
+                std::cout << "i: " << i << endl;
+                std::cout << " C->data[i]: " << C->data[i] << std::endl;
+                std::cout << "expected: " << sol[i] << endl;
                 solved = false;
                 break;
             }
         }
     }
     
-    std::cout << "C->rows: " << C->rows << std::endl;
+    /*std::cout << "C->rows: " << C->rows << std::endl;
     std::cout << "C->cols: " << C->cols << std::endl;
     std::cout << "numRowsS: " << numRowsS << std::endl;
-    std::cout << "numColsS: " << numColsS << std::endl;
+    std::cout << "numColsS: " << numColsS << std::endl;*/
     std::cout << "solved: " << solved << std::endl;
     
     free(A);
