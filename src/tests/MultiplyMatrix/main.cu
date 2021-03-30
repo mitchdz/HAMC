@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
     
     for(int i = 0; i < numColsA * numRowsA; i++){
         std::cout << hostA[i];
-        if(i%16 = 0) std::cout << "" << std::endl;
+        if(i%16 == 0) std::cout << "" << std::endl;
     }
     
     if(cpu_exec){
