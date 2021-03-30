@@ -42,7 +42,7 @@ static void write_data(char *file_name, ushort *data, int height, int width)
     fprintf(handle, "%d %d\n", height, width);
     for(ii = 0; ii < height; ii++){
         for(jj = 0; jj < width; jj++){
-            fprintf(handle, "%.2hi", *data++);
+            fprintf(handle, "%f", (float)*data++);
             if(jj != width - 1){
                 fprintf(handle, " ");
             }
