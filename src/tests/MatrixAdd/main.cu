@@ -6,8 +6,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "RREF_cpu.c"
-#include "../../hamc/RREFMatrix.cu"
+#include "MatrixAdd_cpu.h"
+#include "../../hamc/MatrixAdd.cu"
 
 #define TILE_WIDTH 16
 
@@ -28,100 +28,24 @@ void printHelp()
     printf("run this executable with the following flags\n");
     printf("\n");
     printf("\t-i <input file name>\n");
-    printf("\t  input filename to run the code against\n");
-
+    printf("\t-o <output file name>\n");
     printf("\t-s <solution file name>\n");
-    printf("\t  filename for the solution file to check against\n");
-
-    printf("\t-c\n");
-    printf("\t  runs the CPU based execution with timing\n");
-
-    printf("\t-h\n");
-    printf("\t  prints this help menu\n");
 }
 
 
-void run_cpu(char *in, char*sol, bool verbose)
+void run_cpu(const char *in, const char*sol)
 {
-    cudaEvent_t astartEvent, astopEvent;
-
     int numARows, numAColumns;
-    float aelapsedTime;
-    cudaEventCreate(&astartEvent);
-    cudaEventCreate(&astopEvent);
+    ushort *hostA = (ushort *)wbImport(in, &numARows, &numAColumns);
+    ushort *hostC = (ushort *)malloc(numARows*numAColumns * sizeof(ushort));
 
-    printf("input file: %s\n",in );
-    printf("solution file: %s\n",sol );
-
-    /* wbImport only reads and writes float, so we need to convert that */
-    float *hostAFloats = (float *)wbImport(in, &numARows, &numAColumns);
-    ushort *hostA = (ushort *)malloc(numARows*numAColumns * sizeof(ushort));
-    for (int i = 0; i < numARows*numAColumns; i++)
-        hostA[i] = (ushort)hostAFloats[i];
-
-    //ushort *hostC = (ushort *)malloc(numARows*numAColumns * sizeof(ushort));
-
-    if (verbose) {
-        /* print input array */
-        printf("Input Array:\n");
-        for( int i = 0; i < numARows; i++) {
-            for (int j = 0; j < numAColumns; j++) {
-                printf("%u ", hostA[i*numAColumns + j]);
-            }
-            printf("\n");
-        }
-    }
-
-    bin_matrix hostABin = mat_init(numARows, numAColumns);
-    for (int i = 0; i < numARows*numAColumns; i++) {
-        hostABin->data[i] = hostA[i];
-    }
-    if (verbose) {
-        /* print input array */
-        printf("Input Array:\n");
-        for( int i = 0; i < numARows; i++) {
-            for (int j = 0; j < numAColumns; j++) {
-                printf("%u ", hostABin->data[i*numAColumns + j]);
-            }
-            printf("\n");
-        }
-    }
-
-
-    cudaEventRecord(astartEvent, 0);
-    bin_matrix hostCBin = matrix_rref(hostABin);
-    cudaEventRecord(astopEvent, 0);
-    cudaEventSynchronize(astopEvent);
-    cudaEventElapsedTime(&aelapsedTime, astartEvent, astopEvent);
-
-    if (verbose) {
-        /* print solution array */
-        printf("Solution Array:\n");
-        for( int i = 0; i < numARows; i++) {
-            for (int j = 0; j < numAColumns; j++) {
-                printf("%u ", hostCBin->data[i*numAColumns + j]);
-            }
-            printf("\n");
-        }
-    }
-
-
-    printf("\n");
-    printf("Total compute time (ms) %f for RREF cpu\n",aelapsedTime);
-    printf("\n");
-
-cleanup:
-    free(hostAFloats);
-    free(hostABin);
-    free(hostCBin);
-    free(hostA);
-
+    matrix_add(hostA, hostC, numARows, numAColumns);
 }
 
 
 int main(int argc, char *argv[])
 {
-    printf("RREF test:\n");
+    printf("MatrixAdd test:\n");
     wbArg_t args;
 
     ushort *hostA; // The A matrix
@@ -140,40 +64,35 @@ int main(int argc, char *argv[])
     cudaEventCreate(&astartEvent);
     cudaEventCreate(&astopEvent);
 
-    bool run_cpu_flag = false;
-
     int c;
     opterr = 0;
-    while ((c = getopt (argc, argv, "i:s:hc")) != -1)
+    printf("1\n");
+    while ((c = getopt (argc, argv, "i:s:h")) != -1)
         switch(c)
         {
             case 'i':
-                inputFileName = strdup((const char*)optarg);
+                inputFileName = strdup(optarg);
                 break;
             case 's':
-                solutionFileName = strdup((const char*)optarg);
+                solutionFileName = strdup(optarg);
                 break;
             case 'h':
                 printHelp();
                 return 0;
-            case 'c':
-                run_cpu_flag = true;
-                break;
             default:
                 abort();
         }
 
     args = wbArg_read(argc, argv);
 
-    if (run_cpu_flag){
-        run_cpu(inputFileName, solutionFileName, true);
-        return 0;
-    }
-
 
     printf("input file: %s\n", inputFileName);
     printf("solution file: %s\n", solutionFileName);
 
+
+    wbTime_start(Compute, "Performing CPU computation for MatrixAdd");
+    run_cpu(inputFileName, solutionFileName);
+    wbTime_stop(Compute, "Performing CPU computation");
 
 
     /* allocate host data for matrix */
@@ -198,12 +117,12 @@ int main(int argc, char *argv[])
     wbTime_stop(GPU, "Allocating GPU memory.");
 
 
-    dim3 dimGrid((numCColumns - 1) / TILE_WIDTH + 1, (numCRows - 1) / TILE_WIDTH + 1, 1);
+    dim3 dimGrid((numCColumns - 1) / 16 + 1, (numCRows - 1) / TILE_WIDTH + 1, 1);
     dim3 dimBlock(TILE_WIDTH, TILE_WIDTH, 1);
 
     /* call CUDA kernel to perform computations */
     wbTime_start(Compute, "Performing CUDA computation for RREF");
-    rref_kernel<<<dimGrid, dimBlock>>>(deviceA, deviceB, numARows, numAColumns, deviceC);
+    MatrixAdd_kernel<<<dimGrid, dimBlock>>>(deviceA, deviceB, deviceC, numARows);
     cudaDeviceSynchronize();
     wbTime_stop(Compute, "Performing CUDA computation");
 
@@ -216,14 +135,15 @@ int main(int argc, char *argv[])
     /* Free GPU Memory */
     wbTime_start(GPU, "Freeing GPU Memory");
     cudaFree(deviceA);
-    cudaFree(deviceB);
     cudaFree(deviceC);
     wbTime_stop(GPU, "Freeing GPU Memory");
 
     wbSolution(args, hostC, numCRows, numCColumns);
 
     free(hostA);
+    free(hostB);
     free(hostC);
 
     return 0;
 }
+
