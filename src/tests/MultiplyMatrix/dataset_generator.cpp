@@ -62,11 +62,11 @@ static void write_data(char *file_name, ushort *data, int height, int width)
     fclose(handle);
 }
 
-static void create_dataset(int datasetNum, int numARows, int numACols, int numBCols)
+static void create_dataset(int datasetNum, int numARows, int numACols, int numBRows)
 {
     int numBRows = numACols;
     int numCRows = numARows;
-    int numCCols = numBCols;
+    int numCCols = numBRows;
 
     const char *dir_name = wbDirectory_create(wbPath_join(base_dir, datasetNum));
 
