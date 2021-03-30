@@ -66,7 +66,7 @@ static void create_dataset(int datasetNum, int numARows, int numACols, int numBC
 {
     int numBRows = numACols;
     int numCRows = numARows;
-    int numCCols = numBRows;
+    int numCCols = numACols;
 
     const char *dir_name = wbDirectory_create(wbPath_join(base_dir, datasetNum));
 
