@@ -11,7 +11,7 @@ __global__ void mult_kernel(ushort *A, ushort *B, ushort *C, int rowA, int rowB,
     int tid = threadIdx.y * TILE_WIDTH + threadIdx.x;
     int tilePos = 0;
 
-    float pValue = 0;
+    ushort pValue = 0;
   
     for(int i = 0; (i < ((colA - 1)/TILE_WIDTH) + 1) && (i < ((rowB - 1)/TILE_WIDTH) + 1); i++){
         tilePos = i * TILE_WIDTH;
