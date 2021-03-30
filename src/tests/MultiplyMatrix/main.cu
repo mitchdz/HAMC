@@ -152,7 +152,7 @@ int main(int argc, char *argv[])
         }
     }
     
-    std::cout << solved << std::endl;
+    std::cout << "solved: " << solved << std::endl;
     
     free(A);
     free(B);
