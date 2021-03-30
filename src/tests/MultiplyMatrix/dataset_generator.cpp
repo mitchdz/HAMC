@@ -26,7 +26,7 @@ static void compute(ushort *output, ushort *input0, ushort *input1, int numARows
         //std::cout << output[i] << " ";
         output[i] = C->data[i];
     }
-    std::cout << std::endl;
+    //std::cout << std::endl;
     
     free(A);
     free(B);
