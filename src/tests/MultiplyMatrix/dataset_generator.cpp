@@ -29,7 +29,7 @@ static void compute(ushort *output, ushort *input0, ushort *input1, int numARows
     
     free(A);
     free(B);
-    free(C);
+    //free(C);
 }
 
 static ushort *generate_data(int height, int width)
