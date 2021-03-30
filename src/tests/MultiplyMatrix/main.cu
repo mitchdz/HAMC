@@ -133,8 +133,8 @@ int main(int argc, char *argv[])
     sol = (ushort *)wbImport(expected, &numRowsS, &numColsS);
     
     for(int i = 0; i < numColsA * numRowsA; i++){
-        std::cout << hostA[i];
-        if(i%16 = 0) std::cout << << std::endl;
+        std::cout << A-data[i] << std::end;
+        if(i%16 = 0) std::cout << std::endl;
     }
     
     if(cpu_exec){
