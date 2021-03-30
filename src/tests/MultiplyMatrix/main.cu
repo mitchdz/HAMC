@@ -1,10 +1,11 @@
 #include <cuda_runtime.h>
-#include<stdlib.h>
+#include <stdlib.h>
 #include <wb.h>
 #include <stdint.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <iostream>
 
 #include "../../hamc/hamc_cpu_code.c"
 #include "../../hamc/MultiplyMatrix.cu"
@@ -37,7 +38,7 @@ void printHelp()
 
 bin_matrix run_cpu(bin_matrix A, bin_matrix B)
 {
-    return mult_matrix_cpu(A, B);
+    return matrix_mult_cpu(A, B);
 }
 
 bin_matrix run_kernel(bin_matrix A, bin_matrix B)
@@ -50,6 +51,7 @@ bin_matrix run_kernel(bin_matrix A, bin_matrix B)
     ushort *deviceA;
     ushort *deviceB;
     ushort *deviceC;
+    bin_matrix C = mat_init_cpu(A->rows, A->cols);
     
     cudaMalloc((void **) &deviceA, A->cols * A->rows * sizeof(ushort));
     cudaMalloc((void **) &deviceB, B->cols * B->rows * sizeof(ushort));
@@ -138,12 +140,12 @@ int main(int argc, char *argv[])
     }
     //C = (cpu_exec) ? run_cpu(A, B) : run_kernel(A, B);
     
-    if(C->rows != S->rows && C->cols != S->cols){
+    if(C->rows != numRowsS && C->cols != numColsS){
         solved = false;
     }
     else{
         for(int i = 0; i < numRowsS * numColsS; i++){
-            if(C->data[i] != S->data[i]){
+            if(C->data[i] != sol[i]){
                 solved = false;
                 break;
             }
