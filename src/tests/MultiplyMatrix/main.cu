@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "Multiply_cpu.cpp"
+#include "../../hamc/hamc_cpu_code.c"
 #include "../../hamc/MultiplyMatrix.cu"
 
 #define TILE_WIDTH 16
@@ -23,39 +23,6 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort =
     }
 }
 
-#define mat_element(mat, row_idx, col_idx) \
-    mat->data[row_idx * (mat->cols) + col_idx]
-
-typedef struct matrix
-{
-   int rows;             //number of rows.
-   int cols;             //number of columns.
-   ushort *data;
-}*bin_matrix;
-
-void* safe_malloc(size_t n)
-{
-    void* p = malloc(n);
-    if (!p)
-    {
-        fprintf(stderr, "Out of memory(%lu bytes)\n",(size_t)n);
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
-
-bin_matrix mat_init(int rows, int cols){
-	if(rows <= 0 || cols <= 0)
-		return NULL;
-
-	bin_matrix A;
-	A = (bin_matrix)safe_malloc(sizeof(struct matrix));
-	A->cols = cols;
-	A->rows = rows; 
-	A->data = (ushort *)safe_malloc(rows*cols*sizeof(ushort)); 
-	return A;
-}
-
 void printHelp()
 {
     printf("run this executable with the following flags\n");
@@ -70,7 +37,7 @@ void printHelp()
 
 bin_matrix run_cpu(bin_matrix A, bin_matrix B)
 {
-    return mult_matrix(A, B);
+    return mult_matrix_cpu(A, B);
 }
 
 bin_matrix run_kernel(bin_matrix A, bin_matrix B)
@@ -131,7 +98,7 @@ int main(int argc, char *argv[])
     bool solved = true;
     
     int opt;
-    while ((opt = getopt (argc, argv, "a:b:e:o:c")) != -1){
+    while ((opt = getopt(argc, argv, "a:b:e:o:c")) != -1){
         switch(opt){
             case 'a':
                 input0 = strdup(optarg);
@@ -156,10 +123,10 @@ int main(int argc, char *argv[])
     }
     
     hostA = (ushort *)wbImport(input0, &numRowsA, &numColsA);
-    A = mat_init(numRowsA, numColsA);
+    A = mat_init_cpu(numRowsA, numColsA);
     A->data = hostA;
     hostB = (ushort *)wbImport(input1, &numRowsB, &numColsB);
-    B = mat_init(numRowsB, numColsB);
+    B = mat_init_cpu(numRowsB, numColsB);
     B->data = hostB;
     sol = (ushort *)wbImport(expected, &numRowsS, &numColsS);
     
