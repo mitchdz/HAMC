@@ -38,35 +38,60 @@ static void write_data(char *file_name, ushort *data, int height,
   fclose(handle);
 }
 
-static void create_dataset(int datasetNum, int numARows, int numACols) {
-    int numBRows = numACols;
-    int numBCols = numACols;
-
+static void create_dataset(int datasetNum, int numARows, int numACols,int numBRows, int numBCols) {
+    int numCRows = numARows;
+    int numCCols = numACols;
+    
+    printf("Setting Up Directory Name \n"); // GOOD!
     const char *dir_name =
         wbDirectory_create(wbPath_join(base_dir, datasetNum));
-
-    char *input0_file_name = wbPath_join(dir_name, "input.raw");
+	
+    printf("Setting Up Files \n"); // GOOD!
+    char *input0_file_name = wbPath_join(dir_name, "input0.raw");
+    char *input1_file_name = wbPath_join(dir_name, "input1.raw");
     char *output_file_name = wbPath_join(dir_name, "output.raw");
 
-    ushort *input_data = generate_data(numARows, numACols);
-    ushort *output_data = (ushort *)calloc(sizeof(ushort), numBRows * numBCols);
-
-    matrix_rref(input_data, output_data, numARows, numACols);
+    
+    
+    printf("Filling Up Files \n"); // GOOD!
+    ushort *input0_data = generate_data(numARows, numACols);
+    ushort *input1_data = generate_data(numBRows, numBCols);
+    ushort *output_data = (ushort *)calloc(sizeof(ushort), numCRows * numCCols);
+    
+    printf("Filling Up Matricies \n"); // NOT GOOD!
+    // Create Matricies
+    
+    printf("Filling Up Matrix A \n"); // NOT GOOD!
+    bin_matrix A = mat_init(numARows, numACols);
+    printf("mat_init A FINISHED! \n"); // NOT GOOD!
+   
+    A->data = input0_data;
+    
+    printf("Filling Up Matrix B \n"); // NOT GOOD!
+    bin_matrix B = mat_init(numBRows, numBCols);
+    B->data = input1_data;
+    
+    printf("Create Solution \n");
+    //Solution is made here!! OOOOH!
+    bin_matrix output = matrix_add_cpu(A,B);
 
     //compute(output_data, input_data, numARows, numACols, numBRows, numBCols, numCRows, numCCols);
+    
+    printf("Write Back To Files \n");
+    write_data(input0_file_name, input0_data, numARows, numACols);
+    write_data(input1_file_name, input1_data, numBRows, numBCols);
+    write_data(output_file_name, output->data, output->rows, output->cols);
 
-    write_data(input0_file_name, input_data, numARows, numACols);
-    write_data(output_file_name, output_data, numBRows, numBCols);
-
-    free(input_data);
+    free(input0_data);
+    free(input1_data);
     free(output_data);
 }
 
 int main() {
   base_dir = wbPath_join(wbDirectory_current(),
-                         "RREF", "Dataset");
+                         "MatrixAdd", "Dataset");
 
-  create_dataset(0, 16, 16);
-  create_dataset(1, 64, 64);
+  create_dataset(0, 16, 16, 16, 16);
+  create_dataset(1, 4, 4, 4, 4);
   return 0;
 }
