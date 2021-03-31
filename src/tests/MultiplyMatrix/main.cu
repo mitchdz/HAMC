@@ -82,12 +82,9 @@ bin_matrix run_kernel(bin_matrix A, bin_matrix B)
     int x_blocks = ((B->cols - 1)/TILE_WIDTH) + 1;
     int y_blocks = ((A->rows - 1)/TILE_WIDTH) + 1;
     dim3 DimGrid(x_blocks, y_blocks, 1);
-    //dim3 DimBlock(TILE_WIDTH * TILE_WIDTH, 1, 1);
-    //dim3 DimGrid(((A->rows * B->cols) - 1) / (TILE_WIDTH * TILE_WIDTH), 1, 1);
-    //printf("here");
+    
     mult_kernel<<<DimGrid, DimBlock>>>(deviceA, deviceB, deviceC, A->rows, B->rows, A->cols, B->cols);
-    //printf("here2");
-    //cudaDeviceSynchronize();
+    
     cudaError_t cudaerr = cudaDeviceSynchronize();
     if (cudaerr != cudaSuccess)
         printf("kernel launch failed with error \"%s\".\n", cudaGetErrorString(cudaerr));
