@@ -1,4 +1,5 @@
-#include <stdio.h>
+//#include <stdio.h>
+#include <iostream>
 
 #define TILE_WIDTH 16
 #define ushort int//unsigned short
@@ -48,9 +49,9 @@ __global__ void mult_kernel(ushort *A, ushort *B, ushort *C, int rowA, int rowB,
         
         __syncthreads();
     }
-    printf("FUCK");
+    std::cout << "FUCK" << std:endl;
     if((Row < rowA) && (Col < colB)){
-        printf("pValue: %d", pValue);
+        //printf("pValue: %d", pValue);
         C[Row * colB + Col] = pValue;
     }
     
