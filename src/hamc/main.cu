@@ -98,13 +98,16 @@ int main(int argc, char *argv[]) {
 
     int k = (n - 1) * p;
 
+    bool test = false;
+    if (!strcmp(action, (const char*)"test")) test = true;
+
     /* print input parameters */
     printf("\n");
     printf("Input Parameters:\n");
-    printf("\tInput file: %s%s%s\n", YELLOW, inputFileName, NC);
-    printf("\tOutput file: %s%s%s\n", YELLOW, outputFileName, NC);
-    printf("\tcpu based execution: ");
-    if (cpu) printf("%son%s\n", GREEN, NC);
+    if (!test) printf("\tInput file: %s%s%s\n", YELLOW, inputFileName, NC);
+    if (!test) printf("\tOutput file: %s%s%s\n", YELLOW, outputFileName, NC);
+    printf("\tGPU based execution: ");
+    if (!cpu) printf("%son%s\n", GREEN, NC);
     else printf("%soff%s\n", RED, NC);
     printf("\tn: %s%d%s\n", YELLOW, n, NC);
     printf("\tp: %s%d%s\n", YELLOW, p, NC);
@@ -128,7 +131,7 @@ int main(int argc, char *argv[]) {
         if (cpu) run_decryption_cpu(inputFileName, outputFileName, n, p, t, w, seed);
         else run_decryption_gpu(outputFileName, n, p, t, w, seed);
     }
-    else if (!strcmp(action, (const char*)"test")) {
+    else if (test) {
         if (cpu) test_cpu_e2e(n, p, t, w, seed);
         else test_gpu_e2e(n, p, t, w, seed);
     }
