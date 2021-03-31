@@ -48,17 +48,35 @@ bin_matrix run_kernel(bin_matrix A, bin_matrix B)
         exit(0);
     }
 
-    ushort *deviceA;
+    /* ushort *deviceA;
     ushort *deviceB;
-    ushort *deviceC;
+    ushort *deviceC; */
+    int *deviceA;
+    int *deviceB;
+    int *deviceC;
     bin_matrix C = mat_init_cpu(A->rows, A->cols);
+    int *tempA = (int *)malloc(sizeof(int) * A->rows * A->cols);
+    int *tempB = (int *)malloc(sizeof(int) * B->rows * B->cols);
+    int *tempC = (int *)malloc(sizeof(int) * C->rows * C->cols);
     
-    cudaMalloc((void **) &deviceA, A->cols * A->rows * sizeof(ushort));
+    for(int i = 0; i < A->rows * A->cols; i++){
+        tempA[i] = (int)A->data[i];
+    }
+    for(int i = 0; i < B->rows * B->cols; i++){
+        tempB[i] = (int)B->data[i];
+    }
+    
+    /* cudaMalloc((void **) &deviceA, A->cols * A->rows * sizeof(ushort));
     cudaMalloc((void **) &deviceB, B->cols * B->rows * sizeof(ushort));
-    cudaMalloc((void **) &deviceC, B->cols * A->rows * sizeof(ushort));
+    cudaMalloc((void **) &deviceC, B->cols * A->rows * sizeof(ushort)); */
+    cudaMalloc((void **) &deviceA, A->cols * A->rows * sizeof(int));
+    cudaMalloc((void **) &deviceB, B->cols * B->rows * sizeof(int));
+    cudaMalloc((void **) &deviceC, B->cols * A->rows * sizeof(int));
     
-    cudaMemcpy(deviceA, A->data, A->cols * A->rows * sizeof(ushort), cudaMemcpyHostToDevice);
-    cudaMemcpy(deviceB, B->data, B->cols * B->rows * sizeof(ushort), cudaMemcpyHostToDevice);
+    /* cudaMemcpy(deviceA, A->data, A->cols * A->rows * sizeof(ushort), cudaMemcpyHostToDevice);
+    cudaMemcpy(deviceB, B->data, B->cols * B->rows * sizeof(ushort), cudaMemcpyHostToDevice); */
+    cudaMemcpy(deviceA, tempA, A->cols * A->rows * sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(deviceB, tempB, B->cols * B->rows * sizeof(int), cudaMemcpyHostToDevice);
     
     dim3 DimBlock(TILE_WIDTH, TILE_WIDTH, 1);
     int x_blocks = ((B->cols - 1)/TILE_WIDTH) + 1;
@@ -71,14 +89,19 @@ bin_matrix run_kernel(bin_matrix A, bin_matrix B)
     
     cudaDeviceSynchronize();
     
-    cudaMemcpy(C->data, deviceC, C->cols * C->rows * sizeof(ushort), cudaMemcpyDeviceToHost);
+    //cudaMemcpy(C->data, deviceC, C->cols * C->rows * sizeof(ushort), cudaMemcpyDeviceToHost);
+    cudaMemcpy(tempC, deviceC, C->cols * C->rows * sizeof(int), cudaMemcpyDeviceToHost);
     
-    std::cout << "C->data";
+    for(int i = 0; i < C->rows * C->cols; i++){
+        C->data[i] = (ushort)tempC[i];
+    }
+    
+    /*std::cout << "C->data";
     for(int i = 0; i < (C->rows * C->cols); i++){
         if(i % TILE_WIDTH == 0) std::cout << std::endl;
         std::cout << C->data[i] << " ";
     }
-    std::cout << std::endl;
+    std::cout << std::endl;*/
     
     cudaFree(deviceA);
     cudaFree(deviceB);
