@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
     for(int i = 0; i < numColsB * numRowsB; i++){
         sol[i] = (ushort)floatTemp[i];
     }    
-    std::cout << "A->cols: " << A->cols << " B->rows: " << B->rows << std::endl;
+    //std::cout << "A->cols: " << A->cols << " B->rows: " << B->rows << std::endl;
     /* std::cout << "A->data";
     for(int i = 0; i < numColsA * numRowsA; i++){
         if(i%16 == 0) std::cout << "" << std::endl;
@@ -199,12 +199,12 @@ int main(int argc, char *argv[])
     }
     //C = (cpu_exec) ? run_cpu(A, B) : run_kernel(A, B);
     
-    std::cout << "C->data";
+    /*std::cout << "C->data";
     for(int i = 0; i < C->cols * C->rows; i++){
         if(i%16 == 0) std::cout << "" << std::endl;
         std::cout << C->data[i] << " ";
     }
-    std::cout << std::endl;
+    std::cout << std::endl;*/
     
     if(C->rows != numRowsS && C->cols != numColsS){
         solved = false;
