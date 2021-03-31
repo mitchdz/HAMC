@@ -1,12 +1,13 @@
 #include <cuda_runtime.h>
-#include<stdlib.h>
+#include <stdlib.h>
 #include <wb.h>
 #include <stdint.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <iostream>
 
-#include "Multiply_cpu.cpp"
+#include "../../hamc/hamc_cpu_code.c"
 #include "../../hamc/MultiplyMatrix.cu"
 
 #define TILE_WIDTH 16
@@ -23,39 +24,6 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort =
     }
 }
 
-#define mat_element(mat, row_idx, col_idx) \
-    mat->data[row_idx * (mat->cols) + col_idx]
-
-typedef struct matrix
-{
-   int rows;             //number of rows.
-   int cols;             //number of columns.
-   ushort *data;
-}*bin_matrix;
-
-void* safe_malloc(size_t n)
-{
-    void* p = malloc(n);
-    if (!p)
-    {
-        fprintf(stderr, "Out of memory(%lu bytes)\n",(size_t)n);
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
-
-bin_matrix mat_init(int rows, int cols){
-	if(rows <= 0 || cols <= 0)
-		return NULL;
-
-	bin_matrix A;
-	A = (bin_matrix)safe_malloc(sizeof(struct matrix));
-	A->cols = cols;
-	A->rows = rows; 
-	A->data = (ushort *)safe_malloc(rows*cols*sizeof(ushort)); 
-	return A;
-}
-
 void printHelp()
 {
     printf("run this executable with the following flags\n");
@@ -70,7 +38,7 @@ void printHelp()
 
 bin_matrix run_cpu(bin_matrix A, bin_matrix B)
 {
-    return mult_matrix(A, B);
+    return matrix_mult_cpu(A, B);
 }
 
 bin_matrix run_kernel(bin_matrix A, bin_matrix B)
@@ -80,27 +48,60 @@ bin_matrix run_kernel(bin_matrix A, bin_matrix B)
         exit(0);
     }
 
-    ushort *deviceA;
+    /* ushort *deviceA;
     ushort *deviceB;
-    ushort *deviceC;
+    ushort *deviceC; */
+    int *deviceA;
+    int *deviceB;
+    int *deviceC;
+    bin_matrix C = mat_init_cpu(A->rows, A->cols);
+    int *tempA = (int *)malloc(sizeof(int) * A->rows * A->cols);
+    int *tempB = (int *)malloc(sizeof(int) * B->rows * B->cols);
+    int *tempC = (int *)malloc(sizeof(int) * C->rows * C->cols);
     
-    cudaMalloc((void **) &deviceA, A->cols * A->rows * sizeof(ushort));
+    for(int i = 0; i < A->rows * A->cols; i++){
+        tempA[i] = (int)A->data[i];
+    }
+    for(int i = 0; i < B->rows * B->cols; i++){
+        tempB[i] = (int)B->data[i];
+    }
+    
+    /* cudaMalloc((void **) &deviceA, A->cols * A->rows * sizeof(ushort));
     cudaMalloc((void **) &deviceB, B->cols * B->rows * sizeof(ushort));
-    cudaMalloc((void **) &deviceC, B->cols * A->rows * sizeof(ushort));
+    cudaMalloc((void **) &deviceC, B->cols * A->rows * sizeof(ushort)); */
+    cudaMalloc((void **) &deviceA, A->cols * A->rows * sizeof(int));
+    cudaMalloc((void **) &deviceB, B->cols * B->rows * sizeof(int));
+    cudaMalloc((void **) &deviceC, B->cols * A->rows * sizeof(int));
     
-    cudaMemcpy(deviceA, A->data, A->cols * A->rows * sizeof(ushort), cudaMemcpyHostToDevice);
-    cudaMemcpy(deviceB, B->data, B->cols * B->rows * sizeof(ushort), cudaMemcpyHostToDevice);
+    /* cudaMemcpy(deviceA, A->data, A->cols * A->rows * sizeof(ushort), cudaMemcpyHostToDevice);
+    cudaMemcpy(deviceB, B->data, B->cols * B->rows * sizeof(ushort), cudaMemcpyHostToDevice); */
+    cudaMemcpy(deviceA, tempA, A->cols * A->rows * sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(deviceB, tempB, B->cols * B->rows * sizeof(int), cudaMemcpyHostToDevice);
     
     dim3 DimBlock(TILE_WIDTH, TILE_WIDTH, 1);
     int x_blocks = ((B->cols - 1)/TILE_WIDTH) + 1;
     int y_blocks = ((A->rows - 1)/TILE_WIDTH) + 1;
     dim3 DimGrid(x_blocks, y_blocks, 1);
     
-    matrixMultiplyShared<<<DimGrid, DimBlock>>>(deviceA, deviceB, deviceC, A->rows, B->rows, A->cols, B->cols);
+    mult_kernel<<<DimGrid, DimBlock>>>(deviceA, deviceB, deviceC, A->rows, B->rows, A->cols, B->cols);
     
-    cudaDeviceSynchronize();
+    cudaError_t cudaerr = cudaDeviceSynchronize();
+    if (cudaerr != cudaSuccess)
+        printf("kernel launch failed with error \"%s\".\n", cudaGetErrorString(cudaerr));
     
-    cudaMemcpy(C->data, deviceC, B->cols * A->rows * sizeof(ushort), cudaMemcpyDeviceToHost);
+    //cudaMemcpy(C->data, deviceC, C->cols * C->rows * sizeof(ushort), cudaMemcpyDeviceToHost);
+    cudaMemcpy(tempC, deviceC, C->cols * C->rows * sizeof(int), cudaMemcpyDeviceToHost);
+    
+    for(int i = 0; i < C->rows * C->cols; i++){
+        C->data[i] = (ushort)tempC[i];
+    }
+    
+    /* std::cout << "C->data";
+    for(int i = 0; i < (C->rows * C->cols); i++){
+        if(i % TILE_WIDTH == 0) std::cout << std::endl;
+        std::cout << tempC[i] << " ";
+    }
+    std::cout << std::endl; */
     
     cudaFree(deviceA);
     cudaFree(deviceB);
@@ -131,7 +132,7 @@ int main(int argc, char *argv[])
     bool solved = true;
     
     int opt;
-    while ((opt = getopt (argc, argv, "a:b:e:o:c")) != -1){
+    while ((opt = getopt(argc, argv, "a:b:e:o:c")) != -1){
         switch(opt){
             case 'a':
                 input0 = strdup(optarg);
@@ -154,36 +155,77 @@ int main(int argc, char *argv[])
                 return 0;
         }
     }
-    
-    hostA = (ushort *)wbImport(input0, &numRowsA, &numColsA);
-    A = mat_init(numRowsA, numColsA);
+    float *floatTemp = (float *)wbImport(input0, &numRowsA, &numColsA);
+    hostA = (ushort *)malloc(numRowsA*numColsA * sizeof(ushort));
+    for(int i = 0; i < numColsA * numRowsA; i++){
+        hostA[i] = (ushort)floatTemp[i];
+    }
+    A = mat_init_cpu(numRowsA, numColsA);
     A->data = hostA;
-    hostB = (ushort *)wbImport(input1, &numRowsB, &numColsB);
-    B = mat_init(numRowsB, numColsB);
+    
+    floatTemp = (float *)wbImport(input1, &numRowsB, &numColsB);
+    hostB = (ushort *)malloc(numRowsB*numColsB * sizeof(ushort));
+    for(int i = 0; i < numColsB * numRowsB; i++){
+        hostB[i] = (ushort)floatTemp[i];
+    }    
+    B = mat_init_cpu(numRowsB, numColsB);
     B->data = hostB;
-    sol = (ushort *)wbImport(expected, &numRowsS, &numColsS);
+    
+    floatTemp = (float *)wbImport(expected, &numRowsS, &numColsS);
+    sol = (ushort *)malloc(numRowsS*numColsS * sizeof(ushort));
+    for(int i = 0; i < numColsB * numRowsB; i++){
+        sol[i] = (ushort)floatTemp[i];
+    }    
+    
+    /* std::cout << "A->data";
+    for(int i = 0; i < numColsA * numRowsA; i++){
+        if(i%16 == 0) std::cout << "" << std::endl;
+        std::cout << hostA[i] << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "B->data";
+    for(int i = 0; i < numColsB * numRowsB; i++){
+        if(i%16 == 0) std::cout << "" << std::endl;
+        std::cout << hostB[i] << " ";
+    }
+    std::cout << std::endl; */
     
     if(cpu_exec){
         C = run_cpu(A, B);
     }
     else{
+        std::cout << "Running Kernel" << std::endl;
         C = run_kernel(A, B);
     }
     //C = (cpu_exec) ? run_cpu(A, B) : run_kernel(A, B);
     
-    if(C->rows != S->rows && C->cols != S->cols){
+    std::cout << "C->data";
+    for(int i = 0; i < C->cols * C->rows; i++){
+        if(i%16 == 0) std::cout << "" << std::endl;
+        std::cout << C->data[i] << " ";
+    }
+    std::cout << std::endl;
+    
+    if(C->rows != numRowsS && C->cols != numColsS){
         solved = false;
     }
     else{
         for(int i = 0; i < numRowsS * numColsS; i++){
-            if(C->data[i] != S->data[i]){
+            if(C->data[i] != sol[i]){
+                std::cout << "i: " << i << std::endl;
+                std::cout << "C->data[i]: " << C->data[i] << std::endl;
+                std::cout << "expected: " << sol[i] << std::endl;
                 solved = false;
                 break;
             }
         }
     }
     
-    cout << solved << endl;
+    /*std::cout << "C->rows: " << C->rows << std::endl;
+    std::cout << "C->cols: " << C->cols << std::endl;
+    std::cout << "numRowsS: " << numRowsS << std::endl;
+    std::cout << "numColsS: " << numColsS << std::endl;*/
+    std::cout << "solved: " << solved << std::endl;
     
     free(A);
     free(B);

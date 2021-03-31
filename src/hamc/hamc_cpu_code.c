@@ -258,7 +258,7 @@ bin_matrix transpose_cpu(bin_matrix A)
     return B;
 }
 
-
+//TODO: bookmark
 //Multiplication of two matrices A and B stored in C
 bin_matrix matrix_mult_cpu(bin_matrix A, bin_matrix B)
 {
@@ -627,6 +627,9 @@ bin_matrix decode_cpu(bin_matrix word, mdpc code)
     exit(0);
 }
 
+<<<<<<< HEAD
+/*void run_encryption_cpu(const char* inputFileName, const char* outputFileName,
+=======
 
 //Obtain the specified number of rows and columns
 bin_matrix mat_splice_cpu(bin_matrix A, int row1, int row2, int col1, int col2)
@@ -662,6 +665,7 @@ bin_matrix decrypt_cpu(bin_matrix word, mcc crypt)
 }
 
 void run_decryption_cpu(const char* inputFileName, const char* outputFileName,
+>>>>>>> 591ca6b0acbecd544739fa2736c5ca06c5bd81e8
         int n, int p, int t, int w, int seed)
 {
     mcc crypt;
@@ -749,6 +753,15 @@ bin_matrix add_matrix_cpu(bin_matrix A, bin_matrix B)
 }
 
 
+<<<<<<< HEAD
+    // retrieve message from file
+    /* wbImport only reads and writes float, so we need to convert that */
+    /*float *hostAFloats = (float *)wbImport(inputFileName, &numARows, &numAColumns);
+    ushort *hostA = (ushort *)malloc(numARows*numAColumns * sizeof(ushort));
+    for (int i = 0; i < numARows*numAColumns; i++)
+        hostA[i] = (ushort)hostAFloats[i];
+=======
+>>>>>>> 591ca6b0acbecd544739fa2736c5ca06c5bd81e8
 
 //Encrypting the message to be sent
 bin_matrix encrypt_cpu(bin_matrix msg, mcc crypt)
@@ -805,12 +818,21 @@ void run_encryption_cpu(const char* inputFileName, const char* outputFileName,
         printf("%c",  input_message[i]);
     printf("\n");
 
+<<<<<<< HEAD
+    /* determine error length and weight */
+    /*int error_length = 0;
+    int error_weight = 0;
+=======
     printf("Input message (ushort):\n");
     for (int i = 0; i < (int)icc; i++)
         printf("%hu ",  (ushort)input_message[i]);
     printf("\n");
+>>>>>>> 591ca6b0acbecd544739fa2736c5ca06c5bd81e8
 
 
+<<<<<<< HEAD
+}*/
+=======
     printf("\n");
 
     /* check that input file is within size */
@@ -953,3 +975,4 @@ void test_cpu_e2e(int n0, int p, int t, int w, int seed)
 }
 
 
+>>>>>>> 591ca6b0acbecd544739fa2736c5ca06c5bd81e8
