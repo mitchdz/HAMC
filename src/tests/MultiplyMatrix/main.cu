@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
     for(int i = 0; i < numColsB * numRowsB; i++){
         sol[i] = (ushort)floatTemp[i];
     }    
-    
+    std::cout << "A->cols: " << A->cols << " B->rows: " << std::endl;
     /* std::cout << "A->data";
     for(int i = 0; i < numColsA * numRowsA; i++){
         if(i%16 == 0) std::cout << "" << std::endl;
