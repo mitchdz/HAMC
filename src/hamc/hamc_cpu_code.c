@@ -258,7 +258,7 @@ bin_matrix transpose_cpu(bin_matrix A)
     return B;
 }
 
-
+//TODO: bookmark
 //Multiplication of two matrices A and B stored in C
 bin_matrix matrix_mult_cpu(bin_matrix A, bin_matrix B)
 {
@@ -749,7 +749,6 @@ bin_matrix add_matrix_cpu(bin_matrix A, bin_matrix B)
 }
 
 
-
 //Encrypting the message to be sent
 bin_matrix encrypt_cpu(bin_matrix msg, mcc crypt)
 {
@@ -804,12 +803,6 @@ void run_encryption_cpu(const char* inputFileName, const char* outputFileName,
     for (int i = 0; i < (int)icc; i++)
         printf("%c",  input_message[i]);
     printf("\n");
-
-    printf("Input message (ushort):\n");
-    for (int i = 0; i < (int)icc; i++)
-        printf("%hu ",  (ushort)input_message[i]);
-    printf("\n");
-
 
     printf("\n");
 
@@ -951,5 +944,3 @@ void test_cpu_e2e(int n0, int p, int t, int w, int seed)
     delete_mceliece_cpu(crypt);
     return;
 }
-
-
