@@ -259,7 +259,7 @@ bin_matrix transpose_cpu(bin_matrix A)
   return B;
 }
 
-
+//TODO: bookmark
 //Multiplication of two matrices A and B stored in C
 bin_matrix matrix_mult_cpu(bin_matrix A, bin_matrix B)
 {
