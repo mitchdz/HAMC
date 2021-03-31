@@ -96,12 +96,12 @@ bin_matrix run_kernel(bin_matrix A, bin_matrix B)
         C->data[i] = (ushort)tempC[i];
     }
     
-    std::cout << "C->data";
+    /* std::cout << "C->data";
     for(int i = 0; i < (C->rows * C->cols); i++){
         if(i % TILE_WIDTH == 0) std::cout << std::endl;
         std::cout << tempC[i] << " ";
     }
-    std::cout << std::endl;
+    std::cout << std::endl; */
     
     cudaFree(deviceA);
     cudaFree(deviceB);
@@ -177,7 +177,7 @@ int main(int argc, char *argv[])
         sol[i] = (ushort)floatTemp[i];
     }    
     
-    std::cout << "A->data";
+    /* std::cout << "A->data";
     for(int i = 0; i < numColsA * numRowsA; i++){
         if(i%16 == 0) std::cout << "" << std::endl;
         std::cout << hostA[i] << " ";
@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
         if(i%16 == 0) std::cout << "" << std::endl;
         std::cout << hostB[i] << " ";
     }
-    std::cout << std::endl;
+    std::cout << std::endl; */
     
     if(cpu_exec){
         C = run_cpu(A, B);
@@ -199,12 +199,12 @@ int main(int argc, char *argv[])
     }
     //C = (cpu_exec) ? run_cpu(A, B) : run_kernel(A, B);
     
-    std::cout << "C->data";
+    /* std::cout << "C->data";
     for(int i = 0; i < C->cols * C->rows; i++){
         if(i%16 == 0) std::cout << "" << std::endl;
         std::cout << C->data[i] << " ";
     }
-    std::cout << std::endl;
+    std::cout << std::endl; */
     
     if(C->rows != numRowsS && C->cols != numColsS){
         solved = false;
