@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 #include <time.h>
 
 typedef struct matrix
@@ -36,7 +37,7 @@ bin_matrix get_error_vector_cpu(int len, int t);
 int random_val(int min, int max, unsigned seed);
 
 void* safe_malloc(size_t n);
-mdpc qc_mdpc_init_cpu(int n0, int p, int w, int t);
+mdpc qc_mdpc_init_cpu(int n0, int p, int w, int t, unsigned seed);
 
 
 /* matrix function declarations */
@@ -48,11 +49,14 @@ bin_matrix concat_vertical_cpu(bin_matrix A, bin_matrix B);
 bin_matrix concat_horizontal_cpu(bin_matrix A, bin_matrix B);
 void set_matrix_row_cpu(bin_matrix A, int row, unsigned short* vec);
 bin_matrix matrix_mult_cpu(bin_matrix A, bin_matrix B);
-
+bin_matrix add_matrix_cpu(bin_matrix A, bin_matrix B);
 bin_matrix transpose_cpu(bin_matrix A);
 void make_indentity_cpu(bin_matrix A);
-
+int is_zero_matrix_cpu(bin_matrix A);
 bin_matrix circ_matrix_inverse_cpu(bin_matrix A);
+bin_matrix mat_splice_cpu(bin_matrix A, int row1, int row2, int col1, int col2);
+int get_max_cpu(int* vec, int len);
+
 
 
 //Set the value of matix element at position given by the indices to "val"
@@ -92,11 +96,11 @@ bin_matrix get_error_vector_cpu(int len, int t)
 }
 
 //Initialize the mceliece cryptosystem
-mcc mceliece_init_cpu(int n0, int p, int w, int t)
+mcc mceliece_init_cpu(int n0, int p, int w, int t, unsigned seed)
 {
     mcc crypt;
     crypt = (mcc)safe_malloc(sizeof(struct mceliece));
-    crypt->code = qc_mdpc_init_cpu(n0, p, w, t);
+    crypt->code = qc_mdpc_init_cpu(n0, p, w, t, seed);
     crypt->public_key = generator_matrix_cpu(crypt->code);
     //printf("mceliece generated...\n");
     return crypt;
@@ -104,19 +108,18 @@ mcc mceliece_init_cpu(int n0, int p, int w, int t)
 //Return the matrix element at position given by the indices
 unsigned short get_matrix_element_cpu(bin_matrix mat, int row_idx, int col_idx)
 {
-  if(row_idx < 0 || row_idx >= mat->rows || col_idx < 0 || col_idx >= mat->cols)
-  {
-    printf("Matrix index out of range\n");
-    exit(0);
-  }
-  return mat->data[row_idx * (mat->cols) + col_idx];
+    if(row_idx < 0 || row_idx >= mat->rows || col_idx < 0 || col_idx >= mat->cols) {
+        printf("Matrix index out of range\n");
+        exit(0);
+    }
+    return mat->data[row_idx * (mat->cols) + col_idx];
 }
 
 
 void run_keygen_cpu(const char* outputFileName, int n, int p, int t, int w,
     int seed)
 {
-    mcc crypt = mceliece_init_cpu(n, p, w, t);
+    mcc crypt = mceliece_init_cpu(n, p, w, t, seed);
 
     bin_matrix H = parity_check_matrix_cpu(crypt->code);
     bin_matrix G = generator_matrix_cpu(crypt->code);
@@ -185,15 +188,13 @@ unsigned short* shift_cpu(unsigned short* row, int x, int len)
 //Set the indicated row of the matrix A equal to the vector vec
 void set_matrix_row_cpu(bin_matrix A, int row, unsigned short* vec)
 {
-  if(row < 0 || row >= A->rows)
-  {
-    printf("Row index out of range\n");
-    exit(0);
-  }
-  for(int i = 0; i < A->cols; i++)
-  {
-    set_matrix_element_cpu(A, row, i, vec[i]);
-  }
+    if(row < 0 || row >= A->rows) {
+        printf("Row index out of range\n");
+        exit(0);
+    }
+    for(int i = 0; i < A->cols; i++) {
+        set_matrix_element_cpu(A, row, i, vec[i]);
+    }
 }
 
 //Create a binary circular matrix
@@ -247,46 +248,39 @@ bin_matrix parity_check_matrix_cpu(mdpc code)
 //Return the transpose of the matrix A
 bin_matrix transpose_cpu(bin_matrix A)
 {
-  bin_matrix B;
-  B = mat_init_cpu(A->cols, A->rows);
-  for(int i = 0; i < A->rows; i++)
-  {
-    for(int j = 0; j < A->cols; j++)
-    {
-      set_matrix_element_cpu(B, j, i, mat_element(A, i, j));
+    bin_matrix B;
+    B = mat_init_cpu(A->cols, A->rows);
+    for(int i = 0; i < A->rows; i++) {
+        for(int j = 0; j < A->cols; j++) {
+            set_matrix_element_cpu(B, j, i, mat_element(A, i, j));
+        }
     }
-  }
-  return B;
+    return B;
 }
 
 //TODO: bookmark
 //Multiplication of two matrices A and B stored in C
 bin_matrix matrix_mult_cpu(bin_matrix A, bin_matrix B)
 {
-  if (A->cols != B->rows)
-  {
-    printf("Matrices are incompatible, check dimensions...\n");
-    exit(0);
-  }
-  
-  bin_matrix C;
-  C = mat_init_cpu(A->rows, B->cols);
-  bin_matrix B_temp = transpose_cpu(B);
-
-  for(int i = 0; i < A->rows; i++)
-  {
-    for(int j = 0  ; j < B->cols; j++)
-    {
-      unsigned short val = 0;
-      for(int k = 0; k < B->rows; k++)
-      {
-        val = (val ^ (mat_element(A, i, k) & mat_element(B_temp, j, k)));
-      }
-      mat_element(C, i, j) = val;
+    if (A->cols != B->rows) {
+      printf("Matrices are incompatible, check dimensions...\n");
+      exit(0);
     }
-  }
-    
-  return C;
+
+    bin_matrix C;
+    C = mat_init_cpu(A->rows, B->cols);
+    bin_matrix B_temp = transpose_cpu(B);
+
+    for(int i = 0; i < A->rows; i++) {
+        for(int j = 0  ; j < B->cols; j++) {
+            unsigned short val = 0;
+            for(int k = 0; k < B->rows; k++) {
+                val = (val ^ (mat_element(A, i, k) & mat_element(B_temp, j, k)));
+            }
+            mat_element(C, i, j) = val;
+        }
+    }
+    return C;
 }
 
 
@@ -341,7 +335,7 @@ int get_row_weight(unsigned short* row, int min, int max)
 }
 
 
-mdpc qc_mdpc_init_cpu(int n0, int p, int w, int t)
+mdpc qc_mdpc_init_cpu(int n0, int p, int w, int t, unsigned seed)
 {
     mdpc code;
     code = (mdpc)safe_malloc(sizeof(struct qc_mdpc));
@@ -352,10 +346,10 @@ mdpc qc_mdpc_init_cpu(int n0, int p, int w, int t)
     code->n = n0 * p;
     code->r = p;
     code->k = (n0 - 1) * p;
-    unsigned seed;
+    //unsigned seed;
     code->row = (unsigned short*)calloc(n0 * p, sizeof(unsigned short));
-    printf("Input seed or -1 to use default seed: ");
-    scanf("%u", &seed);
+    //printf("Input seed or -1 to use default seed: ");
+    //scanf("%u", &seed);
     time_t tx;
     if(seed == -1) {
         srand((unsigned) time(&tx));
@@ -388,27 +382,21 @@ mdpc qc_mdpc_init_cpu(int n0, int p, int w, int t)
 //Concatenate the matrices A and B vertically
 bin_matrix concat_vertical_cpu(bin_matrix A, bin_matrix B)
 {
-  if(A->cols != B->cols)
-  {
-    printf("Incompatible dimensions of the two matrices. Number of rows should be same.\n");
-    exit(0);
-  }
-  bin_matrix temp = mat_init_cpu(A->rows + B->rows, A->cols);
-  for(int i = 0; i < temp->rows; i++)
-  {
-    for(int j = 0; j < temp->cols; j++)
-    {
-      if(i < A->rows)
-      {
-        set_matrix_element_cpu(temp, i, j, mat_element(A, i, j));
-      }
-      else
-      {
-        set_matrix_element_cpu(temp, i, j, mat_element(B, i - A->rows, j));
-      }
+    if(A->cols != B->cols) {
+        printf("Incompatible dimensions of the two matrices. Number of rows should be same.\n");
+        exit(0);
     }
-  }
-  return temp;
+    bin_matrix temp = mat_init_cpu(A->rows + B->rows, A->cols);
+    for(int i = 0; i < temp->rows; i++) {
+        for(int j = 0; j < temp->cols; j++) {
+            if(i < A->rows) {
+                set_matrix_element_cpu(temp, i, j, mat_element(A, i, j));
+            } else {
+                set_matrix_element_cpu(temp, i, j, mat_element(B, i - A->rows, j));
+            }
+        }
+    }
+    return temp;
 }
 
 
@@ -564,45 +552,427 @@ bin_matrix circ_matrix_inverse_cpu(bin_matrix A)
     return B;
 }
 
-void run_decryption_cpu(const char* outputFileName, int n, int p, int t, int w,
-    int seed)
+//Checks if the matrix is a zero matrix
+int is_zero_matrix_cpu(bin_matrix A)
 {
+    int flag = 1;
+    for(int i = 0; i < A->rows; i++) {
+        for(int j = 0; j < A->cols; j++) {
+            if(mat_element(A, i, j) != 0) {
+                flag = 0;
+                return flag;
+            }
+        }
+    }
+    return flag;
+}
+
+//Returns the maximum element of the array
+int get_max_cpu(int* vec, int len)
+{
+    int max = vec[0];
+    int i;
+    for(i = 1; i < len; i++) {
+        if(vec[i] > max) {
+            max = vec[i];
+        }
+    }
+    return max;
+}
+
+//Decoding the codeword
+bin_matrix decode_cpu(bin_matrix word, mdpc code)
+{
+    bin_matrix H = parity_check_matrix_cpu(code);
+    bin_matrix syn  = matrix_mult_cpu(H, transpose_cpu(word));
+    int limit = 10;
+    int delta = 5;
+    int i,j,k,x;
+    for(i = 0; i < limit; i++) {
+        //printf("Iteration: %d\n", i);
+        int unsatisfied[word->cols];
+        for(x = 0; x < word->cols; x++) {
+          unsatisfied[x] = 0;
+        }
+        for(j = 0; j < word->cols; j++) {
+            for(k = 0; k < H->rows; k++) {
+               if(get_matrix_element_cpu(H, k, j) == 1) {
+                   if(get_matrix_element_cpu(syn, k, 0) == 1) {
+                       unsatisfied[j] = unsatisfied[j] + 1;
+                   }
+               }
+            }
+        }
+        // printf("No. of unsatisfied equations for each bit: \n");
+        // for(int idx = 0; idx < word->cols; idx++)
+        // {
+        // 	printf("b%d: %d \n", idx, unsatisfied[idx]);
+        // }
+        int b = get_max_cpu(unsatisfied, word->cols) - delta;
+        for(j = 0; j < word->cols; j++) {
+            if(unsatisfied[j] >= b) {
+                set_matrix_element_cpu(word, 0, j, (get_matrix_element_cpu(word, 0, j) ^ 1));
+                syn = add_matrix_cpu(syn, mat_splice_cpu(H, 0, H->rows - 1, j, j));
+            }
+        }
+        // printf("Syndrome: ");
+        // print_matrix(syn);
+        // printf("\n");
+        //printf("Iteration: %d\n", i);
+        if(is_zero_matrix_cpu(syn)) {
+            return word;
+        }
+    }
+    printf("Decoding failure...\n");
+    exit(0);
+}
+
+<<<<<<< HEAD
+/*void run_encryption_cpu(const char* inputFileName, const char* outputFileName,
+=======
+
+//Obtain the specified number of rows and columns
+bin_matrix mat_splice_cpu(bin_matrix A, int row1, int row2, int col1, int col2)
+{
+  int row_count = row2 - row1 + 1;
+  int col_count = col2 - col1 + 1;
+  int idx1, idx2;
+
+  bin_matrix t = mat_init_cpu(row_count, col_count);
+  for(int i = 0; i < row_count; i++)
+  {
+    idx1 = row1 + i;
+    for(int j = 0; j < col_count; j++)
+    {
+      idx2 = col1 + j;
+      set_matrix_element_cpu(t, i, j, mat_element(A, idx1, idx2));
+    }
+  }
+  return t;
+}
+
+//Decrypting the recieved message
+bin_matrix decrypt_cpu(bin_matrix word, mcc crypt)
+{
+    if(word->cols != crypt->code->n) {
+        printf("Length of message is incorrect while decrypting.\n");
+        exit(0);
+    }
+    //printf("Decryption started...\n");
+    bin_matrix msg = decode_cpu(word, crypt->code);
+    msg = mat_splice_cpu(msg, 0, msg->rows - 1, 0, crypt->code->k - 1);
+    return msg;
+}
+
+void run_decryption_cpu(const char* inputFileName, const char* outputFileName,
+>>>>>>> 591ca6b0acbecd544739fa2736c5ca06c5bd81e8
+        int n, int p, int t, int w, int seed)
+{
+    mcc crypt;
+    bin_matrix msg, m;
+    long f_size;
+    int c;
+    size_t icc = 0;
+
+    /* open input and output files */
+    FILE *in_file  = fopen(inputFileName, "r");
+    FILE *out_file  = fopen(outputFileName, "w");
+
+    // test for input file not existing
+    if (in_file == NULL) {
+        printf("Error! Could not open file\n");
+        exit(-1);
+    }
+
+    /* determine filesize */
+    fseek(in_file, 0, SEEK_END);
+    f_size = ftell(in_file);
+    fseek(in_file, 0, SEEK_SET);
+
+    char *input_message = (char *)malloc(f_size);
+
+    /* read and write file data into local array */
+    icc = 0;
+    while ((c = fgetc(in_file)) != EOF) {
+        input_message[icc++] = (char)c;
+    }
+    input_message[icc] = '\0';
+
+
+    printf("Input message:\n");
+    for (int i = 0; i < (int)icc; i++)
+        printf("%c",  input_message[i]);
+    printf("\n");
+
+
+    /* check that input file is within size */
+    int k = (n - 1) * p;
+    if ((int)icc > k) {
+        printf("ERROR: intput message is too long for k\n");
+        printf("input message is length %d while k is %d\n", (int)icc, k);
+    }
+
+
+    /* set up basic encryption primitives */
+    crypt = mceliece_init_cpu(n, p, w, t, seed);
+    msg = mat_init_cpu(1, k);
+    for(int i = 0; i < k; i++) {
+        set_matrix_element_cpu(msg, 0, i,
+                (unsigned short)strtoul(input_message, NULL, 0));
+    }
+
+    /* run CPU based execution code */
+    m = decrypt_cpu(msg, crypt);
+
+    /* write cipher.text to file */
+    for( int i = 0; i < m->cols; i++) {
+        fprintf(out_file, "%hu", get_matrix_element_cpu(m, 0, i));
+    }
+
+cleanup:
+    fclose(in_file);
+    fclose(out_file);
 
 }
 
 
-/*void run_encryption_cpu(const char* inputFileName, const char* outputFileName,
-        int n, int p, int t, int w, int seed)
+//Add two matrices
+bin_matrix add_matrix_cpu(bin_matrix A, bin_matrix B)
 {
-    cudaEvent_t astartEvent, astopEvent;
+    if(A->rows != B->rows || A->cols != B->cols) {
+        printf("Incompatible dimenions for matrix addition.\n");
+        exit(0);
+    }
+    bin_matrix temp = mat_init_cpu(A->rows, A->cols);
+    for(int i = 0; i < A->rows; i++) {
+        for(int j = 0; j < A->cols; j++) {
+            set_matrix_element_cpu(temp, i, j, (mat_element(A, i, j) ^ mat_element(B, i, j)));
+        }
+    }
+    return temp;
+}
 
-    int numARows, numAColumns;
-    float aelapsedTime;
-    cudaEventCreate(&astartEvent);
-    cudaEventCreate(&astopEvent);
 
+<<<<<<< HEAD
     // retrieve message from file
     /* wbImport only reads and writes float, so we need to convert that */
     /*float *hostAFloats = (float *)wbImport(inputFileName, &numARows, &numAColumns);
     ushort *hostA = (ushort *)malloc(numARows*numAColumns * sizeof(ushort));
     for (int i = 0; i < numARows*numAColumns; i++)
         hostA[i] = (ushort)hostAFloats[i];
+=======
+>>>>>>> 591ca6b0acbecd544739fa2736c5ca06c5bd81e8
 
-    // initialize encryption algo
+//Encrypting the message to be sent
+bin_matrix encrypt_cpu(bin_matrix msg, mcc crypt)
+{
+    if(msg->cols != crypt->public_key->rows) {
+        printf("Length of message is incorrect.\n");
+        exit(0);
+    }
+    bin_matrix error = get_error_vector_cpu(crypt->code->n, crypt->code->t);
+    //printf("error generated...\n");
+    bin_matrix word = add_matrix_cpu(matrix_mult_cpu(msg, crypt->public_key), error);
+    //printf("Messsage encrypted....\n");
+    return word;
+}
+
+
+void run_encryption_cpu(const char* inputFileName, const char* outputFileName,
+        int n, int p, int t, int w, int seed)
+{
     mcc crypt;
-    crypt = (mcc)safe_malloc(sizeof(struct mceliece));
-    crypt->code = qc_mdpc_init_cpu(n, p, w, t);
-    crypt->public_key = generator_matrix_cpu(crypt->code);
-    //printf("mceliece generated...\n");
+    bin_matrix msg, m;
+    long f_size;
+    int c;
+    size_t icc = 0;
 
-    /* get error vector */
+    /* open input and output files */
+    FILE *in_file  = fopen(inputFileName, "r");
+    FILE *out_file  = fopen(outputFileName, "w");
 
-    /* add message, public key, and error */
+    // test for input file not existing
+    if (in_file == NULL) {
+        printf("Error! Could not open file\n");
+        exit(-1);
+    }
 
+    /* determine filesize */
+    fseek(in_file, 0, SEEK_END);
+    f_size = ftell(in_file);
+    fseek(in_file, 0, SEEK_SET);
+
+    char *input_message = (char *)malloc(f_size);
+
+    /* read and write file data into local array */
+    icc = 0;
+    while ((c = fgetc(in_file)) != EOF) {
+        input_message[icc++] = (char)c;
+    }
+    input_message[icc] = '\0';
+
+
+    printf("\n");
+    printf("Input message (char):\n");
+    for (int i = 0; i < (int)icc; i++)
+        printf("%c",  input_message[i]);
+    printf("\n");
+
+<<<<<<< HEAD
     /* determine error length and weight */
     /*int error_length = 0;
     int error_weight = 0;
+=======
+    printf("Input message (ushort):\n");
+    for (int i = 0; i < (int)icc; i++)
+        printf("%hu ",  (ushort)input_message[i]);
+    printf("\n");
+>>>>>>> 591ca6b0acbecd544739fa2736c5ca06c5bd81e8
 
-    ushort *error = get_error_vector_cpu(error_length, error_weight)->data;
 
+<<<<<<< HEAD
 }*/
+=======
+    printf("\n");
+
+    /* check that input file is within size */
+    int k = (n - 1) * p;
+    if ((int)icc > k) {
+        printf("ERROR: intput message is too long for k\n");
+        printf("input message is length %d while k is %d\n", (int)icc, k);
+    }
+
+
+    /* set up basic encryption primitives */
+    crypt = mceliece_init_cpu(n, p, w, t, seed);
+    msg = mat_init_cpu(1, k);
+    for(int i = 0; i < k; i++) {
+        set_matrix_element_cpu(msg, 0, i,
+                (unsigned short)strtoul(input_message, NULL, 0));
+    }
+
+    printf("\n");
+    /* run CPU based encryption code */
+    m = encrypt_cpu(msg, crypt);
+    printf("Encrypted data (ushort):\n");
+    for (int i = 0; i < m->cols; i++)
+        printf("%hu", m->data[i]);
+    printf("\n");
+
+    /* decrypt the ciphertext */
+    bin_matrix d = decrypt_cpu(m, crypt);
+
+    printf("Decrypted text:\n");
+    for(int i = 0; i < d->cols; i++)
+        printf("%c", (char)d->data[i]);
+
+
+    /* write cipher.text to file */
+    for( int i = 0; i < m->cols; i++) {
+        fprintf(out_file, "%hu", get_matrix_element_cpu(m, 0, i));
+    }
+
+cleanup:
+    fclose(in_file);
+    fclose(out_file);
+}
+
+
+
+//Checks if two matrices are equal
+int mat_is_equal_cpu(bin_matrix A, bin_matrix B)
+{
+  int flag = 1;
+  if(A->rows != B->rows || A->cols != B->cols)
+  {
+    flag = 0;
+    return flag;
+  }
+  for(int i = 0; i < A->rows; i++)
+  {
+    for(int j = 0; j < A->cols; j++)
+    {
+      if(mat_element(A, i, j) != mat_element(B, i, j))
+      {
+        flag = 0;
+        return flag;
+      }
+    }
+  }
+  return flag;
+}
+
+//Delete the cryptosystem
+void delete_mceliece_cpu(mcc A)
+{
+    free(A->code);
+    free(A->public_key);
+    free(A);
+}
+
+void test_cpu_e2e(int n0, int p, int t, int w, int seed)
+{
+
+    printf("CPU based mceliece cryptosystem test\n");
+
+
+    printf("Starting Encryption...\n");
+    clock_t start, end;
+    double cpu_time_used;
+    start = clock();
+    mcc crypt = mceliece_init_cpu(n0, p, w, t, seed);
+    bin_matrix msg = mat_init_cpu(1, crypt->code->k);
+    //Initializing the message a random message
+    for(int i = 0; i < crypt->code->k; i++)
+    {
+            int z = rand() % 2;
+            set_matrix_element_cpu(msg, 0, i, z);
+    }
+
+    printf("message:\n");
+    for (int i = 0; i < msg->cols; i++)
+        printf("%hu", msg->data[i]);
+    printf("\n");
+
+    printf("public key:\n");
+    for (int i = 0; i < crypt->public_key->cols; i++)
+        printf("%hu", crypt->public_key->data[i]);
+    printf("\n");
+
+    bin_matrix error = get_error_vector_cpu(crypt->code->n, crypt->code->t);
+
+    printf("error vector:\n");
+    for (int i = 0; i < error->cols; i++)
+        printf("%hu", error->data[i]);
+    printf("\n");
+
+
+    bin_matrix v = encrypt_cpu(msg, crypt);
+
+    printf("encrypted data (message * public key + error):\n");
+    for (int i = 0; i < v->cols; i++)
+        printf("%hu", v->data[i]);
+    printf("\n");
+
+
+    bin_matrix s = decrypt_cpu(v, crypt);
+
+    printf("decrypted data:\n");
+    for (int i = 0; i < s->cols; i++)
+        printf("%hu", s->data[i]);
+    printf("\n");
+
+    if(mat_is_equal_cpu(msg, s)) {
+            end = clock();
+            printf("Decryption successful...\n");
+            cpu_time_used = ((double) (end - start))/ CLOCKS_PER_SEC;
+            printf("Time taken by cryptosystem: %f\n", cpu_time_used);
+    } else {
+            printf("Failure....\n");
+    }
+    delete_mceliece_cpu(crypt);
+    return;
+}
+
+
+>>>>>>> 591ca6b0acbecd544739fa2736c5ca06c5bd81e8
