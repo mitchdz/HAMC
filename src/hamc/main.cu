@@ -10,18 +10,7 @@
 
 #include "decrypt.cu"
 #include "encrypt.cu"
-#include "hamc_common.cu"
-#include "HAMC_decrypt.cu"
-#include "HAMC_encrypt.cu"
-#include "HAMC_key_gen.cu"
-#include "InverseMatrix.cu"
 #include "keygen.cu"
-#include "MatrixAdd.cu"
-#include "matrix.cu"
-#include "mceliece.cu"
-#include "MultiplyMatrix.cu"
-#include "qc_mdpc.cu"
-#include "TransposeMatrix.cu"
 
 
 #define RED "\033[0;31m"
@@ -141,7 +130,7 @@ int main(int argc, char *argv[]) {
     }
     else if (!strcmp(action, (const char*)"test")) {
         if (cpu) test_cpu_e2e(n, p, t, w, seed);
-        //else (outputFileName, n, p, t, w, seed);
+        else test_gpu_e2e(n, p, t, w, seed);
     }
     else {
         printf("action %s not recognized\n", action);
