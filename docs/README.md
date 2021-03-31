@@ -11,9 +11,9 @@ $ cmake ../src/
 $ make
 ```
 
-and then run the program:
+and then run the test program:
 ```bash
-$ hamc_Solution -h
+$ ./hamc -c -a test -n 2 -p 500 -t 10 -w 30
 ```
 
 ## CPU based execution:
