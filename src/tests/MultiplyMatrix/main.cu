@@ -74,11 +74,11 @@ bin_matrix run_kernel(bin_matrix A, bin_matrix B)
     cudaMemcpy(C->data, deviceC, B->cols * A->rows * sizeof(ushort), cudaMemcpyDeviceToHost);
     
     std::cout << "C->data";
-    for(int i = 0; i < (C-rows * C->cols); i++){
-        if(i % TILE_WIDTH == 0) std::cout << endl;
+    for(int i = 0; i < (C->rows * C->cols); i++){
+        if(i % TILE_WIDTH == 0) std::cout << std::endl;
         std::cout << C->data[i];
     }
-    std::cout << endl;
+    std::cout << std::endl;
     
     cudaFree(deviceA);
     cudaFree(deviceB);
