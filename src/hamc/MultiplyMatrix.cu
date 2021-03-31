@@ -1,5 +1,5 @@
-//#include <stdio.h>
-#include <iostream>
+#include <stdio.h>
+//#include <iostream>
 
 #define TILE_WIDTH 16
 #define ushort int//unsigned short
@@ -8,7 +8,7 @@ __global__ void mult_kernel(ushort *A, ushort *B, ushort *C, int rowA, int rowB,
 {
     __shared__ ushort sharedA[TILE_WIDTH * TILE_WIDTH];
     __shared__ ushort sharedB[TILE_WIDTH * TILE_WIDTH];
-
+    printf("test");
     int Row = blockIdx.y * TILE_WIDTH + threadIdx.y;
     int Col = blockIdx.x * TILE_WIDTH + threadIdx.x;
     int tid = threadIdx.y * TILE_WIDTH + threadIdx.x;
@@ -49,9 +49,9 @@ __global__ void mult_kernel(ushort *A, ushort *B, ushort *C, int rowA, int rowB,
         
         __syncthreads();
     }
-    cout << "FUCK" << endl;
+    printf("FUCK");
     if((Row < rowA) && (Col < colB)){
-        //printf("pValue: %d", pValue);
+        printf("pValue: %d", pValue);
         C[Row * colB + Col] = pValue;
     }
     
