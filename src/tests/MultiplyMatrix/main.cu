@@ -96,12 +96,12 @@ bin_matrix run_kernel(bin_matrix A, bin_matrix B)
         C->data[i] = (ushort)tempC[i];
     }
     
-    /*std::cout << "C->data";
+    std::cout << "C->data";
     for(int i = 0; i < (C->rows * C->cols); i++){
         if(i % TILE_WIDTH == 0) std::cout << std::endl;
         std::cout << C->data[i] << " ";
     }
-    std::cout << std::endl;*/
+    std::cout << std::endl;
     
     cudaFree(deviceA);
     cudaFree(deviceB);
