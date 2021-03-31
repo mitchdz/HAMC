@@ -9,7 +9,6 @@ __global__ void mult_kernel(ushort *A, ushort *B, ushort *C, int rowA, int rowB,
     int Row = blockIdx.y * TILE_WIDTH + threadIdx.y;
     int Col = blockIdx.x * TILE_WIDTH + threadIdx.x;
     int tid = threadIdx.y * TILE_WIDTH + threadIdx.x;
-    
     int tilePos = 0;
 
     ushort pValue = 0;
@@ -32,7 +31,16 @@ __global__ void mult_kernel(ushort *A, ushort *B, ushort *C, int rowA, int rowB,
         
         if((Row < rowA) && (Col < colB)){
             for(int j = 0; j < TILE_WIDTH; j++){
-                pValue ^= sharedA[threadIdx.y * TILE_WIDTH + j] & sharedB[j * TILE_WIDTH + threadIdx.x];
+                //pValue = (pValue ^ (sharedA[threadIdx.y * TILE_WIDTH + j] & sharedB[j * TILE_WIDTH + threadIdx.x]));
+                if(sharedA[threadIdx.y * TILE_WIDTH + j] == 0 || sharedB[j * TILE_WIDTH + threadIdx.x] == 0)
+                else{
+                    if(pValue == 1){
+                        pValue = 0;
+                    }
+                    else{
+                        pValue = 1;
+                    }
+                }
             }
         }
         
