@@ -2,7 +2,7 @@
 //#include <iostream>
 
 #define TILE_WIDTH 16
-#define ushort int//unsigned short
+#define ushort unsigned short
 
 __global__ void mult_kernel(ushort *A, ushort *B, ushort *C, int rowA, int rowB, int colA, int colB)
 {
