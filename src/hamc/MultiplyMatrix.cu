@@ -34,7 +34,7 @@ __global__ void mult_kernel(ushort *A, ushort *B, ushort *C, int rowA, int rowB,
         
         if((Row < rowA) && (Col < colB)){
             for(int j = 0; j < TILE_WIDTH; j++){
-                pValue = (pValue ^ (sharedA[threadIdx.y * TILE_WIDTH + j] & sharedB[j * TILE_WIDTH + threadIdx.x]));
+                pValue ^= (sharedA[threadIdx.y * TILE_WIDTH + j] & sharedB[j * TILE_WIDTH + threadIdx.x]);
                 /* if(sharedA[threadIdx.y * TILE_WIDTH + j] == 0 || sharedB[j * TILE_WIDTH + threadIdx.x] == 0);
                 else{
                     if(pValue == 1){
