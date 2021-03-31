@@ -46,6 +46,7 @@ __global__ void mult_kernel(ushort *A, ushort *B, ushort *C, int rowA, int rowB,
         
         __syncthreads();
     }
+    printf("FUCK");
     if((Row < rowA) && (Col < colB)){
         printf("pValue: %d", pValue);
         C[Row * colB + Col] = pValue;
