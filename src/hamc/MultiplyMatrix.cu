@@ -9,6 +9,7 @@ __global__ void mult_kernel(ushort *A, ushort *B, ushort *C, int rowA, int rowB,
     int Row = blockIdx.y * TILE_WIDTH + threadIdx.y;
     int Col = blockIdx.x * TILE_WIDTH + threadIdx.x;
     int tid = threadIdx.y * TILE_WIDTH + threadIdx.x;
+    
     int tilePos = 0;
 
     ushort pValue = 0;
@@ -40,4 +41,39 @@ __global__ void mult_kernel(ushort *A, ushort *B, ushort *C, int rowA, int rowB,
     if((Row < rowA) && (Col < colB)){
         C[Row * colB + Col] = pValue;
     }
+    
+    /*__shared__ ushort sharedA[TILE_WIDTH * TILE_WIDTH];
+    __shared__ ushort sharedB[TILE_WIDTH * TILE_WIDTH];
+    
+    int tilePos = 0;
+
+    ushort pValue = 0;
+  
+    for(int i = 0; ; i++){
+        tilePos = i * TILE_WIDTH;
+        if(() && ()){
+            sharedA[threadIdx.x] = A[];
+        }
+        else{
+            sharedA[threadIdx.x] = 0.0;
+        }
+        if(() && ()){
+            sharedB[threadIdx.x] = B[];
+        }
+        else{
+            sharedB[threadIdx.x] = 0.0;
+        }
+        __syncthreads();
+        
+        if(() && ()){
+            for(int j = 0; j < TILE_WIDTH; j++){
+                pValue ^= sharedA[] & sharedB[];
+            }
+        }
+        
+        __syncthreads();
+    }
+    if(( < rowA) && ( < colB)){
+        C[] = pValue;
+    }*/
 }
