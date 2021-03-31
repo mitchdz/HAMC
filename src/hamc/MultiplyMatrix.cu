@@ -8,7 +8,7 @@ __global__ void mult_kernel(ushort *A, ushort *B, ushort *C, int rowA, int rowB,
 {
     __shared__ ushort sharedA[TILE_WIDTH * TILE_WIDTH];
     __shared__ ushort sharedB[TILE_WIDTH * TILE_WIDTH];
-    printf("test");
+    //printf("test");
     int Row = blockIdx.y * TILE_WIDTH + threadIdx.y;
     int Col = blockIdx.x * TILE_WIDTH + threadIdx.x;
     int tid = threadIdx.y * TILE_WIDTH + threadIdx.x;
@@ -49,9 +49,9 @@ __global__ void mult_kernel(ushort *A, ushort *B, ushort *C, int rowA, int rowB,
         
         __syncthreads();
     }
-    printf("FUCK");
+    //printf("FUCK");
     if((Row < rowA) && (Col < colB)){
-        printf("pValue: %d", pValue);
+        //printf("pValue: %d", pValue);
         C[Row * colB + Col] = pValue;
     }
     
