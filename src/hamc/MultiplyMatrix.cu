@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #define TILE_WIDTH 16
 #define ushort int//unsigned short
 
