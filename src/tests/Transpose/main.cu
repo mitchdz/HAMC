@@ -102,10 +102,11 @@ bin_matrix run_kernel(bin_matrix A)
 
 int main(int argc, char *argv[])
 {
+    printf("Transpose matrix unit test\n");
+
     wbArg_t args;
     bin_matrix A;
     bin_matrix B;
-    bin_matrix C;
     int numRowsA;
     int numColsA;
     int numRowsB;
@@ -113,7 +114,6 @@ int main(int argc, char *argv[])
     int numRowsS;
     int numColsS;
     ushort *hostA;
-    ushort *hostB;
     ushort *sol;
     char *input0;
     char *expected;
@@ -141,6 +141,11 @@ int main(int argc, char *argv[])
                 return 0;
         }
     }
+
+    printf("input file: %s\n", input0);
+    printf("solution fil: %s\n", expected);
+
+    printf("Reading input file...\n");
     float *floatTemp = (float *)wbImport(input0, &numRowsA, &numColsA);
     hostA = (ushort *)malloc(numRowsA*numColsA * sizeof(ushort));
     for(int i = 0; i < numColsA * numRowsA; i++){
@@ -149,10 +154,11 @@ int main(int argc, char *argv[])
     A = mat_init_cpu(numRowsA, numColsA);
     A->data = hostA;
 
-    floatTemp = (float *)wbImport(expected, &numRowsS, &numColsS);
+    printf("Reading Solution file...\n");
+    float *floatTemp2 = (float *)wbImport(expected, &numRowsS, &numColsS);
     sol = (ushort *)malloc(numRowsS*numColsS * sizeof(ushort));
-    for(int i = 0; i < numColsB * numRowsB; i++){
-        sol[i] = (ushort)floatTemp[i];
+    for(int i = 0; i < numColsS * numRowsS; i++){
+        sol[i] = (ushort)floatTemp2[i];
     }
 
     /* std::cout << "A->data";
@@ -168,24 +174,31 @@ int main(int argc, char *argv[])
     }
     std::cout << std::endl; */
 
-    if(cpu_exec) C = run_cpu(A);
-    else C = run_kernel(A);
+    if(cpu_exec) {
+        printf("C Based execution:\n");
+        B = run_cpu(A);
+
+    }
+    else {
+        printf("GPU Based execution:\n");
+        B = run_kernel(A);
+    }
 
     std::cout << "C->data";
-    for(int i = 0; i < C->cols * C->rows; i++){
+    for(int i = 0; i < B->cols * B->rows; i++){
         if(i%16 == 0) std::cout << "" << std::endl;
-        std::cout << C->data[i] << " ";
+        std::cout << B->data[i] << " ";
     }
     std::cout << std::endl;
 
-    if(C->rows != numRowsS && C->cols != numColsS){
+    if(B->rows != numRowsS && B->cols != numColsS){
         solved = false;
     }
     else{
         for(int i = 0; i < numRowsS * numColsS; i++){
-            if(C->data[i] != sol[i]){
+            if(B->data[i] != sol[i]){
                 std::cout << "i: " << i << std::endl;
-                std::cout << "C->data[i]: " << C->data[i] << std::endl;
+                std::cout << "C->data[i]: " << B->data[i] << std::endl;
                 std::cout << "expected: " << sol[i] << std::endl;
                 solved = false;
                 break;
@@ -201,7 +214,6 @@ int main(int argc, char *argv[])
 
     free(A);
     free(B);
-    free(C);
 
     return 0;
 }
