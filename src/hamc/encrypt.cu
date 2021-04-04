@@ -73,16 +73,16 @@ bin_matrix generator_matrix_gpu(mdpc code)
 
     bool verbose = true;
 
-    if (verbose) {
-        printf("H0*H_inv:\n");
-        for(int i = 0; i < code->p*2; i++) {
-            for(int j = 0; j < code->p; j++) {
-                printf("%hu", H_inv_times_H0->data[i*j + j]);
-            }
-            printf("\n");
-        }
-        printf("\n");
-    }
+    //if (verbose) {
+    //    printf("H0*H_inv:\n");
+    //    for(int i = 0; i < code->p*2; i++) {
+    //        for(int j = 0; j < code->p; j++) {
+    //            printf("%hu", H_inv_times_H0->data[i*j + j]);
+    //        }
+    //        printf("\n");
+    //    }
+    //    printf("\n");
+    //}
 
     //transpose<<<DimGrid, DimBlock>>> (H_inv_times_H0->data, Q, code->p, code->p);
 
