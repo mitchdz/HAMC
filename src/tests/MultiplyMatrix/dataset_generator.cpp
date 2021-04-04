@@ -97,6 +97,6 @@ int main()
     create_dataset(6, 128, 128, 128);
     create_dataset(7, 100, 100, 100);
     create_dataset(8, 134, 130, 150);
-    create_dataset(9, 417, 210, 519);
+    create_dataset(9, 500, 500, 500);
   return 0;
 }

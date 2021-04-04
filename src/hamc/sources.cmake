@@ -1,11 +1,5 @@
-
-
-
 add_lab("hamc")
 add_lab_solution("hamc" ${CMAKE_CURRENT_LIST_DIR}/main.cu)
-#add_generator("TiledMatrixMultiplication" ${CMAKE_CURRENT_LIST_DIR}/dataset_generator.cpp)
-
-
 
 #add_lab("hamc")
 
@@ -31,8 +25,6 @@ add_lab_solution("hamc" ${CMAKE_CURRENT_LIST_DIR}/main.cu)
 
 
 #target_link_libraries("hamc" "${WBLIB}" "${LINK_LIBRARIES} hamc_lib")
-
-
 
 #CUDA_INCLUDE_DIRS(hamc ${CMAKE_CURRENT_LIST_DIR})
 #add_lab_helper(hamc ${CMAKE_CURRENT_LIST_DIR}/hamc.cu

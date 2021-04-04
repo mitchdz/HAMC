@@ -48,7 +48,7 @@ bin_matrix run_kernel(bin_matrix A)
     ushort *deviceC; */
     ushort *deviceA;
     ushort *deviceB;
-    bin_matrix B = mat_init_cpu(A->rows, A->cols);
+    bin_matrix B = mat_init_cpu(A->cols, A->rows);
     ushort *tempA = (ushort *)malloc(sizeof(ushort) * A->rows * A->cols);
     ushort *tempB = (ushort *)malloc(sizeof(ushort) * B->rows * B->cols);
 
@@ -72,7 +72,9 @@ bin_matrix run_kernel(bin_matrix A)
     int y_blocks = ((A->rows - 1)/TILE_WIDTH) + 1;
     dim3 DimGrid(x_blocks, y_blocks, 1);
 
-    transpose<<<DimGrid, DimBlock>>>(deviceA, deviceB, A->rows, A->cols);
+    //transpose<<<DimGrid, DimBlock>>>(deviceA, deviceB, A->rows, A->cols);
+    //TransposeSharedMem<<<DimGrid, DimBlock>>>(deviceA, deviceB);
+    transposeNaive<<<DimGrid, DimBlock>>>(deviceA, deviceB);
 
     cudaError_t cudaerr = cudaDeviceSynchronize();
     if (cudaerr != cudaSuccess) {
@@ -104,13 +106,10 @@ int main(int argc, char *argv[])
 {
     printf("Transpose matrix unit test\n");
 
-    wbArg_t args;
     bin_matrix A;
     bin_matrix B;
     int numRowsA;
     int numColsA;
-    int numRowsB;
-    int numColsB;
     int numRowsS;
     int numColsS;
     ushort *hostA;
@@ -161,35 +160,47 @@ int main(int argc, char *argv[])
         sol[i] = (ushort)floatTemp2[i];
     }
 
-    /* std::cout << "A->data";
-    for(int i = 0; i < numColsA * numRowsA; i++){
-        if(i%16 == 0) std::cout << "" << std::endl;
-        std::cout << hostA[i] << " ";
+
+    printf("Input matrix:\n");
+    printf("%d x %d\n", numRowsA, numColsA);
+    for (int i = 0; i < numRowsA; i++) {
+        for (int j = 0; j < numColsA; j++) {
+            printf("%hu ",A->data[i*j + j]);
+        }
+        printf("\n");
     }
-    std::cout << std::endl;
-    std::cout << "B->data";
-    for(int i = 0; i < numColsB * numRowsB; i++){
-        if(i%16 == 0) std::cout << "" << std::endl;
-        std::cout << hostB[i] << " ";
-    }
-    std::cout << std::endl; */
 
     if(cpu_exec) {
         printf("C Based execution:\n");
         B = run_cpu(A);
-
     }
     else {
         printf("GPU Based execution:\n");
         B = run_kernel(A);
     }
 
-    std::cout << "C->data";
-    for(int i = 0; i < B->cols * B->rows; i++){
-        if(i%16 == 0) std::cout << "" << std::endl;
-        std::cout << B->data[i] << " ";
+
+    printf("\n");
+    printf("Solution matrix:\n");
+    printf("%d x %d\n", numRowsS, numColsS);
+    for (int i = 0; i < numRowsS; i++) {
+        for (int j = 0; j < numColsS; j++) {
+            printf("%hu ",sol[i*j + j]);
+        }
+        printf("\n");
     }
-    std::cout << std::endl;
+    printf("\n");
+
+
+    printf("Output matrix:\n");
+    printf("%d x %d\n", numRowsS, numColsS);
+    for (int i = 0; i < numRowsS; i++) {
+        for (int j = 0; j < numColsS; j++) {
+            printf("%hu ",B->data[i*j + j]);
+        }
+        printf("\n");
+    }
+
 
     if(B->rows != numRowsS && B->cols != numColsS){
         solved = false;
@@ -206,10 +217,6 @@ int main(int argc, char *argv[])
         }
     }
 
-    /*std::cout << "C->rows: " << C->rows << std::endl;
-    std::cout << "C->cols: " << C->cols << std::endl;
-    std::cout << "numRowsS: " << numRowsS << std::endl;
-    std::cout << "numColsS: " << numColsS << std::endl;*/
     std::cout << "solved: " << solved << std::endl;
 
     free(A);
