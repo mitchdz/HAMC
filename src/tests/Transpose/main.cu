@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <iostream>
+#include <time.h>
 
 #include "../../hamc/hamc_cpu_code.c"
 #include "../../hamc/TransposeMatrix.cu"
@@ -40,10 +41,54 @@ void printHelp()
     printf("\t  run CPU based execution\n");
 }
 
-bin_matrix run_cpu(bin_matrix A)
+static ushort *generate_data(int height, int width)
 {
-    return transpose_cpu(A);
+    ushort *data = (ushort *)malloc(sizeof(ushort) * width * height);
+    int i;
+    for (i = 0; i < width * height; i++) {
+        data[i] = (ushort)(rand() % 2); // 0 or 1
+    }
+    return data;
 }
+
+void run_test(int x, int y)
+{
+
+    clock_t start, end;
+    double cpu_time_used;
+
+    ushort *raw_data = (ushort *)malloc(sizeof(ushort) * x * y);
+    raw_data = generate_data(x, y);
+
+    bin_matrix input = mat_init_cpu(x,y);
+    input->data = raw_data;
+
+    /* CPU execution time */
+    start = clock();
+
+    bin_matrix CPU_BIN = transpose_cpu(input);
+
+    end = clock();
+    cpu_time_used = ((double) (end - start))/ CLOCKS_PER_SEC;
+    printf("CPU time: %lf\n", cpu_time_used);
+
+
+    /* GPU execution time */
+    start = clock();
+
+    bin_matrix GPU_BIN = run_transpose_kernel(input);
+
+    end = clock();
+    cpu_time_used = ((double) (end - start))/ CLOCKS_PER_SEC;
+    printf("GPU time: %lf\n", cpu_time_used);
+
+    free(input);
+    free(raw_data);
+    free(CPU_BIN);
+    free(GPU_BIN);
+}
+
+
 
 int main(int argc, char *argv[])
 {
@@ -62,9 +107,21 @@ int main(int argc, char *argv[])
     bool cpu_exec = false;
     bool solved = true;
 
+    char *action = NULL;
+    int x, y;
+
     int opt;
-    while ((opt = getopt(argc, argv, "i:b:e:o:c")) != -1){
+    while ((opt = getopt(argc, argv, "i:b:e:o:cx:y:a:")) != -1){
         switch(opt){
+            case 'y':
+                y = atoi(optarg);
+                break;
+             case 'x':
+                x = atoi(optarg);
+                break;
+            case 'a':
+                action = strdup(optarg);
+                break;
             case 'i':
                 input0 = strdup(optarg);
                 break;
@@ -82,6 +139,11 @@ int main(int argc, char *argv[])
                 printHelp();
                 return 0;
         }
+    }
+
+    if (!strcmp(action, (const char*)"test")) {
+        run_test(x, y);
+        return 0;
     }
 
     if (!input0|| !expected) {

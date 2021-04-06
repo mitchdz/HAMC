@@ -76,7 +76,8 @@ bin_matrix generator_matrix_gpu(mdpc code)
 
     //TODO: transpose kernel
     // Tranpose H_inv*M
-    bin_matrix Q = transpose_cpu(H_inv_times_H0);
+    //bin_matrix Q = transpose_cpu(H_inv_times_H0);
+    bin_matrix Q = run_transpose_kernel(H_inv_times_H0);
 
     //printf("Transpose obtained...\n");
     bin_matrix M;
