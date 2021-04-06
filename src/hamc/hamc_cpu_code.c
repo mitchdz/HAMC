@@ -1,3 +1,6 @@
+#ifndef HAMC_CPU_CODE_C
+#define HAMC_CPU_CODE_C
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -944,3 +947,4 @@ void test_cpu_e2e(int n0, int p, int t, int w, int seed)
     delete_mceliece_cpu(crypt);
     return;
 }
+#endif /* HAMC_CPU_CODE_C */

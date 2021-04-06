@@ -11,7 +11,13 @@
 #include "../../hamc/TransposeMatrix.cu"
 
 #define TILE_WIDTH 16
+#define BLOCK_DIM 16
+#define BLOCK_SIZE 16
 #define ushort unsigned short
+
+#define TILE_DIM 16
+#define BLOCK_ROWS 8
+
 
 #define CUDA_CHECK(ans)                                                   \
   { gpuAssert((ans), __FILE__, __LINE__); }
@@ -29,77 +35,14 @@ void printHelp()
     printf("run this executable with the following flags\n");
     printf("\n");
     printf("\t-a <input0 file name>\n");
-    printf("\t-b <input1 file name>\n");
     printf("\t-e <expected solution file name>\n");
-    printf("\t-o <output file name>\n");
     printf("\t-c \n");
+    printf("\t  run CPU based execution\n");
 }
-
 
 bin_matrix run_cpu(bin_matrix A)
 {
     return transpose_cpu(A);
-}
-
-bin_matrix run_kernel(bin_matrix A)
-{
-    /* ushort *deviceA;
-    ushort *deviceB;
-    ushort *deviceC; */
-    ushort *deviceA;
-    ushort *deviceB;
-    bin_matrix B = mat_init_cpu(A->cols, A->rows);
-    ushort *tempA = (ushort *)malloc(sizeof(ushort) * A->rows * A->cols);
-    ushort *tempB = (ushort *)malloc(sizeof(ushort) * B->rows * B->cols);
-
-    for(int i = 0; i < A->rows * A->cols; i++){
-        tempA[i] = (ushort)A->data[i];
-    }
-    for(int i = 0; i < B->rows * B->cols; i++){
-        tempB[i] = (ushort)B->data[i];
-    }
-
-    cudaMalloc((void **) &deviceA, A->cols * A->rows * sizeof(ushort));
-    cudaMalloc((void **) &deviceB, B->cols * B->rows * sizeof(ushort));
-
-    /* cudaMemcpy(deviceA, A->data, A->cols * A->rows * sizeof(ushort), cudaMemcpyHostToDevice);
-    cudaMemcpy(deviceB, B->data, B->cols * B->rows * sizeof(ushort), cudaMemcpyHostToDevice); */
-    cudaMemcpy(deviceA, tempA, A->cols * A->rows * sizeof(int), cudaMemcpyHostToDevice);
-    cudaMemcpy(deviceB, tempB, B->cols * B->rows * sizeof(int), cudaMemcpyHostToDevice);
-
-    dim3 DimBlock(TILE_WIDTH, TILE_WIDTH, 1);
-    int x_blocks = ((B->cols - 1)/TILE_WIDTH) + 1;
-    int y_blocks = ((A->rows - 1)/TILE_WIDTH) + 1;
-    dim3 DimGrid(x_blocks, y_blocks, 1);
-
-    //transpose<<<DimGrid, DimBlock>>>(deviceA, deviceB, A->rows, A->cols);
-    //TransposeSharedMem<<<DimGrid, DimBlock>>>(deviceA, deviceB);
-    transposeNaive<<<DimGrid, DimBlock>>>(deviceA, deviceB);
-
-    cudaError_t cudaerr = cudaDeviceSynchronize();
-    if (cudaerr != cudaSuccess) {
-        printf("kernel launch failed with error \"%s\".\n", 
-                cudaGetErrorString(cudaerr));
-    }
-
-    cudaMemcpy(tempB, deviceB, B->cols * B->rows * sizeof(int),
-            cudaMemcpyDeviceToHost);
-
-    for(int i = 0; i < B->rows * B->cols; i++){
-        B->data[i] = (ushort)tempB[i];
-    }
-
-    /* std::cout << "C->data";
-    for(int i = 0; i < (C->rows * C->cols); i++){
-        if(i % TILE_WIDTH == 0) std::cout << std::endl;
-        std::cout << tempC[i] << " ";
-    }
-    std::cout << std::endl; */
-
-    cudaFree(deviceA);
-    cudaFree(deviceB);
-
-    return B;
 }
 
 int main(int argc, char *argv[])
@@ -114,8 +57,8 @@ int main(int argc, char *argv[])
     int numColsS;
     ushort *hostA;
     ushort *sol;
-    char *input0;
-    char *expected;
+    char *input0 = NULL;
+    char *expected = NULL;
     bool cpu_exec = false;
     bool solved = true;
 
@@ -140,6 +83,12 @@ int main(int argc, char *argv[])
                 return 0;
         }
     }
+
+    if (!input0|| !expected) {
+        printf("Invalid inputs.\n");
+        return -1;
+    }
+
 
     printf("input file: %s\n", input0);
     printf("solution fil: %s\n", expected);
@@ -172,11 +121,11 @@ int main(int argc, char *argv[])
 
     if(cpu_exec) {
         printf("C Based execution:\n");
-        B = run_cpu(A);
+        B = transpose_cpu(A);
     }
     else {
         printf("GPU Based execution:\n");
-        B = run_kernel(A);
+        B = run_transpose_kernel(A);
     }
 
 
