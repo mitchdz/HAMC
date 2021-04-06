@@ -1,3 +1,6 @@
+#ifndef HAMC_TRANSPOSE_DATASET_GENERATOR_H
+#define HAMC_TRANSPOSE_DATASET_GENERATOR_H
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -87,5 +90,9 @@ int main()
     create_dataset(7, 100, 100);
     create_dataset(8, 134, 130);
     create_dataset(9, 417, 210);
+    create_dataset(10, 500, 500);
+    create_dataset(11, 2000, 2000);
   return 0;
 }
+
+#endif /* HAMC_TRANSPOSE_DATASET_GENERATOR_H */

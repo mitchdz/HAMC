@@ -31,7 +31,7 @@ bin_matrix run_transpose_kernel(bin_matrix A)
     int y_blocks = ((A->cols - 1)/TRANSPOSE_TILE_WIDTH) + 1;
     dim3 DimGrid(x_blocks, y_blocks, 1);
 
-    transpose_naive<<<DimGrid, DimBlock>>> (deviceA, deviceB, A->rows, A->cols);
+    transpose_no_bank_conflicts<<<DimGrid, DimBlock>>> (deviceA, deviceB, A->rows, A->cols);
 
     cudaError_t cudaerr = cudaDeviceSynchronize();
     if (cudaerr != cudaSuccess)
