@@ -27,7 +27,7 @@ static ushort *generate_data(int height, int width)
     ushort *data = (ushort *)malloc(sizeof(ushort) * width * height);
     int i;
     for (i = 0; i < width * height; i++) {
-        data[i] = (ushort)(rand() % 2);
+        data[i] = (ushort)(rand() % 2); // 0 or 1
     }
     return data;
 }
@@ -76,6 +76,7 @@ int main()
 {
     base_dir = wbPath_join(wbDirectory_current(), "Transpose", "Dataset");
 
+    create_dataset(0, 32, 32);
     create_dataset(0, 16, 16);
     create_dataset(1, 64, 64);
     create_dataset(2, 64, 128);
