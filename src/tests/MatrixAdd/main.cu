@@ -209,7 +209,7 @@ int main(int argc, char *argv[])
     
 
     bool cpu_run = false;
-    bool just_test = false;
+    char *just_test = NULL;
     
     int x, y;
 
@@ -220,13 +220,11 @@ int main(int argc, char *argv[])
    
     int c;
     opterr = 0;
-    int num_ran = 0;
     while ((c = getopt (argc, argv, "t:x:y:i:j:s:hp")) != -1){
         switch(c)
         {
             case 't':
-            	
-            	just_test = true;
+            	just_test = strdup(optarg);
             	break;
             case 'x':
             	
@@ -259,15 +257,14 @@ int main(int argc, char *argv[])
             default:
                 abort();
         }
-        num_ran++;
    }
     
-    
-    if (just_test) {
-    	printf("Test is running! \n\n");
+    if (!strcmp(just_test, (const char*)"test")) {
+    	printf("Test is running! \n");
         run_test(x, y);
         return 0;
     } else {
+    	printf("Input Files are running! \n");
     	args = wbArg_read(argc, argv);
     }
     
