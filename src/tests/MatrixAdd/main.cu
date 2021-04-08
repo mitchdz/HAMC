@@ -44,28 +44,24 @@ bin_matrix run_cpu(bin_matrix A, bin_matrix B)
         printf("Matrices are incompatible, check dimensions...\n");
         exit(0);
     }
-       
-    cudaEvent_t astartEvent, astopEvent;
-    float aelapsedTime;
-    cudaEventCreate(&astartEvent);
-    cudaEventCreate(&astopEvent);
-    
-    // Initialize a C Matrix
-    // Not Here?
-    
+        
     // Run CPU Operation
-    cudaEventRecord(astartEvent, 0);
     bin_matrix hostC = matrix_add_cpu(A, B);
-    cudaEventRecord(astopEvent, 0);
-    cudaEventSynchronize(astopEvent);
-    cudaEventElapsedTime(&aelapsedTime, astartEvent, astopEvent);
-    
-    printf("\n");
-    printf("Total compute time (ms) %f for Matrix Add CPU\n",aelapsedTime);
-    printf("\n");
+
     
     return hostC;
 }
+
+static ushort *generate_data(int height, int width)
+{
+    ushort *data = (ushort *)malloc(sizeof(ushort) * width * height);
+    int i;
+    for (i = 0; i < width * height; i++) {
+        data[i] = (ushort)(rand() % 2); // 0 or 1
+    }
+    return data;
+}
+
 
 bin_matrix run_kernel(bin_matrix A, bin_matrix B)
 {
@@ -74,10 +70,10 @@ bin_matrix run_kernel(bin_matrix A, bin_matrix B)
         exit(0);
     }
 
-    cudaEvent_t astartEvent, astopEvent;
-    float aelapsedTime;
-    cudaEventCreate(&astartEvent);
-    cudaEventCreate(&astopEvent);
+    //cudaEvent_t astartEvent, astopEvent;
+    //float aelapsedTime;
+    //cudaEventCreate(&astartEvent);
+    //cudaEventCreate(&astopEvent);
     
 
     
@@ -95,11 +91,11 @@ bin_matrix run_kernel(bin_matrix A, bin_matrix B)
 
     
     /* allocate the memory space on GPU */
-    wbTime_start(GPU, "Allocating GPU memory.");
+  //  wbTime_start(GPU, "Allocating GPU memory.");
     cudaMalloc((void **) &deviceA, A->cols * A->rows * sizeof(ushort));
     cudaMalloc((void **) &deviceB, B->cols * B->rows * sizeof(ushort));
     cudaMalloc((void **) &deviceC, B->cols * A->rows * sizeof(ushort));
-    wbTime_stop(GPU, "Allocating GPU memory.");
+   // wbTime_stop(GPU, "Allocating GPU memory.");
     
 
     
@@ -111,28 +107,81 @@ bin_matrix run_kernel(bin_matrix A, bin_matrix B)
     int y_blocks = ((A->rows - 1)/TILE_WIDTH) + 1;
     dim3 DimGrid(x_blocks, y_blocks, 1);
     
-    cudaEventRecord(astartEvent, 0);
+   // cudaEventRecord(astartEvent, 0);
     matrixAdd_kernel<<<DimGrid, DimBlock>>>(deviceA, deviceB, deviceC, A->rows, A->cols);
-    cudaDeviceSynchronize();
-    cudaEventRecord(astopEvent, 0);
-    cudaEventSynchronize(astopEvent);
-    cudaEventElapsedTime(&aelapsedTime, astartEvent, astopEvent);
+    //cudaDeviceSynchronize();
+    //cudaEventRecord(astopEvent, 0);
+   // cudaEventSynchronize(astopEvent);
+   // cudaEventElapsedTime(&aelapsedTime, astartEvent, astopEvent);
     
-    printf("\n");
-    printf("Total compute time (ms) %f for Matrix Add GPU\n",aelapsedTime);
-    printf("\n");
+    //printf("\n");
+    //printf("Total compute time (ms) %f for Matrix Add GPU\n\n",aelapsedTime);
+    //printf("\n");
     
-    wbTime_start(Copy, "Copying output memory to the CPU");
+   // wbTime_start(Copy, "Copying output memory to the CPU");
     cudaMemcpy(C->data, deviceC, B->cols * A->rows * sizeof(ushort), cudaMemcpyDeviceToHost);
-    wbTime_stop(Copy, "Copying output memory to the CPU");
+    //wbTime_stop(Copy, "Copying output memory to the CPU");
     
-    wbTime_start(GPU, "Freeing GPU Memory");
+    //wbTime_start(GPU, "Freeing GPU Memory");
     cudaFree(deviceA);
     cudaFree(deviceB);
     cudaFree(deviceC);
-    wbTime_stop(GPU, "Freeing GPU Memory");
+    //wbTime_stop(GPU, "Freeing GPU Memory");
 
     return C;
+}
+
+void run_test(int x, int y)
+{
+
+    clock_t start, end;
+    double cpu_time_used;
+    
+    
+    printf("X var = %i \n", x);
+    printf("Y var = %i \n", y);
+    
+    
+    // Matrix A
+    ushort *raw_data0 = (ushort *)malloc(sizeof(ushort) * x * y);
+    raw_data0 = generate_data(x, y);
+
+    bin_matrix input0 = mat_init_cpu(x,y);
+    input0->data = raw_data0;
+    
+    //Matrix B
+    ushort *raw_data1 = (ushort *)malloc(sizeof(ushort) * x * y);
+    raw_data1 = generate_data(x, y);
+
+    bin_matrix input1 = mat_init_cpu(x,y);
+    input1->data = raw_data1;
+
+    /* CPU execution time */
+    start = clock();
+
+    bin_matrix CPU_BIN = run_cpu(input0, input1);
+
+    end = clock();
+    
+    cpu_time_used = ((double) (end - start))/ CLOCKS_PER_SEC;
+    printf("CPU time: %lf \n", cpu_time_used);
+
+
+    /* GPU execution time */
+    start = clock();
+
+    bin_matrix GPU_BIN = run_kernel(input0, input1);
+
+    end = clock();
+    cpu_time_used = ((double) (end - start))/ CLOCKS_PER_SEC;
+    printf("GPU time: %lf \n", cpu_time_used);
+
+    free(input0);
+    free(input1);
+    free(raw_data0);
+    free(raw_data1);
+    free(CPU_BIN);
+    free(GPU_BIN);
 }
 
 // main - should only be handling the initial matrices A and B generation and input files
@@ -160,6 +209,9 @@ int main(int argc, char *argv[])
     
 
     bool cpu_run = false;
+    bool just_test = false;
+    
+    int x, y;
 
     cudaEvent_t astartEvent, astopEvent;
     float aelapsedTime;
@@ -168,16 +220,32 @@ int main(int argc, char *argv[])
    
     int c;
     opterr = 0;
-    while ((c = getopt (argc, argv, "i:j:s:hp")) != -1){
+    int num_ran = 0;
+    while ((c = getopt (argc, argv, "t:x:y:i:j:s:hp")) != -1){
         switch(c)
         {
+            case 't':
+            	
+            	just_test = true;
+            	break;
+            case 'x':
+            	
+            	x = atoi(optarg);
+            	break;
+            case 'y':
+            	
+            	y = atoi(optarg);
+            	break;
             case 'i':
+            	
                 inputFileName0 = strdup(optarg);
                 break;
             case 'j':
+            	
                 inputFileName1 = strdup(optarg);
                 break;
             case 's':
+            	
                 solutionFileName = strdup(optarg);
                 break;
             case 'h':
@@ -185,13 +253,23 @@ int main(int argc, char *argv[])
                 return 0;
             case 'n':
             case 'p':
+            	printf("p check \n\n");
                 cpu_run = true;
                 break;
             default:
                 abort();
         }
+        num_ran++;
    }
-    args = wbArg_read(argc, argv);
+    
+    
+    if (just_test) {
+    	printf("Test is running! \n\n");
+        run_test(x, y);
+        return 0;
+    } else {
+    	args = wbArg_read(argc, argv);
+    }
     
     // Read Input Files
         // Input File 0 - Matrix A
