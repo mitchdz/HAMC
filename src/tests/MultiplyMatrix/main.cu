@@ -92,7 +92,7 @@ void time_test(int x, int y)
     
     end = clock();
     time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
-    std::cout << "CPU time: " << cpu_time_used << std::endl;
+    std::cout << "CPU time: " << time_used << std::endl;
     
     free(C);
     
@@ -102,12 +102,12 @@ void time_test(int x, int y)
     
     end = clock();
     time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
-    Std::cout << "GPU time: " << time_used << endl;
+    std::cout << "GPU time: " << time_used << std::endl;
 }
 
 int main(int argc, char *argv[])
 {
-    wbArg_t args;
+    //wbArg_t args;
     bin_matrix A;
     bin_matrix B;
     bin_matrix C;
