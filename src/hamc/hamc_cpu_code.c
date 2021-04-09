@@ -582,7 +582,7 @@ int get_max_cpu(int* vec, int len)
     }
     return max;
 }
-
+ 
 //Decoding the codeword
 bin_matrix decode_cpu(bin_matrix word, mdpc code)
 {

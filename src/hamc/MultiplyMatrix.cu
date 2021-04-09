@@ -1,3 +1,7 @@
+
+#ifndef HAMC_MULTIPLY_MATRIX_H
+#define HAMC_MULTIPLY_MATRIX_H
+
 #include <stdio.h>
 //#include <iostream>
 
@@ -89,3 +93,4 @@ __global__ void mult_kernel(ushort *A, ushort *B, ushort *C, int rowA, int rowB,
         C[] = pValue;
     }*/
 }
+#endif /* HAMC_MULTIPLY_MATRIX_H */

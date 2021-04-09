@@ -11,6 +11,7 @@
 #include "decrypt.cu"
 #include "encrypt.cu"
 #include "keygen.cu"
+#include "hamc_e2e.cu"
 
 
 #define RED "\033[0;31m"
@@ -129,7 +130,7 @@ int main(int argc, char *argv[]) {
     }
     else if (!strcmp(action, (const char*)"decrypt")) {
         if (cpu) run_decryption_cpu(inputFileName, outputFileName, n, p, t, w, seed);
-        else run_decryption_gpu(outputFileName, n, p, t, w, seed);
+        //else decrypt_gpu(outputFileName, n, p, t, w, seed);
     }
     else if (test) {
         if (cpu) test_cpu_e2e(n, p, t, w, seed);
