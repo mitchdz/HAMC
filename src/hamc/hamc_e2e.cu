@@ -89,8 +89,6 @@ void test_gpu_e2e(int n0, int p, int t, int w, int seed)
         / CLOCKS_PER_SEC;
 
 
-
-
     if (verbose) {
         /* display encrypted data */
         printf("encrypted data (message * public key + error):\n");
@@ -125,14 +123,16 @@ void test_gpu_e2e(int n0, int p, int t, int w, int seed)
     }
     delete_mceliece_cpu(crypt);
 
-
     printf("Time taken by individual phases:\n");
     printf("\tMcEliece init: %f - %.2f\%\n", mceliece_init_time_used, 100* (mceliece_init_time_used/cpu_time_used));
     //printf("\terror vector generation time: %f - %.2f\%\n",
     //        error_vector_time_used, 100* (error_vector_time_used/cpu_time_used));
-    printf("\tencryption: %f - %.2f\%\n", encrypt_time_used, 100*(encrypt_time_used/cpu_time_used));
-    printf("\tdecryption: %f - %.2f\%\n", decrypt_time_used, 100*(decrypt_time_used/cpu_time_used));
+    printf("\tencryption:    %f - %.2f\%\n", encrypt_time_used, 100*(encrypt_time_used/cpu_time_used));
+    printf("\tdecryption:    %f - %.2f\%\n", decrypt_time_used, 100*(decrypt_time_used/cpu_time_used));
 
+    free(v);
+    free(s);
+    free(msg);
 
     return;
 }

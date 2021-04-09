@@ -23,7 +23,7 @@ bin_matrix run_transpose_kernel(bin_matrix A)
     /* transfer host data to device */
     cudaMemcpy(deviceA, A->data, A->rows * A->cols * sizeof(ushort), cudaMemcpyHostToDevice);
 
-    printf("Starting multiply matrix kernel...\n");
+    printf("Starting Transpose matrix kernel...\n");
 
      /* determine block and grid dimensions */
     dim3 DimBlock(TRANSPOSE_TILE_WIDTH, TRANSPOSE_TILE_WIDTH, 1);
@@ -45,11 +45,6 @@ bin_matrix run_transpose_kernel(bin_matrix A)
     return C;
 }
 
-// This kernel is optimized to ensure all global reads and writes are coalesced,
-// and to avoid bank conflicts in shared memory.  This kernel is up to 11x faster
-// than the naive kernel below.  Note that the shared memory array is sized to
-// (BLOCK_DIM+1)*BLOCK_DIM.  This pads each row of the 2D block in shared memory
-// so that bank conflicts do not occur when threads address the array column-wise.
 __global__ void transpose_no_bank_conflicts(ushort *idata, ushort *odata, int width, int height)
 {
     __shared__ float block[BLOCK_DIM][BLOCK_DIM+1];
@@ -76,8 +71,6 @@ __global__ void transpose_no_bank_conflicts(ushort *idata, ushort *odata, int wi
 }
 
 
-// This naive transpose kernel suffers from completely non-coalesced writes.
-// It can be up to 10x slower than the kernel above for large matrices.
 __global__ void transpose_naive(ushort *idata, ushort* odata, int width, int height)
 {
    int xIndex = blockDim.x * blockIdx.x + threadIdx.x;
