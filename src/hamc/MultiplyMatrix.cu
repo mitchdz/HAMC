@@ -4,21 +4,21 @@
 
 #include <stdio.h>
 //#include <iostream>
+#include "hamc_common.h"
 
 #define TILE_WIDTH 16
-#define ushort unsigned short
 
-__global__ void mult_kernel(ushort *A, ushort *B, ushort *C, int rowA, int rowB, int colA, int colB)
+__global__ void mult_kernel(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB)
 {
-    __shared__ ushort sharedA[TILE_WIDTH * TILE_WIDTH];
-    __shared__ ushort sharedB[TILE_WIDTH * TILE_WIDTH];
+    __shared__ HAMC_DATA_TYPE_t sharedA[TILE_WIDTH * TILE_WIDTH];
+    __shared__ HAMC_DATA_TYPE_t sharedB[TILE_WIDTH * TILE_WIDTH];
     //printf("test");
     int Row = blockIdx.y * TILE_WIDTH + threadIdx.y;
     int Col = blockIdx.x * TILE_WIDTH + threadIdx.x;
     int tid = threadIdx.y * TILE_WIDTH + threadIdx.x;
     int tilePos = 0;
 
-    ushort pValue = 0;
+    HAMC_DATA_TYPE_t pValue = 0;
   
     for(int i = 0; (i < ((colA - 1)/TILE_WIDTH) + 1) && (i < ((rowB - 1)/TILE_WIDTH) + 1); i++){
         tilePos = i * TILE_WIDTH;
@@ -58,12 +58,12 @@ __global__ void mult_kernel(ushort *A, ushort *B, ushort *C, int rowA, int rowB,
         C[Row * colB + Col] = pValue;
     }
     
-    /*__shared__ ushort sharedA[TILE_WIDTH * TILE_WIDTH];
-    __shared__ ushort sharedB[TILE_WIDTH * TILE_WIDTH];
+    /*__shared__ HAMC_DATA_TYPE_t sharedA[TILE_WIDTH * TILE_WIDTH];
+    __shared__ HAMC_DATA_TYPE_t sharedB[TILE_WIDTH * TILE_WIDTH];
     
     int tilePos = 0;
 
-    ushort pValue = 0;
+    HAMC_DATA_TYPE_t pValue = 0;
   
     for(int i = 0; ; i++){
         tilePos = i * TILE_WIDTH;

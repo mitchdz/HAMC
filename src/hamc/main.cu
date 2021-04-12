@@ -8,6 +8,8 @@
 
 #include "hamc_cpu_code.c"
 
+
+#include "hamc_common.h"
 #include "decrypt.cu"
 #include "encrypt.cu"
 #include "keygen.cu"
@@ -54,12 +56,16 @@ int main(int argc, char *argv[]) {
     /* determines whether to run CPU based implementation */
     bool cpu = false;
 
+    bool verbose = false;
 
     int c;
     opterr = 0;
-    while ((c = getopt (argc, argv, "a:n:p:w:t:i:o:hs:cs:")) != -1)
+    while ((c = getopt (argc, argv, "a:n:p:w:t:i:o:hs:cs:vz")) != -1)
         switch(c)
         {
+            case 'v':
+                verbose = true;
+                break;
             case 'c':
                 cpu = true;
                 break;
@@ -117,8 +123,6 @@ int main(int argc, char *argv[]) {
     printf("\tk: %s%d%s\n", YELLOW, k, NC);
     printf("\tseed: %s%d%s\n", YELLOW, seed, NC);
     printf("\taction: %s%s%s\n", YELLOW, action, NC);
-
-
     //TODO: make sure action is null-terminated before passing into strcmp
     if (!strcmp(action, (const char*)"keygen")) {
         if (cpu) run_keygen_cpu(outputFileName, n, p, t, w, seed);
@@ -134,7 +138,7 @@ int main(int argc, char *argv[]) {
     }
     else if (test) {
         if (cpu) test_cpu_e2e(n, p, t, w, seed);
-        else test_gpu_e2e(n, p, t, w, seed);
+        else test_gpu_e2e(n, p, t, w, seed, verbose);
     }
     else {
         printf("action %s not recognized\n", action);

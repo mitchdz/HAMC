@@ -4,21 +4,21 @@
 #include "wb.h"
 #include "MatrixAdd_cpu.c"
 
-#define ushort unsigned short
+#define HAMC_DATA_TYPE_t HAMC_DATA_TYPE_t
 
 static char *base_dir;
 
-static ushort *generate_data(int height, int width) {
-  ushort *data = (ushort *)malloc(sizeof(ushort) * width * height);
+static HAMC_DATA_TYPE_t *generate_data(int height, int width) {
+  HAMC_DATA_TYPE_t *data = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * width * height);
   int i;
   for (i = 0; i < width * height; i++) {
-    //data[i] = ((ushort)(rand() % 20) - 5) / 5.0f;
-    data[i] = (ushort)(rand() % 2);
+    //data[i] = ((HAMC_DATA_TYPE_t)(rand() % 20) - 5) / 5.0f;
+    data[i] = (HAMC_DATA_TYPE_t)(rand() % 2);
   }
   return data;
 }
 
-static void write_data(char *file_name, ushort *data, int height,
+static void write_data(char *file_name, HAMC_DATA_TYPE_t *data, int height,
                        int width) {
   int ii, jj;
   FILE *handle = fopen(file_name, "w");
@@ -48,8 +48,8 @@ static void create_dataset(int datasetNum, int numARows, int numACols) {
     char *input0_file_name = wbPath_join(dir_name, "input.raw");
     char *output_file_name = wbPath_join(dir_name, "output.raw");
 
-    ushort *input_data = generate_data(numARows, numACols);
-    ushort *output_data = (ushort *)calloc(sizeof(ushort), numBRows * numBCols);
+    HAMC_DATA_TYPE_t *input_data = generate_data(numARows, numACols);
+    HAMC_DATA_TYPE_t *output_data = (HAMC_DATA_TYPE_t *)calloc(sizeof(HAMC_DATA_TYPE_t), numBRows * numBCols);
 
     matrix_rref(input_data, output_data, numARows, numACols);
 

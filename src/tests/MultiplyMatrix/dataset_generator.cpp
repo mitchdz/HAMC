@@ -4,11 +4,9 @@
 #include "wb.h"
 #include "../../hamc/hamc_cpu_code.c"
 
-#define ushort unsigned short
-
 static char *base_dir;
 
-static void compute(ushort *output, ushort *input0, ushort *input1, int numARows, int numACols, int numBRows, int numBCols, int numCRows, int numCCols)
+static void compute(HAMC_DATA_TYPE_t *output, HAMC_DATA_TYPE_t *input0, HAMC_DATA_TYPE_t *input1, int numARows, int numACols, int numBRows, int numBCols, int numCRows, int numCCols)
 {
     bin_matrix A = mat_init_cpu(numARows, numACols);
     bin_matrix B = mat_init_cpu(numBRows, numBCols);
@@ -27,17 +25,17 @@ static void compute(ushort *output, ushort *input0, ushort *input1, int numARows
     free(C);
 }
 
-static ushort *generate_data(int height, int width)
+static HAMC_DATA_TYPE_t *generate_data(int height, int width)
 {
-    ushort *data = (ushort *)malloc(sizeof(ushort) * width * height);
+    HAMC_DATA_TYPE_t *data = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * width * height);
     int i;
     for (i = 0; i < width * height; i++) {
-        data[i] = (ushort)(rand() % 2);
+        data[i] = (HAMC_DATA_TYPE_t)(rand() % 2);
     }
     return data;
 }
 
-static void write_data(char *file_name, ushort *data, int height, int width)
+static void write_data(char *file_name, HAMC_DATA_TYPE_t *data, int height, int width)
 {
     int ii, jj;
     FILE *handle = fopen(file_name, "w");
@@ -69,9 +67,9 @@ static void create_dataset(int datasetNum, int numARows, int numACols, int numBC
     char *input1_file_name = wbPath_join(dir_name, "input1.raw");
     char *output_file_name = wbPath_join(dir_name, "output.raw");
 
-    ushort *input0_data = generate_data(numARows, numACols);
-    ushort *input1_data = generate_data(numBRows, numBCols);
-    ushort *output_data = (ushort *)calloc(sizeof(ushort), numCRows * numCCols);
+    HAMC_DATA_TYPE_t *input0_data = generate_data(numARows, numACols);
+    HAMC_DATA_TYPE_t *input1_data = generate_data(numBRows, numBCols);
+    HAMC_DATA_TYPE_t *output_data = (HAMC_DATA_TYPE_t *)calloc(sizeof(HAMC_DATA_TYPE_t), numCRows * numCCols);
 
     compute(output_data, input0_data, input1_data, numARows, numACols, numBRows, numBCols, numCRows, numCCols);
     

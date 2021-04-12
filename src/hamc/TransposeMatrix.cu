@@ -6,8 +6,8 @@
 #define TRANSPOSE_TILE_WIDTH 16
 #include "hamc_cpu_code.c"
 
-__global__ void transpose_no_bank_conflicts(ushort *idata, ushort *odata, int width, int height);
-__global__ void transpose_naive(ushort *idata, ushort* odata, int width, int height);
+__global__ void transpose_no_bank_conflicts(HAMC_DATA_TYPE_t *idata, HAMC_DATA_TYPE_t *odata, int width, int height);
+__global__ void transpose_naive(HAMC_DATA_TYPE_t *idata, HAMC_DATA_TYPE_t* odata, int width, int height);
 
 bin_matrix run_transpose_kernel(bin_matrix A)
 {
@@ -15,13 +15,13 @@ bin_matrix run_transpose_kernel(bin_matrix A)
     bin_matrix C = mat_init_cpu(A->cols, A->rows);
 
     /* allocate device memory */
-    ushort *deviceA;
-    ushort *deviceB;
-    cudaMalloc((void **) &deviceA, A->rows * A->cols * sizeof(ushort));
-    cudaMalloc((void **) &deviceB, A->rows * A->cols * sizeof(ushort));
+    HAMC_DATA_TYPE_t *deviceA;
+    HAMC_DATA_TYPE_t *deviceB;
+    cudaMalloc((void **) &deviceA, A->rows * A->cols * sizeof(HAMC_DATA_TYPE_t));
+    cudaMalloc((void **) &deviceB, A->rows * A->cols * sizeof(HAMC_DATA_TYPE_t));
 
     /* transfer host data to device */
-    cudaMemcpy(deviceA, A->data, A->rows * A->cols * sizeof(ushort), cudaMemcpyHostToDevice);
+    cudaMemcpy(deviceA, A->data, A->rows * A->cols * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyHostToDevice);
 
     printf("Starting Transpose matrix kernel...\n");
 
@@ -37,7 +37,7 @@ bin_matrix run_transpose_kernel(bin_matrix A)
     if (cudaerr != cudaSuccess)
         printf("kernel launch failed with error \"%s\".\n", cudaGetErrorString(cudaerr));
 
-    cudaMemcpy(C->data, deviceB, A->rows * A->cols * sizeof(ushort), cudaMemcpyDeviceToHost);
+    cudaMemcpy(C->data, deviceB, A->rows * A->cols * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyDeviceToHost);
 
     cudaFree(deviceA);
     cudaFree(deviceB);
@@ -45,7 +45,7 @@ bin_matrix run_transpose_kernel(bin_matrix A)
     return C;
 }
 
-__global__ void transpose_no_bank_conflicts(ushort *idata, ushort *odata, int width, int height)
+__global__ void transpose_no_bank_conflicts(HAMC_DATA_TYPE_t *idata, HAMC_DATA_TYPE_t *odata, int width, int height)
 {
     __shared__ float block[BLOCK_DIM][BLOCK_DIM+1];
 
@@ -71,7 +71,7 @@ __global__ void transpose_no_bank_conflicts(ushort *idata, ushort *odata, int wi
 }
 
 
-__global__ void transpose_naive(ushort *idata, ushort* odata, int width, int height)
+__global__ void transpose_naive(HAMC_DATA_TYPE_t *idata, HAMC_DATA_TYPE_t* odata, int width, int height)
 {
    int xIndex = blockDim.x * blockIdx.x + threadIdx.x;
    int yIndex = blockDim.y * blockIdx.y + threadIdx.y;

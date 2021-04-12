@@ -11,7 +11,6 @@
 #include "../../hamc/MultiplyMatrix.cu"
 
 #define TILE_WIDTH 16
-#define ushort unsigned short
 
 #define CUDA_CHECK(ans)                                                   \
   { gpuAssert((ans), __FILE__, __LINE__); }
@@ -48,9 +47,9 @@ bin_matrix run_kernel(bin_matrix A, bin_matrix B)
         exit(0);
     }
 
-    ushort *deviceA;
-    ushort *deviceB;
-    ushort *deviceC;
+    HAMC_DATA_TYPE_t *deviceA;
+    HAMC_DATA_TYPE_t *deviceB;
+    HAMC_DATA_TYPE_t *deviceC;
     /* int *deviceA;
     int *deviceB;
     int *deviceC; */
@@ -66,15 +65,15 @@ bin_matrix run_kernel(bin_matrix A, bin_matrix B)
         tempB[i] = (int)B->data[i];
     } */
     
-    cudaMalloc((void **) &deviceA, A->cols * A->rows * sizeof(ushort));
-    cudaMalloc((void **) &deviceB, B->cols * B->rows * sizeof(ushort));
-    cudaMalloc((void **) &deviceC, B->cols * A->rows * sizeof(ushort));
+    cudaMalloc((void **) &deviceA, A->cols * A->rows * sizeof(HAMC_DATA_TYPE_t));
+    cudaMalloc((void **) &deviceB, B->cols * B->rows * sizeof(HAMC_DATA_TYPE_t));
+    cudaMalloc((void **) &deviceC, B->cols * A->rows * sizeof(HAMC_DATA_TYPE_t));
     /* cudaMalloc((void **) &deviceA, A->cols * A->rows * sizeof(int));
     cudaMalloc((void **) &deviceB, B->cols * B->rows * sizeof(int));
     cudaMalloc((void **) &deviceC, B->cols * A->rows * sizeof(int)); */
     
-    cudaMemcpy(deviceA, A->data, A->cols * A->rows * sizeof(ushort), cudaMemcpyHostToDevice);
-    cudaMemcpy(deviceB, B->data, B->cols * B->rows * sizeof(ushort), cudaMemcpyHostToDevice);
+    cudaMemcpy(deviceA, A->data, A->cols * A->rows * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyHostToDevice);
+    cudaMemcpy(deviceB, B->data, B->cols * B->rows * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyHostToDevice);
     /* cudaMemcpy(deviceA, tempA, A->cols * A->rows * sizeof(int), cudaMemcpyHostToDevice);
     cudaMemcpy(deviceB, tempB, B->cols * B->rows * sizeof(int), cudaMemcpyHostToDevice); */
     
@@ -89,11 +88,11 @@ bin_matrix run_kernel(bin_matrix A, bin_matrix B)
     if (cudaerr != cudaSuccess)
         printf("kernel launch failed with error \"%s\".\n", cudaGetErrorString(cudaerr));
     
-    cudaMemcpy(C->data, deviceC, C->cols * C->rows * sizeof(ushort), cudaMemcpyDeviceToHost);
+    cudaMemcpy(C->data, deviceC, C->cols * C->rows * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyDeviceToHost);
     //cudaMemcpy(tempC, deviceC, C->cols * C->rows * sizeof(int), cudaMemcpyDeviceToHost);
     
     /* for(int i = 0; i < C->rows * C->cols; i++){
-        C->data[i] = (ushort)tempC[i];
+        C->data[i] = (HAMC_DATA_TYPE_t)tempC[i];
     } */
     
     /* std::cout << "C->data";
@@ -122,9 +121,9 @@ int main(int argc, char *argv[])
     int numColsB;
     int numRowsS;
     int numColsS;
-    ushort *hostA;
-    ushort *hostB;
-    ushort *sol;
+    HAMC_DATA_TYPE_t *hostA;
+    HAMC_DATA_TYPE_t *hostB;
+    HAMC_DATA_TYPE_t *sol;
     char *input0;
     char *input1;
     char *expected;
@@ -156,25 +155,25 @@ int main(int argc, char *argv[])
         }
     }
     float *floatTemp = (float *)wbImport(input0, &numRowsA, &numColsA);
-    hostA = (ushort *)malloc(numRowsA*numColsA * sizeof(ushort));
+    hostA = (HAMC_DATA_TYPE_t *)malloc(numRowsA*numColsA * sizeof(HAMC_DATA_TYPE_t));
     for(int i = 0; i < numColsA * numRowsA; i++){
-        hostA[i] = (ushort)floatTemp[i];
+        hostA[i] = (HAMC_DATA_TYPE_t)floatTemp[i];
     }
     A = mat_init_cpu(numRowsA, numColsA);
     A->data = hostA;
     
     floatTemp = (float *)wbImport(input1, &numRowsB, &numColsB);
-    hostB = (ushort *)malloc(numRowsB*numColsB * sizeof(ushort));
+    hostB = (HAMC_DATA_TYPE_t *)malloc(numRowsB*numColsB * sizeof(HAMC_DATA_TYPE_t));
     for(int i = 0; i < numColsB * numRowsB; i++){
-        hostB[i] = (ushort)floatTemp[i];
+        hostB[i] = (HAMC_DATA_TYPE_t)floatTemp[i];
     }    
     B = mat_init_cpu(numRowsB, numColsB);
     B->data = hostB;
     
     floatTemp = (float *)wbImport(expected, &numRowsS, &numColsS);
-    sol = (ushort *)malloc(numRowsS*numColsS * sizeof(ushort));
+    sol = (HAMC_DATA_TYPE_t *)malloc(numRowsS*numColsS * sizeof(HAMC_DATA_TYPE_t));
     for(int i = 0; i < numColsB * numRowsB; i++){
-        sol[i] = (ushort)floatTemp[i];
+        sol[i] = (HAMC_DATA_TYPE_t)floatTemp[i];
     }    
     //std::cout << "A->cols: " << A->cols << " B->rows: " << B->rows << std::endl;
     /* std::cout << "A->data";

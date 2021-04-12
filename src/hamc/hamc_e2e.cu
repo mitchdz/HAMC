@@ -6,11 +6,11 @@
 #include "hamc_cpu_code.c"
 #include "mceliece.cu"
 #include "decrypt.cu"
+#include "hamc_common.h"
 
 
-void test_gpu_e2e(int n0, int p, int t, int w, int seed)
+void test_gpu_e2e(int n0, int p, int t, int w, int seed, bool verbose)
 {
-    bool verbose = true;
 
     printf("GPU based mceliece cryptosystem test\n");
 
@@ -107,11 +107,12 @@ void test_gpu_e2e(int n0, int p, int t, int w, int seed)
         / CLOCKS_PER_SEC;
 
 
-
-    printf("decrypted data:\n");
-    for (int i = 0; i < s->cols; i++)
-        printf("%hu", s->data[i]);
-    printf("\n");
+    if (verbose) {
+        printf("decrypted data:\n");
+        for (int i = 0; i < s->cols; i++)
+            printf("%hu", s->data[i]);
+        printf("\n");
+    }
 
     end = clock();
     cpu_time_used = ((double) (end - start))/ CLOCKS_PER_SEC;

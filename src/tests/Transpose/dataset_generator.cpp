@@ -6,12 +6,11 @@
 #include <stdio.h>
 #include "wb.h"
 #include "../../hamc/hamc_cpu_code.c"
-
-#define ushort unsigned short
+#include "../../hamc/hamc_common.h"
 
 static char *base_dir;
 
-static void compute(ushort *output, ushort *input0, int numARows, int numACols)
+static void compute(HAMC_DATA_TYPE_t *output, HAMC_DATA_TYPE_t *input0, int numARows, int numACols)
 {
     bin_matrix A = mat_init_cpu(numARows, numACols);
 
@@ -25,17 +24,17 @@ static void compute(ushort *output, ushort *input0, int numARows, int numACols)
     free(A);
 }
 
-static ushort *generate_data(int height, int width)
+static HAMC_DATA_TYPE_t *generate_data(int height, int width)
 {
-    ushort *data = (ushort *)malloc(sizeof(ushort) * width * height);
+    HAMC_DATA_TYPE_t *data = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * width * height);
     int i;
     for (i = 0; i < width * height; i++) {
-        data[i] = (ushort)(rand() % 2); // 0 or 1
+        data[i] = (HAMC_DATA_TYPE_t)(rand() % 2); // 0 or 1
     }
     return data;
 }
 
-static void write_data(char *file_name, ushort *data, int height, int width)
+static void write_data(char *file_name, HAMC_DATA_TYPE_t *data, int height, int width)
 {
     int ii, jj;
     FILE *handle = fopen(file_name, "w");
@@ -63,8 +62,8 @@ static void create_dataset(int datasetNum, int numARows, int numACols)
     char *input0_file_name = wbPath_join(dir_name, "input0.raw");
     char *output_file_name = wbPath_join(dir_name, "output.raw");
 
-    ushort *input0_data = generate_data(numARows, numACols);
-    ushort *output_data = (ushort *)calloc(sizeof(ushort), numARows * numACols);
+    HAMC_DATA_TYPE_t *input0_data = generate_data(numARows, numACols);
+    HAMC_DATA_TYPE_t *output_data = (HAMC_DATA_TYPE_t *)calloc(sizeof(HAMC_DATA_TYPE_t), numARows * numACols);
 
     compute(output_data, input0_data, numARows, numACols);
 
