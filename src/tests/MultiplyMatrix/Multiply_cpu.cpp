@@ -1,4 +1,4 @@
-#define ushort unsigned short
+#define HAMC_DATA_TYPE_t HAMC_DATA_TYPE_t
 
 #define mat_element(mat, row_idx, col_idx) \
     mat->data[row_idx * (mat->cols) + col_idx]
@@ -7,7 +7,7 @@ typedef struct matrix
 {
    int rows;             //number of rows.
    int cols;             //number of columns.
-   ushort *data;
+   HAMC_DATA_TYPE_t *data;
 }*bin_matrix;
 
 void* safe_malloc(size_t n)
@@ -29,7 +29,7 @@ bin_matrix mat_init(int rows, int cols){
 	A = (bin_matrix)safe_malloc(sizeof(struct matrix));
 	A->cols = cols;
 	A->rows = rows; 
-	A->data = (ushort *)safe_malloc(rows*cols*sizeof(ushort)); 
+	A->data = (HAMC_DATA_TYPE_t *)safe_malloc(rows*cols*sizeof(HAMC_DATA_TYPE_t)); 
 	return A;
 }
 
@@ -57,7 +57,7 @@ bin_matrix mult_matrix(bin_matrix A, bin_matrix B)
 
     for(int i = 0; i < A->rows; i++){
         for(int j = 0; j < B->cols; j++){
-            unsigned short val = 0;
+            HAMC_DATA_TYPE_t val = 0;
             for(int k = 0; k < B->rows; k++){
                 val = (val ^ (mat_element(A, i, k) & mat_element(B_temp, j, k)));
             }

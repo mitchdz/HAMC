@@ -9,12 +9,12 @@
 #include <time.h>
 
 #include "../../hamc/hamc_cpu_code.c"
+#include "../../hamc/hamc_common.h"
 #include "../../hamc/TransposeMatrix.cu"
 
 #define TILE_WIDTH 16
 #define BLOCK_DIM 16
 #define BLOCK_SIZE 16
-#define ushort unsigned short
 
 #define TILE_DIM 16
 #define BLOCK_ROWS 8
@@ -41,12 +41,12 @@ void printHelp()
     printf("\t  run CPU based execution\n");
 }
 
-static ushort *generate_data(int height, int width)
+static HAMC_DATA_TYPE_t *generate_data(int height, int width)
 {
-    ushort *data = (ushort *)malloc(sizeof(ushort) * width * height);
+    HAMC_DATA_TYPE_t *data = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * width * height);
     int i;
     for (i = 0; i < width * height; i++) {
-        data[i] = (ushort)(rand() % 2); // 0 or 1
+        data[i] = (HAMC_DATA_TYPE_t)(rand() % 2); // 0 or 1
     }
     return data;
 }
@@ -57,7 +57,7 @@ void run_test(int x, int y)
     clock_t start, end;
     double cpu_time_used;
 
-    ushort *raw_data = (ushort *)malloc(sizeof(ushort) * x * y);
+    HAMC_DATA_TYPE_t *raw_data = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * x * y);
     raw_data = generate_data(x, y);
 
     bin_matrix input = mat_init_cpu(x,y);
@@ -100,8 +100,8 @@ int main(int argc, char *argv[])
     int numColsA;
     int numRowsS;
     int numColsS;
-    ushort *hostA;
-    ushort *sol;
+    HAMC_DATA_TYPE_t *hostA;
+    HAMC_DATA_TYPE_t *sol;
     char *input0 = NULL;
     char *expected = NULL;
     bool cpu_exec = false;
@@ -157,18 +157,18 @@ int main(int argc, char *argv[])
 
     printf("Reading input file...\n");
     float *floatTemp = (float *)wbImport(input0, &numRowsA, &numColsA);
-    hostA = (ushort *)malloc(numRowsA*numColsA * sizeof(ushort));
+    hostA = (HAMC_DATA_TYPE_t *)malloc(numRowsA*numColsA * sizeof(HAMC_DATA_TYPE_t));
     for(int i = 0; i < numColsA * numRowsA; i++){
-        hostA[i] = (ushort)floatTemp[i];
+        hostA[i] = (HAMC_DATA_TYPE_t)floatTemp[i];
     }
     A = mat_init_cpu(numRowsA, numColsA);
     A->data = hostA;
 
     printf("Reading Solution file...\n");
     float *floatTemp2 = (float *)wbImport(expected, &numRowsS, &numColsS);
-    sol = (ushort *)malloc(numRowsS*numColsS * sizeof(ushort));
+    sol = (HAMC_DATA_TYPE_t *)malloc(numRowsS*numColsS * sizeof(HAMC_DATA_TYPE_t));
     for(int i = 0; i < numColsS * numRowsS; i++){
-        sol[i] = (ushort)floatTemp2[i];
+        sol[i] = (HAMC_DATA_TYPE_t)floatTemp2[i];
     }
 
 

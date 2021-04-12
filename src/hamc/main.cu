@@ -8,6 +8,8 @@
 
 #include "hamc_cpu_code.c"
 
+
+#include "hamc_common.h"
 #include "decrypt.cu"
 #include "encrypt.cu"
 #include "keygen.cu"

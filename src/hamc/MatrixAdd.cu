@@ -1,8 +1,8 @@
 //#include <wb.h>
 //
-//#define ushort unsigned short
+//#define HAMC_DATA_TYPE_t HAMC_DATA_TYPE_t
 //
-//__global__ void MatrixAdd(ushort *A, ushort *B, ushort *C,
+//__global__ void MatrixAdd(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C,
 //                                     int height, int width,) {
 //        int ROW = blockIdx.y*blockDim.y + threadIdx.y;
 //	

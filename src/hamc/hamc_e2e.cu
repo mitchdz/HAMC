@@ -6,6 +6,7 @@
 #include "hamc_cpu_code.c"
 #include "mceliece.cu"
 #include "decrypt.cu"
+#include "hamc_common.h"
 
 
 void test_gpu_e2e(int n0, int p, int t, int w, int seed, bool verbose)

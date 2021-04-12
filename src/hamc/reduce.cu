@@ -52,7 +52,7 @@ int run_reduction_gpu(int *input, int len, int* version)
     if (cudaerr != cudaSuccess)
         printf("kernel launch failed with error \"%s\".\n", cudaGetErrorString(cudaerr));
 
-    //cudaMemcpy(C->data, deviceB, A->rows * A->cols * sizeof(ushort), cudaMemcpyDeviceToHost);
+    //cudaMemcpy(C->data, deviceB, A->rows * A->cols * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyDeviceToHost);
 
     cudaFree(deviceA);
 

@@ -3,6 +3,7 @@
 #define HAMC_DECRYPT_H
 
 
+#include "hamc_common.h"
 #include "hamc_cpu_code.c"
 
 #include "MultiplyMatrix.cu"

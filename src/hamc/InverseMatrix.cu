@@ -1,5 +1,5 @@
-#ifndef ushort
-#define ushort unsigned short
+#ifndef HAMC_DATA_TYPE_t
+#define HAMC_DATA_TYPE_t HAMC_DATA_TYPE_t
 #endif
 
 #include "hamc_cpu_code.c"
@@ -24,10 +24,10 @@ __global__ void binary_gaussian_elimination_with_pivot()
 
 // uses shared memory
 // each thread handles a single column
-__global__ void binary_inverse_square_matrix_naive(ushort *in, ushort *out, int rows, int cols)
+__global__ void binary_inverse_square_matrix_naive(HAMC_DATA_TYPE_t *in, HAMC_DATA_TYPE_t *out, int rows, int cols)
 {
-    __shared__ ushort A[16];
-    __shared__ ushort B[16];
+    __shared__ HAMC_DATA_TYPE_t A[16];
+    __shared__ HAMC_DATA_TYPE_t B[16];
 
     int idx = threadIdx.x + blockIdx.x * blockDim.x;
     int idy = threadIdx.y + blockIdx.y * blockDim.y;
@@ -183,13 +183,13 @@ bin_matrix run_inverse_kernel(bin_matrix A)
     bin_matrix C = mat_init_cpu(A->rows, A->cols);
 
     /* allocate device memory */
-    ushort *deviceA;
-    ushort *deviceB;
-    cudaMalloc((void **) &deviceA, A->rows * A->cols * sizeof(ushort));
-    cudaMalloc((void **) &deviceB, A->rows * A->cols * sizeof(ushort));
+    HAMC_DATA_TYPE_t *deviceA;
+    HAMC_DATA_TYPE_t *deviceB;
+    cudaMalloc((void **) &deviceA, A->rows * A->cols * sizeof(HAMC_DATA_TYPE_t));
+    cudaMalloc((void **) &deviceB, A->rows * A->cols * sizeof(HAMC_DATA_TYPE_t));
 
     /* transfer host data to device */
-    cudaMemcpy(deviceA, A->data, A->rows * A->cols * sizeof(ushort), cudaMemcpyHostToDevice);
+    cudaMemcpy(deviceA, A->data, A->rows * A->cols * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyHostToDevice);
 
     printf("A from run_inverse_kernel:\n");
     for (int i =0; i < A->rows; i++) {
@@ -217,7 +217,7 @@ bin_matrix run_inverse_kernel(bin_matrix A)
     if (cudaerr != cudaSuccess)
         printf("kernel launch failed with error \"%s\".\n", cudaGetErrorString(cudaerr));
 
-    cudaMemcpy(C->data, deviceB, A->rows * A->cols * sizeof(ushort), cudaMemcpyDeviceToHost);
+    cudaMemcpy(C->data, deviceB, A->rows * A->cols * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyDeviceToHost);
 
     cudaFree(deviceA);
     cudaFree(deviceB);
