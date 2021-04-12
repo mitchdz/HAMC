@@ -43,7 +43,7 @@ bin_matrix mat_copy(bin_matrix A)
   int i;
 
   B = mat_init(A->rows, A->cols);
-  memcpy(B->data, A->data, (A->rows)*(A->cols)*(sizeof(unsigned short)));
+  memcpy(B->data, A->data, (A->rows)*(A->cols)*(sizeof(HAMC_DATA_TYPE_t)));
   return B;
 }
 
@@ -101,7 +101,7 @@ bin_matrix matrix_rref(bin_matrix A)
 //  mat[(row_idx * cols) + col_idx]
 //
 //
-//void swap(ushort *A, int row1, int row2, int rows, int cols)
+//void swap(HAMC_DATA_TYPE_t *A, int row1, int row2, int rows, int cols)
 //{
 //    int temp;
 //    for(int i = 0; i < cols; i++)
@@ -114,7 +114,7 @@ bin_matrix matrix_rref(bin_matrix A)
 //
 //
 //
-//void add_rows(ushort *A, int row1, int row2, int rows, int cols)
+//void add_rows(HAMC_DATA_TYPE_t *A, int row1, int row2, int rows, int cols)
 //{
 //  for(int i = 0; i < cols; i++)
 //  {
@@ -126,9 +126,9 @@ bin_matrix matrix_rref(bin_matrix A)
 //
 //
 ////Function to obtain the row reduced echlon form of a matrix A
-//void matrix_rref(ushort *A, ushort *B, int rows, int cols)
+//void matrix_rref(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, int rows, int cols)
 //{
-//  ushort *temp = (ushort *)calloc(sizeof(ushort), rows * cols);
+//  HAMC_DATA_TYPE_t *temp = (HAMC_DATA_TYPE_t *)calloc(sizeof(HAMC_DATA_TYPE_t), rows * cols);
 //  for (int i = 0; i < rows*cols;i++)
 //      temp[i] = A[i];
 //

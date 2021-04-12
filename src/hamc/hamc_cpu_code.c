@@ -1,19 +1,24 @@
+#ifndef HAMC_CPU_CODE_C
+#define HAMC_CPU_CODE_C
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
 #include <time.h>
 
+#include "hamc_common.h"
+
 typedef struct matrix
 {
     int rows;             //number of rows.
     int cols;             //number of columns.
-    unsigned short *data;
+    HAMC_DATA_TYPE_t *data;
 }*bin_matrix;
 
 typedef struct qc_mdpc
 {
-    unsigned short* row;
+    HAMC_DATA_TYPE_t* row;
     int n0, p, w, t, n, k, r;
 }*mdpc;
 
@@ -27,12 +32,9 @@ typedef struct mceliece
 #define mat_element(mat, row_idx, col_idx) \
       mat->data[row_idx * (mat->cols) + col_idx]
 
-#define ushort unsigned short
-
-
 /* function declarations */
 bin_matrix mat_init_cpu(int rows, int cols);
-void reset_row_cpu(unsigned short* row, int min, int max);
+void reset_row_cpu(HAMC_DATA_TYPE_t* row, int min, int max);
 bin_matrix get_error_vector_cpu(int len, int t);
 int random_val(int min, int max, unsigned seed);
 
@@ -42,12 +44,12 @@ mdpc qc_mdpc_init_cpu(int n0, int p, int w, int t, unsigned seed);
 
 /* matrix function declarations */
 bin_matrix generator_matrix_cpu(mdpc code);
-void set_matrix_element_cpu(bin_matrix A, int row_idx, int col_idx, unsigned short val);
-unsigned short get_matrix_element_cpu(bin_matrix mat, int row_idx, int col_idx);
+void set_matrix_element_cpu(bin_matrix A, int row_idx, int col_idx, HAMC_DATA_TYPE_t val);
+HAMC_DATA_TYPE_t get_matrix_element_cpu(bin_matrix mat, int row_idx, int col_idx);
 bin_matrix parity_check_matrix_cpu(mdpc code);
 bin_matrix concat_vertical_cpu(bin_matrix A, bin_matrix B);
 bin_matrix concat_horizontal_cpu(bin_matrix A, bin_matrix B);
-void set_matrix_row_cpu(bin_matrix A, int row, unsigned short* vec);
+void set_matrix_row_cpu(bin_matrix A, int row, HAMC_DATA_TYPE_t* vec);
 bin_matrix matrix_mult_cpu(bin_matrix A, bin_matrix B);
 bin_matrix add_matrix_cpu(bin_matrix A, bin_matrix B);
 bin_matrix transpose_cpu(bin_matrix A);
@@ -60,7 +62,7 @@ int get_max_cpu(int* vec, int len);
 
 
 //Set the value of matix element at position given by the indices to "val"
-void set_matrix_element_cpu(bin_matrix A, int row_idx, int col_idx, unsigned short val)
+void set_matrix_element_cpu(bin_matrix A, int row_idx, int col_idx, HAMC_DATA_TYPE_t val)
 {
   if(row_idx < 0 || row_idx >= A->rows || col_idx < 0 || col_idx >= A->cols)
   {
@@ -72,7 +74,7 @@ void set_matrix_element_cpu(bin_matrix A, int row_idx, int col_idx, unsigned sho
 
 
 //Reset all positions in the row to 0
-void reset_row_cpu(unsigned short* row, int min, int max)
+void reset_row_cpu(HAMC_DATA_TYPE_t* row, int min, int max)
 {
     int i;
     for(i = min; i < max + 1; i++) {
@@ -106,7 +108,7 @@ mcc mceliece_init_cpu(int n0, int p, int w, int t, unsigned seed)
     return crypt;
 }
 //Return the matrix element at position given by the indices
-unsigned short get_matrix_element_cpu(bin_matrix mat, int row_idx, int col_idx)
+HAMC_DATA_TYPE_t get_matrix_element_cpu(bin_matrix mat, int row_idx, int col_idx)
 {
     if(row_idx < 0 || row_idx >= mat->rows || col_idx < 0 || col_idx >= mat->cols) {
         printf("Matrix index out of range\n");
@@ -173,9 +175,9 @@ void* safe_malloc(size_t n)
     return p;
 }
 //Rotate the row x positions to the right
-unsigned short* shift_cpu(unsigned short* row, int x, int len)
+HAMC_DATA_TYPE_t* shift_cpu(HAMC_DATA_TYPE_t* row, int x, int len)
 {
-    unsigned short* temp = (unsigned short*)calloc(len, sizeof(unsigned short));
+    HAMC_DATA_TYPE_t* temp = (HAMC_DATA_TYPE_t*)calloc(len, sizeof(HAMC_DATA_TYPE_t));
     int i;
     for(i = 0; i < len; i++)
     {
@@ -186,7 +188,7 @@ unsigned short* shift_cpu(unsigned short* row, int x, int len)
 
 
 //Set the indicated row of the matrix A equal to the vector vec
-void set_matrix_row_cpu(bin_matrix A, int row, unsigned short* vec)
+void set_matrix_row_cpu(bin_matrix A, int row, HAMC_DATA_TYPE_t* vec)
 {
     if(row < 0 || row >= A->rows) {
         printf("Row index out of range\n");
@@ -198,7 +200,7 @@ void set_matrix_row_cpu(bin_matrix A, int row, unsigned short* vec)
 }
 
 //Create a binary circular matrix
-bin_matrix make_matrix_cpu(int rows, int cols, unsigned short* vec, int x)
+bin_matrix make_matrix_cpu(int rows, int cols, HAMC_DATA_TYPE_t* vec, int x)
 {
     bin_matrix mat = mat_init_cpu(rows, cols);
     set_matrix_row_cpu(mat, 0, vec);
@@ -212,9 +214,9 @@ bin_matrix make_matrix_cpu(int rows, int cols, unsigned short* vec, int x)
 }
 
 //Splice the row for the given range (does not include max)
-ushort* splice_cpu(ushort* row, int min, int max)
+HAMC_DATA_TYPE_t* splice_cpu(HAMC_DATA_TYPE_t* row, int min, int max)
 {
-    ushort* temp = (ushort*)calloc(max - min, sizeof(ushort));
+    HAMC_DATA_TYPE_t* temp = (HAMC_DATA_TYPE_t*)calloc(max - min, sizeof(HAMC_DATA_TYPE_t));
     int i;
     for(i = min; i < max; i++)
     {
@@ -273,7 +275,7 @@ bin_matrix matrix_mult_cpu(bin_matrix A, bin_matrix B)
 
     for(int i = 0; i < A->rows; i++) {
         for(int j = 0  ; j < B->cols; j++) {
-            unsigned short val = 0;
+            HAMC_DATA_TYPE_t val = 0;
             for(int k = 0; k < B->rows; k++) {
                 val = (val ^ (mat_element(A, i, k) & mat_element(B_temp, j, k)));
             }
@@ -322,7 +324,7 @@ bin_matrix generator_matrix_cpu(mdpc code)
 }
 
 //Return the weight of the given row from the indices min to max
-int get_row_weight(unsigned short* row, int min, int max)
+int get_row_weight(HAMC_DATA_TYPE_t* row, int min, int max)
 {
     int weight = 0;
     int i;
@@ -347,7 +349,7 @@ mdpc qc_mdpc_init_cpu(int n0, int p, int w, int t, unsigned seed)
     code->r = p;
     code->k = (n0 - 1) * p;
     //unsigned seed;
-    code->row = (unsigned short*)calloc(n0 * p, sizeof(unsigned short));
+    code->row = (HAMC_DATA_TYPE_t*)calloc(n0 * p, sizeof(HAMC_DATA_TYPE_t));
     //printf("Input seed or -1 to use default seed: ");
     //scanf("%u", &seed);
     time_t tx;
@@ -460,7 +462,7 @@ bin_matrix mat_init_cpu(int rows, int cols)
     A = (bin_matrix)safe_malloc(sizeof(struct matrix));
     A->cols = cols;
     A->rows = rows;
-    A->data = (unsigned short *)safe_malloc(rows*cols*sizeof(unsigned short));
+    A->data = (HAMC_DATA_TYPE_t *)safe_malloc(rows*cols*sizeof(HAMC_DATA_TYPE_t));
     return A;
 }
 
@@ -579,7 +581,7 @@ int get_max_cpu(int* vec, int len)
     }
     return max;
 }
-
+ 
 //Decoding the codeword
 bin_matrix decode_cpu(bin_matrix word, mdpc code)
 {
@@ -714,7 +716,7 @@ void run_decryption_cpu(const char* inputFileName, const char* outputFileName,
     msg = mat_init_cpu(1, k);
     for(int i = 0; i < k; i++) {
         set_matrix_element_cpu(msg, 0, i,
-                (unsigned short)strtoul(input_message, NULL, 0));
+                (HAMC_DATA_TYPE_t)strtoul(input_message, NULL, 0));
     }
 
     /* run CPU based execution code */
@@ -819,13 +821,13 @@ void run_encryption_cpu(const char* inputFileName, const char* outputFileName,
     msg = mat_init_cpu(1, k);
     for(int i = 0; i < k; i++) {
         set_matrix_element_cpu(msg, 0, i,
-                (unsigned short)strtoul(input_message, NULL, 0));
+                (HAMC_DATA_TYPE_t)strtoul(input_message, NULL, 0));
     }
 
     printf("\n");
     /* run CPU based encryption code */
     m = encrypt_cpu(msg, crypt);
-    printf("Encrypted data (ushort):\n");
+    printf("Encrypted data (HAMC_DATA_TYPE_t):\n");
     for (int i = 0; i < m->cols; i++)
         printf("%hu", m->data[i]);
     printf("\n");
@@ -944,3 +946,4 @@ void test_cpu_e2e(int n0, int p, int t, int w, int seed)
     delete_mceliece_cpu(crypt);
     return;
 }
+#endif /* HAMC_CPU_CODE_C */

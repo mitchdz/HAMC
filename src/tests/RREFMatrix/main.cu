@@ -55,11 +55,11 @@ void run_cpu(char *in, char*sol, bool verbose)
 
     /* wbImport only reads and writes float, so we need to convert that */
     float *hostAFloats = (float *)wbImport(in, &numARows, &numAColumns);
-    ushort *hostA = (ushort *)malloc(numARows*numAColumns * sizeof(ushort));
+    HAMC_DATA_TYPE_t *hostA = (HAMC_DATA_TYPE_t *)malloc(numARows*numAColumns * sizeof(HAMC_DATA_TYPE_t));
     for (int i = 0; i < numARows*numAColumns; i++)
-        hostA[i] = (ushort)hostAFloats[i];
+        hostA[i] = (HAMC_DATA_TYPE_t)hostAFloats[i];
 
-    //ushort *hostC = (ushort *)malloc(numARows*numAColumns * sizeof(ushort));
+    //HAMC_DATA_TYPE_t *hostC = (HAMC_DATA_TYPE_t *)malloc(numARows*numAColumns * sizeof(HAMC_DATA_TYPE_t));
 
     if (verbose) {
         /* print input array */
@@ -124,11 +124,11 @@ int main(int argc, char *argv[])
     printf("RREF test:\n");
     wbArg_t args;
 
-    ushort *hostA; // The A matrix
-    ushort *hostC; // The output C matrix
-    ushort *deviceA; // A matrix on device
-    ushort *deviceB; // B matrix on device (copy of A)
-    ushort *deviceC; // C matrix on device
+    HAMC_DATA_TYPE_t *hostA; // The A matrix
+    HAMC_DATA_TYPE_t *hostC; // The output C matrix
+    HAMC_DATA_TYPE_t *deviceA; // A matrix on device
+    HAMC_DATA_TYPE_t *deviceB; // B matrix on device (copy of A)
+    HAMC_DATA_TYPE_t *deviceC; // C matrix on device
     int numARows;    // number of rows in the matrix A
     int numAColumns; // number of columns in the matrix A
 
@@ -178,12 +178,12 @@ int main(int argc, char *argv[])
 
     /* allocate host data for matrix */
     wbTime_start(Generic, "Importing data and creating memory on host");
-    hostA = (ushort *)wbImport(inputFileName, &numARows, &numAColumns);
+    hostA = (HAMC_DATA_TYPE_t *)wbImport(inputFileName, &numARows, &numAColumns);
     int numBRows = numARows;    // number of rows in the matrix B
     int numBColumns = numAColumns; // number of columns in the matrix B
     int numCRows = numARows;    // number of rows in the matrix C
     int numCColumns = numAColumns; // number of columns in the matrix C
-    hostC = (ushort *)malloc(numCRows*numCColumns * sizeof(ushort));
+    hostC = (HAMC_DATA_TYPE_t *)malloc(numCRows*numCColumns * sizeof(HAMC_DATA_TYPE_t));
     wbTime_stop(Generic, "Importing data and creating memory on host");
 
 
@@ -192,9 +192,9 @@ int main(int argc, char *argv[])
 
     /* allocate the memory space on GPU */
     wbTime_start(GPU, "Allocating GPU memory.");
-    cudaMalloc((void**) &deviceA, numARows * numAColumns * sizeof(ushort));
-    cudaMalloc((void**) &deviceB, numBRows * numBColumns * sizeof(ushort));
-    cudaMalloc((void**) &deviceC, numCRows * numCColumns * sizeof(ushort));
+    cudaMalloc((void**) &deviceA, numARows * numAColumns * sizeof(HAMC_DATA_TYPE_t));
+    cudaMalloc((void**) &deviceB, numBRows * numBColumns * sizeof(HAMC_DATA_TYPE_t));
+    cudaMalloc((void**) &deviceC, numCRows * numCColumns * sizeof(HAMC_DATA_TYPE_t));
     wbTime_stop(GPU, "Allocating GPU memory.");
 
 
@@ -210,7 +210,7 @@ int main(int argc, char *argv[])
 
 
     wbTime_start(Copy, "Copying output memory to the CPU");
-    cudaMemcpy(hostC, deviceC, numCRows * numCColumns * sizeof(ushort), cudaMemcpyDeviceToHost);
+    cudaMemcpy(hostC, deviceC, numCRows * numCColumns * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyDeviceToHost);
     wbTime_stop(Copy, "Copying output memory to the CPU");
 
     /* Free GPU Memory */

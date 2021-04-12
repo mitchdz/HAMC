@@ -3,7 +3,7 @@
 #define mat_element(mat, row_idx, col_idx, cols) \
     mat[row_idx * cols + col_idx]
 
-#define ushort unsigned short
+#define HAMC_DATA_TYPE_t HAMC_DATA_TYPE_t
 
 //TODO: check that this function works on gpu
 //Add row1 to row2 of matrix A
@@ -22,8 +22,8 @@ __device__ void add_rows_kernel(uint16_t *data, uint16_t row1, uint16_t row2,
 
 //TODO: check that this function works on gpu
 // swap two rows of matrix A
-__device__ void swap_kernel(uint16_t *data, ushort row1, ushort row2,
-        ushort rows, ushort cols)
+__device__ void swap_kernel(uint16_t *data, HAMC_DATA_TYPE_t row1, HAMC_DATA_TYPE_t row2,
+        HAMC_DATA_TYPE_t rows, HAMC_DATA_TYPE_t cols)
 {
     if(row1 < 0 || row1 >= rows || row2 < 0 || row2 >= rows) {
       printf("Swap: Matrix index out of range\n");
