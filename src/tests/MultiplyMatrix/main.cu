@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
     int numColsB;
     int numRowsS;
     int numColsS;
-    int x, y;
+    int x, y, upto;
     HAMC_DATA_TYPE_t *hostA;
     HAMC_DATA_TYPE_t *hostB;
     HAMC_DATA_TYPE_t *sol;
@@ -177,7 +177,7 @@ int main(int argc, char *argv[])
                 y = atoi(optarg);
                 break;
             case 'u':
-                u = atoi(optarg);
+                upto = atoi(optarg);
                 break;
             case 'h':
             default:
@@ -194,10 +194,10 @@ int main(int argc, char *argv[])
         run_tile_sweep(x, y, upto);
         return 0;
     }
-    if(sweep_size_test){
+    /*if(sweep_size_test){
         run_size_sweep();
         return 0;
-    }
+    }*/
     
     float *floatTemp = (float *)wbImport(input0, &numRowsA, &numColsA);
     hostA = (HAMC_DATA_TYPE_t *)malloc(numRowsA*numColsA * sizeof(HAMC_DATA_TYPE_t));
