@@ -45,7 +45,7 @@ bin_matrix run_matrix_multiply_kernel(bin_matrix A, bin_matrix B)
     if (cudaerr != cudaSuccess)
         printf("kernel launch failed with error \"%s\".\n", cudaGetErrorString(cudaerr));
 
-    cudaMemcpy(C->data, deviceC, C->rows * C->cols * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyDeviceToHost);
+    cudaMemcpy(C->data, deviceC, C->rows * C->cols * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyDeviceToHost);*/
 
     cudaFree(deviceA);
     cudaFree(deviceB);
