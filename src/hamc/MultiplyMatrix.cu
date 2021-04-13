@@ -98,9 +98,9 @@ bin_matrix run_mult_kernel(bin_matrix A, bin_matrix B)
     return C;
 }
 
-bin_matrix run_mult_kernel(bin_matrix A, bin_matrix B, int tile_width)
+bin_matrix run_mult_kernel(bin_matrix A, bin_matrix B, int TILE_WIDTH)
 {
-    int TILE_WIDTH = tile_width;
+    //int TILE_WIDTH = tile_width;
     
     if (A->cols != B->rows){
         printf("Matrices are incompatible, check dimensions...\n");

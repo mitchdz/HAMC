@@ -34,7 +34,7 @@ bin_matrix run_matrix_multiply_kernel(bin_matrix A, bin_matrix B)
     printf("Starting multiply matrix kernel...\n");
 
      /* determine block and grid dimensions */
-    dim3 DimBlock(TILE_WIDTH, TILE_WIDTH, 1);
+    /*dim3 DimBlock(TILE_WIDTH, TILE_WIDTH, 1);
     int x_blocks = ((A->rows - 1)/TILE_WIDTH) + 1;
     int y_blocks = ((A->cols - 1)/TILE_WIDTH) + 1;
     dim3 DimGrid(x_blocks, y_blocks, 1);
