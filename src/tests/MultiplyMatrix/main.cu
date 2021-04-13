@@ -40,73 +40,77 @@ bin_matrix run_cpu(bin_matrix A, bin_matrix B)
     return matrix_mult_cpu(A, B);
 }
 
-bin_matrix run_kernel(bin_matrix A, bin_matrix B)
+void run_time(int x, int y)
 {
-    if (A->cols != B->rows){
-        printf("Matrices are incompatible, check dimensions...\n");
-        exit(0);
+    clock_t start, end;
+    double time_used;
+    
+    HAMC_DATA_TYPE_t *dataA = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * x * y);
+    HAMC_DATA_TYPE_t *dataB = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * x * y);
+    
+    for(int i = 0; i < x * y; i++){
+        dataA[i] = (HAMC_DATA_TYPE_t)(rand() % 2);
+        dataB[i] = (HAMC_DATA_TYPE_t)(rand() % 2);
     }
+    
+    bin_matrix A = mat_init_cpu(x, y);
+    bin_matrix B = mat_init_cpu(y, x);
+    
+    A->data = dataA;
+    B->data = dataB;
+    
+    start = clock();
+    
+    bin_matrix C = run_cpu(A, B);
+    
+    end = clock();
+    time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
+    std::cout << "CPU time: " << time_used << std::endl;
+    
+    free(C);
+    
+    start = clock();
+    
+    C = run_mult_kernel(A, B, 16);
+    
+    end = clock();
+    time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
+    std::cout << "GPU time: " << time_used << std::endl;
+}
 
-    HAMC_DATA_TYPE_t *deviceA;
-    HAMC_DATA_TYPE_t *deviceB;
-    HAMC_DATA_TYPE_t *deviceC;
-    /* int *deviceA;
-    int *deviceB;
-    int *deviceC; */
-    bin_matrix C = mat_init_cpu(A->rows, A->cols);
-    int *tempA = (int *)malloc(sizeof(int) * A->rows * A->cols);
-    int *tempB = (int *)malloc(sizeof(int) * B->rows * B->cols);
-    int *tempC = (int *)malloc(sizeof(int) * C->rows * C->cols);
+void run_tile_sweep(int x, int y, int upto)
+{
+    clock_t start, end;
+    double time_used;
     
-   /*  for(int i = 0; i < A->rows * A->cols; i++){
-        tempA[i] = (int)A->data[i];
+    HAMC_DATA_TYPE_t *dataA = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * x * y);
+    HAMC_DATA_TYPE_t *dataB = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * x * y);
+    
+    for(int i = 0; i < x * y; i++){
+        dataA[i] = (HAMC_DATA_TYPE_t)(rand() % 2);
+        dataB[i] = (HAMC_DATA_TYPE_t)(rand() % 2);
     }
-    for(int i = 0; i < B->rows * B->cols; i++){
-        tempB[i] = (int)B->data[i];
-    } */
     
-    cudaMalloc((void **) &deviceA, A->cols * A->rows * sizeof(HAMC_DATA_TYPE_t));
-    cudaMalloc((void **) &deviceB, B->cols * B->rows * sizeof(HAMC_DATA_TYPE_t));
-    cudaMalloc((void **) &deviceC, B->cols * A->rows * sizeof(HAMC_DATA_TYPE_t));
-    /* cudaMalloc((void **) &deviceA, A->cols * A->rows * sizeof(int));
-    cudaMalloc((void **) &deviceB, B->cols * B->rows * sizeof(int));
-    cudaMalloc((void **) &deviceC, B->cols * A->rows * sizeof(int)); */
+    bin_matrix A = mat_init_cpu(x, y);
+    bin_matrix B = mat_init_cpu(y, x);
+    bin_matrix C = mat_init_cpu(x, y);
     
-    cudaMemcpy(deviceA, A->data, A->cols * A->rows * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyHostToDevice);
-    cudaMemcpy(deviceB, B->data, B->cols * B->rows * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyHostToDevice);
-    /* cudaMemcpy(deviceA, tempA, A->cols * A->rows * sizeof(int), cudaMemcpyHostToDevice);
-    cudaMemcpy(deviceB, tempB, B->cols * B->rows * sizeof(int), cudaMemcpyHostToDevice); */
+    A->data = dataA;
+    B->data = dataB;
+    for(int i = 16; i <= upto; i *= 2){
+        start = clock();
     
-    dim3 DimBlock(TILE_WIDTH, TILE_WIDTH, 1);
-    int x_blocks = ((B->cols - 1)/TILE_WIDTH) + 1;
-    int y_blocks = ((A->rows - 1)/TILE_WIDTH) + 1;
-    dim3 DimGrid(x_blocks, y_blocks, 1);
-    
-    mult_kernel<<<DimGrid, DimBlock>>>(deviceA, deviceB, deviceC, A->rows, B->rows, A->cols, B->cols);
-    
-    cudaError_t cudaerr = cudaDeviceSynchronize();
-    if (cudaerr != cudaSuccess)
-        printf("kernel launch failed with error \"%s\".\n", cudaGetErrorString(cudaerr));
-    
-    cudaMemcpy(C->data, deviceC, C->cols * C->rows * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyDeviceToHost);
-    //cudaMemcpy(tempC, deviceC, C->cols * C->rows * sizeof(int), cudaMemcpyDeviceToHost);
-    
-    /* for(int i = 0; i < C->rows * C->cols; i++){
-        C->data[i] = (HAMC_DATA_TYPE_t)tempC[i];
-    } */
-    
-    /* std::cout << "C->data";
-    for(int i = 0; i < (C->rows * C->cols); i++){
-        if(i % TILE_WIDTH == 0) std::cout << std::endl;
-        std::cout << tempC[i] << " ";
+        C = run_mult_kernel(A, B, 16);
+        
+        end = clock();
+        time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
+        std::cout << "GPU time: " << time_used << std::endl;
     }
-    std::cout << std::endl; */
-    
-    cudaFree(deviceA);
-    cudaFree(deviceB);
-    cudaFree(deviceC);
+}
 
-    return C;
+void run_size_sweep()
+{
+    
 }
 
 int main(int argc, char *argv[])
@@ -121,6 +125,7 @@ int main(int argc, char *argv[])
     int numColsB;
     int numRowsS;
     int numColsS;
+    int x, y, upto;
     HAMC_DATA_TYPE_t *hostA;
     HAMC_DATA_TYPE_t *hostB;
     HAMC_DATA_TYPE_t *sol;
@@ -128,10 +133,13 @@ int main(int argc, char *argv[])
     char *input1;
     char *expected;
     bool cpu_exec = false;
+    bool trial_time = false;
+    bool sweep_tile_test = false;
+    bool sweep_size_test = false;
     bool solved = true;
     
     int opt;
-    while ((opt = getopt(argc, argv, "a:b:e:o:c")) != -1){
+    while ((opt = getopt(argc, argv, "a:b:e:o:ctsdx:y:u:h")) != -1){
         switch(opt){
             case 'a':
                 input0 = strdup(optarg);
@@ -148,12 +156,43 @@ int main(int argc, char *argv[])
             case 'c':
                 cpu_exec = true;
                 break;
+            case 't':
+                trial_time = true;
+                break;
+            case 's':
+                sweep_tile_test = true;
+                break;
+            case 'd':
+                sweep_size_test = true;
+            case 'x':
+                x = atoi(optarg);
+                break;
+            case 'y':
+                y = atoi(optarg);
+                break;
+            case 'u':
+                upto = atoi(optarg);
+                break;
             case 'h':
             default:
                 printHelp();
                 return 0;
         }
     }
+    
+    if(trial_time){
+        run_time(x, y);
+        return 0;
+    }
+    if(sweep_tile_test){
+        run_tile_sweep(x, y, upto);
+        return 0;
+    }
+    /*if(sweep_size_test){
+        run_size_sweep();
+        return 0;
+    }*/
+    
     float *floatTemp = (float *)wbImport(input0, &numRowsA, &numColsA);
     hostA = (HAMC_DATA_TYPE_t *)malloc(numRowsA*numColsA * sizeof(HAMC_DATA_TYPE_t));
     for(int i = 0; i < numColsA * numRowsA; i++){
@@ -175,35 +214,14 @@ int main(int argc, char *argv[])
     for(int i = 0; i < numColsB * numRowsB; i++){
         sol[i] = (HAMC_DATA_TYPE_t)floatTemp[i];
     }    
-    //std::cout << "A->cols: " << A->cols << " B->rows: " << B->rows << std::endl;
-    /* std::cout << "A->data";
-    for(int i = 0; i < numColsA * numRowsA; i++){
-        if(i%16 == 0) std::cout << "" << std::endl;
-        std::cout << hostA[i] << " ";
-    }
-    std::cout << std::endl;
-    std::cout << "B->data";
-    for(int i = 0; i < numColsB * numRowsB; i++){
-        if(i%16 == 0) std::cout << "" << std::endl;
-        std::cout << hostB[i] << " ";
-    }
-    std::cout << std::endl; */
     
     if(cpu_exec){
         C = run_cpu(A, B);
     }
     else{
         std::cout << "Running Kernel" << std::endl;
-        C = run_kernel(A, B);
+        C = run_mult_kernel(A, B, 16);
     }
-    //C = (cpu_exec) ? run_cpu(A, B) : run_kernel(A, B);
-    
-    /*std::cout << "C->data";
-    for(int i = 0; i < C->cols * C->rows; i++){
-        if(i%16 == 0) std::cout << "" << std::endl;
-        std::cout << C->data[i] << " ";
-    }
-    std::cout << std::endl;*/
     
     if(C->rows != numRowsS && C->cols != numColsS){
         solved = false;
@@ -211,19 +229,12 @@ int main(int argc, char *argv[])
     else{
         for(int i = 0; i < numRowsS * numColsS; i++){
             if(C->data[i] != sol[i]){
-                std::cout << "i: " << i << std::endl;
-                std::cout << "C->data[i]: " << C->data[i] << std::endl;
-                std::cout << "expected: " << sol[i] << std::endl;
                 solved = false;
                 break;
             }
         }
     }
     
-    /*std::cout << "C->rows: " << C->rows << std::endl;
-    std::cout << "C->cols: " << C->cols << std::endl;
-    std::cout << "numRowsS: " << numRowsS << std::endl;
-    std::cout << "numColsS: " << numColsS << std::endl;*/
     std::cout << "solved: " << solved << std::endl;
     
     free(A);
