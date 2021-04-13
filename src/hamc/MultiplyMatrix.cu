@@ -9,11 +9,11 @@
 
 //int TILE_WIDTH = 16;
 
-__global__ void mult_kernel(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB)
+__global__ void mult_kernel(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB, int TILE_WIDTH)
 {
     extern __shared__ HAMC_DATA_TYPE_t sharedArray[];
     
-    int TILE_WIDTH = (sizeof(sharedArray) / sizeof(sharedArray[0])) / 4;
+    //int TILE_WIDTH = (sizeof(sharedArray) / sizeof(sharedArray[0])) / 4;
     
     HAMC_DATA_TYPE_t *sharedA = sharedArray;
     HAMC_DATA_TYPE_t *sharedB = &sharedA[TILE_WIDTH * TILE_WIDTH];
@@ -83,7 +83,7 @@ bin_matrix run_mult_kernel(bin_matrix A, bin_matrix B, int tile_width)
     int y_blocks = ((A->rows - 1)/TILE_WIDTH) + 1;
     dim3 DimGrid(x_blocks, y_blocks, 1);
     
-    mult_kernel<<<DimGrid, DimBlock, TILE_WIDTH * TILE_WIDTH * sizeof(HAMC_DATA_TYPE_t)>>>(deviceA, deviceB, deviceC, A->rows, B->rows, A->cols, B->cols);
+    mult_kernel<<<DimGrid, DimBlock, TILE_WIDTH * TILE_WIDTH * sizeof(HAMC_DATA_TYPE_t)>>>(deviceA, deviceB, deviceC, A->rows, B->rows, A->cols, B->cols, TILE_WIDTH);
     
     cudaError_t cudaerr = cudaDeviceSynchronize();
     if (cudaerr != cudaSuccess)
