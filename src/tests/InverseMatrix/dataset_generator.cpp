@@ -53,12 +53,15 @@ static bool inverse_cpu_check(bin_matrix A)
     //printf("Out of for loop...\n");
     if(!is_identity_cpu(A))
     {
-      printf("Could not find inverse...\n");
+      //printf("Could not find inverse...\n");
       return false;
     }
 
-    free(B);
+    for (int i = 0; i < A->rows*A->cols; i++) {
+        A->data[i] = B->data[i];
+    }
 
+    free(B);
     return true;
 }
 static void compute(HAMC_DATA_TYPE_t *output, HAMC_DATA_TYPE_t *input0, int numARows, int numACols)
@@ -75,13 +78,15 @@ static void compute(HAMC_DATA_TYPE_t *output, HAMC_DATA_TYPE_t *input0, int numA
     free(A);
 }
 
-static HAMC_DATA_TYPE_t *generate_data(int height, int width, int seed)
+static HAMC_DATA_TYPE_t *generate_data(HAMC_DATA_TYPE_t *data2, int height, int width, int seed)
 {
     HAMC_DATA_TYPE_t *data = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * width * height);
     int i;
     srand(seed);
     for (i = 0; i < width * height; i++) {
-        data[i] = (HAMC_DATA_TYPE_t)(rand() % 2); // 0 or 1
+        HAMC_DATA_TYPE_t val = (HAMC_DATA_TYPE_t)(rand() % 2); // 0 or 1
+        data[i] = val;
+        data2[i] = val;
     }
     return data;
 }
@@ -106,6 +111,19 @@ static void write_data(char *file_name, HAMC_DATA_TYPE_t *data, int height, int 
     fclose(handle);
 }
 
+void printMatrix(bin_matrix A)
+{
+    if (A->rows < 40) {
+        for (int i = 0; i < A->rows; i++) {
+            for (int j = 0; j < A->cols; j++) {
+                printf("%d ", A->data[i*A->cols + j]);
+            }
+            printf("\n");
+        }
+    }
+
+}
+
 static void create_dataset(int datasetNum, int numARows, int numACols)
 {
     printf("Creating dataset for %dx%d...\n",numARows, numACols);
@@ -115,31 +133,41 @@ static void create_dataset(int datasetNum, int numARows, int numACols)
     char *input0_file_name = wbPath_join(dir_name, "input0.raw");
     char *output_file_name = wbPath_join(dir_name, "output.raw");
 
-    HAMC_DATA_TYPE_t *output_data = (HAMC_DATA_TYPE_t *)calloc(sizeof(HAMC_DATA_TYPE_t), numARows * numACols);
+    //HAMC_DATA_TYPE_t *output_data = (HAMC_DATA_TYPE_t *)calloc(sizeof(HAMC_DATA_TYPE_t), numARows * numACols);
 
     bin_matrix A = mat_init_cpu(numARows, numACols);
     bin_matrix B = mat_init_cpu(numARows, numACols);
+
+
+    clock_t start, end;
+    double time_used;
+
+    start = clock();
 
     int maxAttempts = 20000;
     bool ret;
     int i;
     for (i = 0; i < maxAttempts; i++) {
-         A->data = generate_data(numARows, numACols, i);
-         B->data = generate_data(numARows, numACols, i);
+         B->data = generate_data(A->data, numARows, numACols, i);
 
-         ret = inverse_cpu_check(A);
+         ret = inverse_cpu_check(B);
          if (ret == true) break;
     }
 
-    printf("Found inverse for %dx%d with seed %d\n", numARows, numACols, i);
+    end = clock();
+    time_used = ((double) (end - start))/ CLOCKS_PER_SEC;
 
-    compute(output_data, B->data, numARows, numACols);
 
-    write_data(input0_file_name, B->data, numARows, numACols);
-    write_data(output_file_name, output_data, numACols, numARows);
+    printf("Found inverse for %dx%d with seed %d in %lfs\n", numARows, numACols, i, time_used);
+    printMatrix(B);
+    //compute(output_data, B->data, numARows, numACols);
+
+    write_data(input0_file_name, A->data, numARows, numACols);
+    write_data(output_file_name, B->data, numACols, numARows);
 
     free(A);
-    free(output_data);
+    free(B);
+    //free(output_data);
 }
 
 int main()
@@ -150,8 +178,10 @@ int main()
     create_dataset(1, 16, 16);
     create_dataset(2, 64, 64);
     create_dataset(2, 128, 128);
-    create_dataset(3, 500, 500);
-    create_dataset(4, 2000, 2000);
+    create_dataset(3, 256, 256);
+    create_dataset(4, 400, 400);
+    create_dataset(5, 500, 500);
+    create_dataset(6, 2000, 2000);
   return 0;
 }
 
