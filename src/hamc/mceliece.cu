@@ -52,7 +52,7 @@ bin_matrix generator_matrix_gpu(mdpc code)
     multiply_start = clock();
 
     //bin_matrix H_inv_times_H0 = mat_init_cpu(H_inv->rows, H_inv->cols);
-    bin_matrix H_inv_times_H0 = run_matrix_multiply_kernel(H_inv, H_0);
+    bin_matrix H_inv_times_H0 = run_mult_kernel(H_inv, H_0, 16);
     multiply_end = clock();
     multiply_time_used = ((double) (multiply_end - multiply_start))/ CLOCKS_PER_SEC;
     printf("Multiply time used: %f\n", multiply_time_used);
