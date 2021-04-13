@@ -93,6 +93,7 @@ void run_tile_sweep(int x, int y, int upto)
     
     bin_matrix A = mat_init_cpu(x, y);
     bin_matrix B = mat_init_cpu(y, x);
+    bin_matrix C = mat_init_cpu(x, y);
     
     A->data = dataA;
     B->data = dataB;
@@ -104,14 +105,7 @@ void run_tile_sweep(int x, int y, int upto)
         end = clock();
         time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
         std::cout << "GPU time: " << time_used << std::endl;
-        }
-        start = clock();
-        
-        C = run_mult_kernel(A, B, 16);
-        
-        end = clock();
-        time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
-        std::cout << "GPU time: " << time_used << std::endl;
+    }
 }
 
 void run_size_sweep()
