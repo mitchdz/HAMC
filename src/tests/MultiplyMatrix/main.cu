@@ -71,16 +71,47 @@ void run_time(int x, int y)
     
     start = clock();
     
-    C = run_mult_kernel(A, B);
+    C = run_mult_kernel(A, B, 16);
     
     end = clock();
     time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
     std::cout << "GPU time: " << time_used << std::endl;
 }
 
-void run_tile_sweep()
+void run_tile_sweep(int x, int y, int upto)
 {
+    clock_t start, end;
+    double time_used;
     
+    HAMC_DATA_TYPE_t *dataA = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * x * y);
+    HAMC_DATA_TYPE_t *dataB = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * x * y);
+    
+    for(int i = 0; i < x * y; i++){
+        dataA[i] = (HAMC_DATA_TYPE_t)(rand() % 2);
+        dataB[i] = (HAMC_DATA_TYPE_t)(rand() % 2);
+    }
+    
+    bin_matrix A = mat_init_cpu(x, y);
+    bin_matrix B = mat_init_cpu(y, x);
+    
+    A->data = dataA;
+    B->data = dataB;
+    for(int i = 16; i <= upto; i *= 2){
+        start = clock();
+    
+        C = run_mult_kernel(A, B, 16);
+        
+        end = clock();
+        time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
+        std::cout << "GPU time: " << time_used << std::endl;
+        }
+        start = clock();
+        
+        C = run_mult_kernel(A, B, 16);
+        
+        end = clock();
+        time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
+        std::cout << "GPU time: " << time_used << std::endl;
 }
 
 void run_size_sweep()
@@ -114,7 +145,7 @@ int main(int argc, char *argv[])
     bool solved = true;
     
     int opt;
-    while ((opt = getopt(argc, argv, "a:b:e:o:c")) != -1){
+    while ((opt = getopt(argc, argv, "a:b:e:o:ctsdx:y:u:h")) != -1){
         switch(opt){
             case 'a':
                 input0 = strdup(optarg);
@@ -145,6 +176,9 @@ int main(int argc, char *argv[])
             case 'y':
                 y = atoi(optarg);
                 break;
+            case 'u':
+                u = atoi(optarg);
+                break;
             case 'h':
             default:
                 printHelp();
@@ -157,7 +191,7 @@ int main(int argc, char *argv[])
         return 0;
     }
     if(sweep_tile_test){
-        run_tile_sweep();
+        run_tile_sweep(x, y, upto);
         return 0;
     }
     if(sweep_size_test){
@@ -192,7 +226,7 @@ int main(int argc, char *argv[])
     }
     else{
         std::cout << "Running Kernel" << std::endl;
-        C = run_kernel(A, B);
+        C = run_mult_kernel(A, B, 16);
     }
     
     if(C->rows != numRowsS && C->cols != numColsS){
