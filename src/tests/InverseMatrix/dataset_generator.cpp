@@ -124,19 +124,19 @@ void printMatrix(bin_matrix A)
 
 }
 
-static void create_dataset(int datasetNum, int numARows, int numACols)
+static void create_dataset(int datasetNum, int n, int p, int t, int w, int seed)
 {
-    printf("Creating dataset for %dx%d...\n",numARows, numACols);
+    printf("Creating dataset for %dx%d...\n",p, p);
     const char *dir_name =
         wbDirectory_create(wbPath_join(base_dir, datasetNum));
 
-    char *input0_file_name = wbPath_join(dir_name, "input0.raw");
+    char *input0_file_name = wbPath_join(dir_name, "input.raw");
     char *output_file_name = wbPath_join(dir_name, "output.raw");
 
     //HAMC_DATA_TYPE_t *output_data = (HAMC_DATA_TYPE_t *)calloc(sizeof(HAMC_DATA_TYPE_t), numARows * numACols);
 
-    bin_matrix A = mat_init_cpu(numARows, numACols);
-    bin_matrix B = mat_init_cpu(numARows, numACols);
+    //bin_matrix A = mat_init_cpu(numARows, numACols);
+    //bin_matrix B = mat_init_cpu(numARows, numACols);
 
 
     clock_t start, end;
@@ -144,26 +144,36 @@ static void create_dataset(int datasetNum, int numARows, int numACols)
 
     start = clock();
 
-    int maxAttempts = 20000;
     bool ret;
-    int i;
-    for (i = 6000; i < maxAttempts; i++) {
-        printf("seed: %d\n", i);
-        generate_data(B->data, A->data, numARows, numACols, i);
 
-        ret = inverse_cpu_check(B);
-        if (ret == true) break;
+    //int maxAttempts = 20000;
+    //int i;
+    //for (i = 6000; i < maxAttempts; i++) {
+    //    printf("seed: %d\n", i);
+    //    generate_data(B->data, A->data, numARows, numACols, i);
+
+    //    ret = inverse_cpu_check(B);
+    //    if (ret == true) break;
+    //}
+
+    mdpc code = qc_mdpc_init_cpu(n, p, t, w, seed);
+    bin_matrix A = make_matrix_cpu(code->p, code->p, splice_cpu(code->row, (code->n0 - 1) * code->p, code->n), 1);
+    bin_matrix B = mat_init_cpu(p, p);
+    for (int i =0; i < p*p; i++) {
+        B->data[i] = A->data[i];
     }
+    ret = inverse_cpu_check(A);
+
 
     end = clock();
     time_used = ((double) (end - start))/ CLOCKS_PER_SEC;
 
 
-    printf("Found inverse for %dx%d with seed %d in %lfs\n", numARows, numACols, i, time_used);
+    printf("Found inverse for %dx%d with seed %d in %lfs\n", p, p, seed, time_used);
     printMatrix(B);
 
-    write_data(input0_file_name, A->data, numARows, numACols);
-    write_data(output_file_name, B->data, numACols, numARows);
+    write_data(input0_file_name, A->data, p, p);
+    write_data(output_file_name, B->data, p, p);
 
     free(A->data);
     free(A);
@@ -176,18 +186,25 @@ int main()
 {
     base_dir = wbPath_join(wbDirectory_current(), "inverse", "Dataset");
 
-    create_dataset(0, 4, 4);
-    create_dataset(1, 16, 16);
-    create_dataset(2, 32, 32);
-    create_dataset(3, 64, 64);
-    create_dataset(4, 128, 128);
-    create_dataset(5, 256, 256);
-    create_dataset(6, 499, 499);
-    create_dataset(7, 512, 512);
-    create_dataset(8, 1024, 1024);
-    create_dataset(9, 2048, 2048);
-    create_dataset(10, 4096, 4096);
-    create_dataset(11, 8192, 8192);
+
+
+      create_dataset(5, 2, 2000, 10, 120, 10);
+      create_dataset(6, 2, 4800, 20, 60, 10);
+      create_dataset(7, 2, 6000, 20, 60, 10);
+      create_dataset(8, 2, 32771, 264, 274, 10);
+
+//    create_dataset(10, 4096, 4096);
+//    create_dataset(0, 4, 4);
+//    create_dataset(1, 16, 16);
+//    create_dataset(2, 32, 32);
+//    create_dataset(3, 64, 64);
+//    create_dataset(4, 128, 128);
+//    create_dataset(5, 256, 256);
+//    create_dataset(6, 499, 499);
+//    create_dataset(7, 512, 512);
+//    create_dataset(8, 1024, 1024);
+//    create_dataset(9, 2048, 2048);
+//    create_dataset(11, 8192, 8192);
 
   return 0;
 }
