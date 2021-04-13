@@ -61,6 +61,7 @@ static bool inverse_cpu_check(bin_matrix A)
         A->data[i] = B->data[i];
     }
 
+    free(B->data);
     free(B);
     return true;
 }
@@ -78,17 +79,16 @@ static void compute(HAMC_DATA_TYPE_t *output, HAMC_DATA_TYPE_t *input0, int numA
     free(A);
 }
 
-static HAMC_DATA_TYPE_t *generate_data(HAMC_DATA_TYPE_t *data2, int height, int width, int seed)
+static void generate_data(HAMC_DATA_TYPE_t *data1, HAMC_DATA_TYPE_t *data2, int height, int width, int seed)
 {
-    HAMC_DATA_TYPE_t *data = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * width * height);
+    //HAMC_DATA_TYPE_t *data = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * width * height);
     int i;
     srand(seed);
     for (i = 0; i < width * height; i++) {
         HAMC_DATA_TYPE_t val = (HAMC_DATA_TYPE_t)(rand() % 2); // 0 or 1
-        data[i] = val;
+        data1[i] = val;
         data2[i] = val;
     }
-    return data;
 }
 
 static void write_data(char *file_name, HAMC_DATA_TYPE_t *data, int height, int width)
@@ -147,11 +147,12 @@ static void create_dataset(int datasetNum, int numARows, int numACols)
     int maxAttempts = 20000;
     bool ret;
     int i;
-    for (i = 0; i < maxAttempts; i++) {
-         B->data = generate_data(A->data, numARows, numACols, i);
+    for (i = 6000; i < maxAttempts; i++) {
+        printf("seed: %d\n", i);
+        generate_data(B->data, A->data, numARows, numACols, i);
 
-         ret = inverse_cpu_check(B);
-         if (ret == true) break;
+        ret = inverse_cpu_check(B);
+        if (ret == true) break;
     }
 
     end = clock();
@@ -160,12 +161,13 @@ static void create_dataset(int datasetNum, int numARows, int numACols)
 
     printf("Found inverse for %dx%d with seed %d in %lfs\n", numARows, numACols, i, time_used);
     printMatrix(B);
-    //compute(output_data, B->data, numARows, numACols);
 
     write_data(input0_file_name, A->data, numARows, numACols);
     write_data(output_file_name, B->data, numACols, numARows);
 
+    free(A->data);
     free(A);
+    free(B->data);
     free(B);
     //free(output_data);
 }
@@ -174,14 +176,19 @@ int main()
 {
     base_dir = wbPath_join(wbDirectory_current(), "inverse", "Dataset");
 
-    create_dataset(0, 32, 32);
+    create_dataset(0, 4, 4);
     create_dataset(1, 16, 16);
-    create_dataset(2, 64, 64);
-    create_dataset(2, 128, 128);
-    create_dataset(3, 256, 256);
-    create_dataset(4, 400, 400);
-    create_dataset(5, 500, 500);
-    create_dataset(6, 2000, 2000);
+    create_dataset(2, 32, 32);
+    create_dataset(3, 64, 64);
+    create_dataset(4, 128, 128);
+    create_dataset(5, 256, 256);
+    create_dataset(6, 499, 499);
+    create_dataset(7, 512, 512);
+    create_dataset(8, 1024, 1024);
+    create_dataset(9, 2048, 2048);
+    create_dataset(10, 4096, 4096);
+    create_dataset(11, 8192, 8192);
+
   return 0;
 }
 
