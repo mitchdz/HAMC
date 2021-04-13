@@ -5,12 +5,18 @@
 #include <stdio.h>
 #include "hamc_common.h"
 
-#define TILE_WIDTH 16
+//#define TILE_WIDTH 16
+
+int TILE_WIDTH 16
 
 __global__ void mult_kernel(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB)
 {
-    __shared__ HAMC_DATA_TYPE_t sharedA[TILE_WIDTH * TILE_WIDTH];
-    __shared__ HAMC_DATA_TYPE_t sharedB[TILE_WIDTH * TILE_WIDTH];
+    extern __shared__ HAMC_DATA_TYPE_t sharedArray[];
+    
+    HAMC_DATA_TYPE_t *sharedA = sharedArray[];
+    HAMC_DATA_TYPE_t *sharedB = &sharedA[(sizeof(sharedArray) / sizeof(sharedArray[0])) / 2];
+    //extern __shared__ HAMC_DATA_TYPE_t sharedA[];
+    //extern __shared__ HAMC_DATA_TYPE_t sharedB[];
     
     int Row = blockIdx.y * TILE_WIDTH + threadIdx.y;
     int Col = blockIdx.x * TILE_WIDTH + threadIdx.x;

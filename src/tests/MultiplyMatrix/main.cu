@@ -40,7 +40,7 @@ bin_matrix run_cpu(bin_matrix A, bin_matrix B)
     return matrix_mult_cpu(A, B);
 }
 
-void time_test(int x, int y)
+void run_time(int x, int y)
 {
     clock_t start, end;
     double time_used;
@@ -78,6 +78,16 @@ void time_test(int x, int y)
     std::cout << "GPU time: " << time_used << std::endl;
 }
 
+void run_tile_sweep()
+{
+    
+}
+
+void run_size_sweep()
+{
+    
+}
+
 int main(int argc, char *argv[])
 {
     wbArg_t args;
@@ -99,6 +109,8 @@ int main(int argc, char *argv[])
     char *expected;
     bool cpu_exec = false;
     bool trial_time = false;
+    bool sweep_tile_test = false;
+    bool sweep_size_test = false;
     bool solved = true;
     
     int opt;
@@ -122,6 +134,11 @@ int main(int argc, char *argv[])
             case 't':
                 trial_time = true;
                 break;
+            case 's':
+                sweep_tile_test = true;
+                break;
+            case 'd':
+                sweep_size_test = true;
             case 'x':
                 x = atoi(optarg);
                 break;
@@ -136,7 +153,15 @@ int main(int argc, char *argv[])
     }
     
     if(trial_time){
-        time_test(x, y);
+        run_time(x, y);
+        return 0;
+    }
+    if(sweep_tile_test){
+        run_tile_sweep();
+        return 0;
+    }
+    if(sweep_size_test){
+        run_size_sweep();
         return 0;
     }
     
