@@ -54,12 +54,14 @@ __global__ void mult_kernel(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_
     }
 }
 
-bin_matrix run_mult_kernel(bin_matrix A, bin_matrix B)
+bin_matrix run_mult_kernel(bin_matrix A, bin_matrix B, int tile_width)
 {
     if (A->cols != B->rows){
         printf("Matrices are incompatible, check dimensions...\n");
         exit(0);
     }
+
+    TILE_WIDTH = tile_width;
 
     HAMC_DATA_TYPE_t *deviceA;
     HAMC_DATA_TYPE_t *deviceB;
@@ -79,7 +81,7 @@ bin_matrix run_mult_kernel(bin_matrix A, bin_matrix B)
     int y_blocks = ((A->rows - 1)/TILE_WIDTH) + 1;
     dim3 DimGrid(x_blocks, y_blocks, 1);
     
-    mult_kernel<<<DimGrid, DimBlock>>>(deviceA, deviceB, deviceC, A->rows, B->rows, A->cols, B->cols);
+    mult_kernel<<<DimGrid, DimBlock, TILE_WIDTH * TILE_WIDTH * sizeof(HAMC_DATA_TYPE_t)>>>(deviceA, deviceB, deviceC, A->rows, B->rows, A->cols, B->cols);
     
     cudaError_t cudaerr = cudaDeviceSynchronize();
     if (cudaerr != cudaSuccess)
