@@ -16,7 +16,7 @@ __global__ void mult_kernel(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_
     int TILE_WIDTH = (sizeof(sharedArray) / sizeof(sharedArray[0])) / 4;
     
     HAMC_DATA_TYPE_t *sharedA = sharedArray;
-    HAMC_DATA_TYPE_t *sharedB = (HAMC_DATA_TYPE_t *)&sharedA[TILE_WIDTH * TILE_WIDTH];
+    HAMC_DATA_TYPE_t *sharedB = &sharedA[TILE_WIDTH * TILE_WIDTH];
     //extern __shared__ HAMC_DATA_TYPE_t sharedA[];
     //extern __shared__ HAMC_DATA_TYPE_t sharedB[];
     
