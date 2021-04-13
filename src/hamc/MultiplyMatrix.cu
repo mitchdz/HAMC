@@ -127,7 +127,7 @@ bin_matrix run_mult_kernel(bin_matrix A, bin_matrix B, int TILE_WIDTH)
     
     mult_kernel<<<DimGrid, DimBlock, 2 * TILE_WIDTH * TILE_WIDTH * sizeof(HAMC_DATA_TYPE_t)>>>(deviceA, deviceB, deviceC, A->rows, B->rows, A->cols, B->cols, TILE_WIDTH);
     
-    printf("yee");
+    //printf("yee");
     
     cudaError_t cudaerr = cudaDeviceSynchronize();
     if (cudaerr != cudaSuccess)
