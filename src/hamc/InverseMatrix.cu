@@ -11,23 +11,89 @@
 
 //TODO: make device function to generate NxN identity matrix
 
+__device__ int getBIndex(int i,  int j, int rows, int cols);
+__device__ int getAIndex(int i, int j, int rows, int cols);
 
 
-__global__ void binary_gaussian_elimination_with_pivot()
+__global__ void binary_gaussian_elimination_with_pivot(HAMC_DATA_TYPE_t *in, HAMC_DATA_TYPE_t *out, int rows, int cols)
 {
-    // for each column k = 0 : n
+    __shared__ HAMC_DATA_TYPE_t A[16*2];
 
+    int idx = threadIdx.x + blockIdx.x * blockDim.x;
+    int idy = threadIdx.y + blockIdx.y * blockDim.y;
+
+    /**
+     * if "in" array is:
+     * 1 0 1
+     * 1 0 0
+     * 1 1 1
+     * then A shall look like:
+     * left   right
+     * half   half
+     * 1 0 1  1 0 0
+     * 1 0 0  0 1 0
+     * 1 1 1  0 0 1
+     * where the left half is "in" and the right half is the identity matrix
+     **/
+    /* store "in" to left half of A, and identity matrix to right half */
+    if (idx == 0) {
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                mat_element_gpu(A,cols,i,j) = mat_element_gpu(in,cols,i,j);
+
+                if (i == j) A[getBIndex(i, j, rows, cols)] = 1;
+                else A[getBIndex(i, j, rows, cols)] = 0;
+            }
+        }
+    }
+
+    //// for each column k = 0 : cols
+    //for (int k = 0; k < cols; k++) {
+    //    //while a_11 = 0
+    //    //    shiftup(cols-k+1, A)
+    //    while (A[0] == 0) {
+    //    }
+
+    //    // A = eliminate(A);
+
+    //}
+
+
+    // write output to "out"
 
 
 }
+
+
+#define mat_size 16
+
+// shared memory can only be one variable, therefore both of
+// the matrix A and B need to be in one variable.
+// This function simply offsets the address to be where the B
+// matrix starts and then accesses the necessary address.
+__device__ int getBIndex(int i,  int j, int rows, int cols)
+{
+    return rows*cols + i*cols + j;
+}
+
+__device__ int getAIndex(int i, int j, int rows, int cols)
+{
+    return i*cols + j;
+}
+
+
 
 
 // uses shared memory
 // each thread handles a single column
 __global__ void binary_inverse_square_matrix_naive(HAMC_DATA_TYPE_t *in, HAMC_DATA_TYPE_t *out, int rows, int cols)
 {
-    __shared__ HAMC_DATA_TYPE_t A[16];
-    __shared__ HAMC_DATA_TYPE_t B[16];
+    //int matrix_size = rows*cols;
+
+    // we need to store two arrays
+    // left half = input matrix
+    // right half = output matrix
+    __shared__ HAMC_DATA_TYPE_t A[16*2];
 
     int idx = threadIdx.x + blockIdx.x * blockDim.x;
     int idy = threadIdx.y + blockIdx.y * blockDim.y;
@@ -37,8 +103,8 @@ __global__ void binary_inverse_square_matrix_naive(HAMC_DATA_TYPE_t *in, HAMC_DA
             for (int j = 0; j < cols; j++) {
                 mat_element_gpu(A,cols,i,j) = mat_element_gpu(in,cols,i,j);
 
-                if (i == j) B[i*rows  + j] = 1;
-                else B[i*rows + j] = 0;
+                if (i == j) A[getBIndex(i, j, rows, cols)] = 1;
+                else A[getBIndex(i, j, rows, cols)] = 0;
             }
         }
     }
@@ -64,13 +130,17 @@ __global__ void binary_inverse_square_matrix_naive(HAMC_DATA_TYPE_t *in, HAMC_DA
     for(int i = 0; i < cols; i++) {
         printf("i: %d\n", i);
         __syncthreads();
-        if(mat_element_gpu(A, cols, i, i) == 1) {
+        //if(mat_element_gpu(A, cols, i, i) == 1) {
+        if (A[getAIndex(i, i, rows, cols)] == 1) {
             __syncthreads();
             for(int j = 0; j <  rows; j++) {
 
-                printf("\ti=%d ,j=%d ,A[j,i]=%d, \n", i, j, mat_element_gpu(A, cols, j, i));
+                //printf("\ti=%d ,j=%d ,A[j,i]=%d, \n", i, j, mat_element_gpu(A, cols, j, i));
+                printf("\ti=%d ,j=%d ,A[j,i]=%d, \n", i, j, 
+                        A[getAIndex(j, i, rows, cols)]);
                 __syncthreads();
-                if(i != j && mat_element_gpu(A, cols, j, i) == 1) {
+                //if(i != j && mat_element_gpu(A, cols, j, i) == 1) {
+                if (i != j && A[getAIndex(j, i, rows, cols)] == 1) {
                     printf("\t\t got into last if statement\n");
                     /* (i) notates the ith row of the matrix */
                     /* => denotes where the row which the output is stored in */
@@ -90,9 +160,12 @@ __global__ void binary_inverse_square_matrix_naive(HAMC_DATA_TYPE_t *in, HAMC_DA
                             /* add rows to identity */
                             /* (i) ^ (j) => (j) */
                             //add_rows_new_cpu(B, i, j, 0, A->cols);
-                            mat_element_gpu(B, cols, j, colid) =
-                                (mat_element_gpu(B, cols, i, colid)
-                                ^ mat_element_gpu(B, cols, j, colid));
+                            //mat_element_gpu(B, cols, j, colid) =
+                            A[getBIndex(j, colid, rows, cols)] =
+                                //(mat_element_gpu(B, cols, i, colid)
+                                (A[getBIndex(i, colid, rows, cols)]
+                                //^ mat_element_gpu(B, cols, j, colid));
+                                ^ A[getBIndex(j, colid, rows, cols)]);
 
                             /* A is special, we only XOR from i to cols */
                             if (colid >= i) {
@@ -136,9 +209,13 @@ __global__ void binary_inverse_square_matrix_naive(HAMC_DATA_TYPE_t *in, HAMC_DA
                              /* add rows to input */
                              /* (k) ^ (i) => (i) */
                              //add_rows_cpu(A, k, i);
-                             mat_element_gpu(B, cols, k, i) =
-                                (mat_element_gpu(B, cols, k, colid)
-                                ^ mat_element_gpu(B, cols, i, colid));
+
+                             //mat_element_gpu(B, cols, k, i) =
+                             A[getBIndex(k, i, rows, cols)] =
+                                //(mat_element_gpu(B, cols, k, colid)
+                                (A[getBIndex(k, colid, rows, cols)]
+                                //^ mat_element_gpu(B, cols, i, colid));
+                                ^ A[getBIndex(i, colid, rows, cols)]);
                         }
                         __syncthreads();
 
@@ -171,7 +248,8 @@ __global__ void binary_inverse_square_matrix_naive(HAMC_DATA_TYPE_t *in, HAMC_DA
     //write to output
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < rows; j++) {
-            mat_element_gpu(out, cols, i, j) = mat_element_gpu(B, cols, i, j);
+            //mat_element_gpu(out, cols, i, j) = mat_element_gpu(B, cols, i, j);
+            mat_element_gpu(out, cols, i, j) = A[getBIndex(i, j, rows, cols)];
         }
     }
 
