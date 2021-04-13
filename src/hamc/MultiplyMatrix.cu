@@ -7,14 +7,16 @@
 
 //#define TILE_WIDTH 16
 
-int TILE_WIDTH = 16;
+//int TILE_WIDTH = 16;
 
 __global__ void mult_kernel(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB)
 {
     extern __shared__ HAMC_DATA_TYPE_t sharedArray[];
     
+    int TILE_WIDTH = (sizeof(sharedArray) / sizeof(sharedArray[0])) / 4;
+    
     HAMC_DATA_TYPE_t *sharedA = sharedArray;
-    HAMC_DATA_TYPE_t *sharedB = (HAMC_DATA_TYPE_t *)&sharedA[(sizeof(sharedArray) / sizeof(sharedArray[0])) / 2];
+    HAMC_DATA_TYPE_t *sharedB = (HAMC_DATA_TYPE_t *)&sharedA[TILE_WIDTH * TILE_WIDTH];
     //extern __shared__ HAMC_DATA_TYPE_t sharedA[];
     //extern __shared__ HAMC_DATA_TYPE_t sharedB[];
     
@@ -56,12 +58,12 @@ __global__ void mult_kernel(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_
 
 bin_matrix run_mult_kernel(bin_matrix A, bin_matrix B, int tile_width)
 {
+    int TILE_WIDTH = tile_width;
+    
     if (A->cols != B->rows){
         printf("Matrices are incompatible, check dimensions...\n");
         exit(0);
     }
-
-    TILE_WIDTH = tile_width;
 
     HAMC_DATA_TYPE_t *deviceA;
     HAMC_DATA_TYPE_t *deviceB;
