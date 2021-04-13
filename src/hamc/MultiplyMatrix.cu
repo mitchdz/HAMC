@@ -7,7 +7,7 @@
 
 //#define TILE_WIDTH 16
 
-int TILE_WIDTH 16;
+int TILE_WIDTH = 16;
 
 __global__ void mult_kernel(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB)
 {
