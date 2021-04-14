@@ -94,7 +94,7 @@ bin_matrix run_mult_kernel(bin_matrix A, bin_matrix B)
     cudaFree(deviceA);
     cudaFree(deviceB);
     cudaFree(deviceC);
-
+    //printf("C Row: %d, C Col: %d\n", C->rows)
     return C;
 }
 
