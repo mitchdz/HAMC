@@ -17,7 +17,23 @@ bin_matrix decode_gpu(bin_matrix word, mdpc code)
 
     //bin_matrix syn  = matrix_mult_cpu(H, transpose_cpu(word));
     printf("pre mult\n");
-    bin_matrix syn = run_mult_kernel(H, run_transpose_kernel(word), 16);
+    bin_matrix trans = run_transpose_kernel(word);
+    //bin_matrix syn = run_mult_kernel(H, run_transpose_kernel(word), 16);
+    bin_matrix syn = run_mult_kernel(H, trans, 16);
+    bin_matrix syn_cpu = matrix_mult_cpu(H, trans);
+    
+    //printf("\n");
+    //TODO: remove debug
+    printf("syn->rows: %d, syn->cols: %d, syn_cpu->rows: %d, syn_cpu->cols: %d\n", syn->rows, syn->cols, syn_cpu->rows, syn_cpu->cols);
+    bool matching = true;
+    for(int qw = 0; qw < syn->rows * syn->cols; qw++){
+        if(){
+            matching = false;
+            printf("Position: [%d][%d]\n", syn->rows, syn->cols);
+            break;
+        }
+    }
+    printf("matchy match: %d\n", matching);
     printf("post mult\n");
 
     int limit = 10;
