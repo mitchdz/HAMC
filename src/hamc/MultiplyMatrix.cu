@@ -111,7 +111,7 @@ bin_matrix run_mult_kernel(bin_matrix A, bin_matrix B, int TILE_WIDTH)
     HAMC_DATA_TYPE_t *deviceB;
     HAMC_DATA_TYPE_t *deviceC;
     
-    bin_matrix C = mat_init_cpu(A->rows, A->cols);
+    bin_matrix C = mat_init_cpu(A->rows, B->cols);
     
     cudaMalloc((void **) &deviceA, A->cols * A->rows * sizeof(HAMC_DATA_TYPE_t));
     cudaMalloc((void **) &deviceB, B->cols * B->rows * sizeof(HAMC_DATA_TYPE_t));
