@@ -97,7 +97,7 @@ void test_gpu_e2e(int n0, int p, int t, int w, int seed, bool verbose)
         printf("\n");
     }
 
-    printf("v size: [%d][%d]\np size: [%d]\n", v->rows, v->cols, crypt->p);
+    printf("v size: [%d][%d]\np size: [%d]\n", v->rows, v->cols, crypt->code->p);
     decrypt_start = clock();
     //bin_matrix s = decrypt_cpu(v, crypt);
     bin_matrix s = decrypt_gpu(v, crypt);
