@@ -16,26 +16,7 @@ bin_matrix decode_gpu(bin_matrix word, mdpc code)
     bin_matrix H = parity_check_matrix_cpu(code);
 
     //bin_matrix syn  = matrix_mult_cpu(H, transpose_cpu(word));
-    printf("pre mult\n");
-    bin_matrix trans = run_transpose_kernel(word);
-    //bin_matrix syn = run_mult_kernel(H, run_transpose_kernel(word), 16);
-    bin_matrix syn = run_mult_kernel(H, trans, 16);
-    bin_matrix syn_cpu = matrix_mult_cpu(H, trans);
-    
-    //printf("\n");
-    //TODO: remove debug
-    printf("H size: [%d][%d], trans size: [%d][%d]\n", H->rows, H->cols, trans->rows, trans->cols);
-    printf("syn->rows: %d, syn->cols: %d, syn_cpu->rows: %d, syn_cpu->cols: %d\n", syn->rows, syn->cols, syn_cpu->rows, syn_cpu->cols);
-    bool matching = true;
-    for(int qw = 0; qw < syn->rows * syn->cols; qw++){
-        if(syn->data[qw] != syn_cpu->data[qw]){
-            matching = false;
-            printf("Position: [%d][%d]\n", syn->rows, syn->cols);
-            break;
-        }
-    }
-    printf("matchy match: %d\n", matching);
-    printf("post mult\n");
+    bin_matrix syn = run_mult_kernel(H, run_transpose_kernel(word), 16);
 
     int limit = 10;
     int delta = 5;
@@ -67,9 +48,7 @@ bin_matrix decode_gpu(bin_matrix word, mdpc code)
         for(j = 0; j < word->cols; j++) {
             if(unsatisfied[j] >= b) {
                 set_matrix_element_cpu(word, 0, j, (get_matrix_element_cpu(word, 0, j) ^ 1));
-                printf("pre add\n");
                 syn = add_matrix_cpu(syn, mat_splice_cpu(H, 0, H->rows - 1, j, j));
-                printf("post add\n");
             }
         }
         // printf("Syndrome: ");
