@@ -16,7 +16,9 @@ bin_matrix decode_gpu(bin_matrix word, mdpc code)
     bin_matrix H = parity_check_matrix_cpu(code);
 
     //bin_matrix syn  = matrix_mult_cpu(H, transpose_cpu(word));
+    printf("pre mult\n");
     bin_matrix syn = run_mult_kernel(H, run_transpose_kernel(word), 16);
+    printf("post mult\n");
 
     int limit = 10;
     int delta = 5;
@@ -48,7 +50,9 @@ bin_matrix decode_gpu(bin_matrix word, mdpc code)
         for(j = 0; j < word->cols; j++) {
             if(unsatisfied[j] >= b) {
                 set_matrix_element_cpu(word, 0, j, (get_matrix_element_cpu(word, 0, j) ^ 1));
+                printf("pre add\n");
                 syn = add_matrix_cpu(syn, mat_splice_cpu(H, 0, H->rows - 1, j, j));
+                printf("post add\n");
             }
         }
         // printf("Syndrome: ");
