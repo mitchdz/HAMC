@@ -100,7 +100,8 @@ void run_tile_sweep(int x, int y, int upto)
     for(int i = 16; i <= upto; i *= 2){
         start = clock();
     
-        C = run_mult_kernel(A, B, 16);
+        //C = run_mult_kernel(A, B, 16);
+        C = run_mult_kernel_test(A, B);
         
         end = clock();
         time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
@@ -139,7 +140,7 @@ int main(int argc, char *argv[])
     bool solved = true;
     
     int opt;
-    while ((opt = getopt(argc, argv, "a:b:e:o:ctsdx:y:u:h")) != -1){
+    while ((opt = getopt(argc, argv, "a:b:e:o:cts:dx:y:h")) != -1){
         switch(opt){
             case 'a':
                 input0 = strdup(optarg);
@@ -161,6 +162,7 @@ int main(int argc, char *argv[])
                 break;
             case 's':
                 sweep_tile_test = true;
+                upto = atoi(optarg);
                 break;
             case 'd':
                 sweep_size_test = true;
@@ -170,9 +172,9 @@ int main(int argc, char *argv[])
             case 'y':
                 y = atoi(optarg);
                 break;
-            case 'u':
+            /*case 'u':
                 upto = atoi(optarg);
-                break;
+                break;*/
             case 'h':
             default:
                 printHelp();
