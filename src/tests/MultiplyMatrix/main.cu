@@ -44,6 +44,7 @@ void run_time(int x, int y)
 {
     clock_t start, end;
     double time_used;
+    bool matched = true;
     
     HAMC_DATA_TYPE_t *dataA = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * x * y);
     HAMC_DATA_TYPE_t *dataB = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * x * y);
@@ -67,15 +68,26 @@ void run_time(int x, int y)
     time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
     std::cout << "CPU time: " << time_used << std::endl;
     
-    free(C);
-    
     start = clock();
     
-    C = run_mult_kernel(A, B, 16);
+    bin_matrix G = run_mult_kernel(A, B, 16);
     
     end = clock();
     time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
     std::cout << "GPU time: " << time_used << std::endl;
+    
+    for(int i = 0; i < C->rows * C->cols; i++){
+        if(C->data[i] != G->data[i]){
+            printf("Index failed at: %d\n", i);
+            matched = false;
+            break
+        }
+    }
+    
+    printf("Matched: %s", matched ? "true" : "false");
+    
+    free(C);
+    free(G);
 }
 
 void run_tile_sweep(int x, int y, int upto)
