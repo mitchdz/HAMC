@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
     bool solved = true;
     
     int opt;
-    while ((opt = getopt(argc, argv, "a:b:e:o:ctsdx:y:u:h")) != -1){
+    while ((opt = getopt(argc, argv, "a:b:e:o:cts:dx:y:h")) != -1){
         switch(opt){
             case 'a':
                 input0 = strdup(optarg);
@@ -161,6 +161,7 @@ int main(int argc, char *argv[])
                 break;
             case 's':
                 sweep_tile_test = true;
+                upto = atoi(optarg);
                 break;
             case 'd':
                 sweep_size_test = true;
@@ -170,9 +171,9 @@ int main(int argc, char *argv[])
             case 'y':
                 y = atoi(optarg);
                 break;
-            case 'u':
+            /*case 'u':
                 upto = atoi(optarg);
-                break;
+                break;*/
             case 'h':
             default:
                 printHelp();
