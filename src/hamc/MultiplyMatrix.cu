@@ -14,7 +14,7 @@ __global__ void mult_kernel_register_blocked(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE
     __shared__ HAMC_DATA_TYPE_t sharedB[64*64];
     
     int tile = 64;
-    HAMC_DATA_TYPE_t *regC
+    HAMC_DATA_TYPE_t *regC[16];
     
     int tileRow = blockIdx.y * tile;
     int tileCol = blockIdx.x * tile;
