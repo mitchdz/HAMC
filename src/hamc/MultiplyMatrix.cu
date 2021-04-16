@@ -9,6 +9,52 @@
 
 //int TILE_WIDTH = 16;
 
+__global__ void mult_kernel_register_blocked(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB){
+    __shared__ HAMC_DATA_TYPE_t sharedA[64*64];
+    __shared__ HAMC_DATA_TYPE_t sharedB[64*64];
+    
+    int tile = 64;
+    HAMC_DATA_TYPE_t *regC
+    
+    int tileRow = blockIdx.y * tile;
+    int tileCol = blockIdx.x * tile;
+    int tid = threadIdx.y * blockDim.x + threadIdx.x;//0-255
+    int tilePosX = tid % tile;//0-63
+    int tilePosY = tid / tile;//0-3
+    int row = 0, sharedIndex = 0;
+    int stride = (blockDim.x * blockDim.y) / tile;
+    for(int i = 0; (i < ((colA - 1)/tile) + 1) && (i < ((rowB - 1)/tile) + 1) ; i++){
+        for(int j = 0; j < (tile * tile) / (blockDim.x * blockDim.y); j++){//0-15
+            row = j * stride + tilePosY;
+            sharedIndex = row * tile + tilePosX
+            if(((tileRow + row) < rowA) && (((i * tile) + tilePosX) < colA)){
+                sharedA[sharedIndex] = A[((tileRow + row) * colA) + (i * tile) + tilePosX];
+            }
+            else{
+                sharedA[sharedIndex] = 0;
+            }
+            if(((row + (i * tile)) < rowB) && ((tileCol + tilePosX) < colB)){
+                sharedB[sharedIndex] = B[(colB * (row + (i * tile))) + tileCol + tilePosX];
+            }
+            else{
+                sharedB[sharedIndex] = 0;
+            }
+        }
+        __syncthreads();
+        for(int j = 0; j < blockDim.x; j++){
+            //stride = j * blockDim.x / tile;
+            for(int k = 0; k < tile; k++){
+                regC[j] ^= sharedA[((j * blockDim.x / tile) + (tid % blockDim.x)) * tile + k] & sharedB[(k * tile) + (j * blockDim.x / tile) + (tid % blockDim.x)];
+            }
+        }
+        __syncthreads();
+    }
+    __syncthreads();
+    for(int i = 0; i < blockDim.x; i++){
+        C[(tileRow + tid % blockDim.x + blockDim.y * (i / stride) * colB) + tileCol + tid % tile] = regC[i];
+    }
+}
+
 __global__ void mult_kernel(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB, int TILE_WIDTH)
 {
     extern __shared__ HAMC_DATA_TYPE_t sharedArray[];
@@ -33,13 +79,13 @@ __global__ void mult_kernel(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_
             sharedA[tid] = A[Row * colA + tilePos + threadIdx.x];
         }
         else{
-            sharedA[tid] = 0.0;
+            sharedA[tid] = 0;
         }
         if((Col < colB) && (tilePos + threadIdx.y < rowB)){
             sharedB[tid] = B[(tilePos + threadIdx.y) * colB + Col];
         }
         else{
-            sharedB[tid] = 0.0;
+            sharedB[tid] = 0;
         }
         __syncthreads();
         
@@ -139,6 +185,48 @@ bin_matrix run_mult_kernel(bin_matrix A, bin_matrix B, int TILE_WIDTH)
     cudaFree(deviceB);
     cudaFree(deviceC);
 
+    return C;
+}
+
+bin_matrix run_mult_kernel_test(bin_matrix A, bin_matrix B)
+{
+    int TILE_WIDTH = 16;
+    
+    if (A->cols != B->rows){
+        printf("Matrices are incompatible, check dimensions...\n");
+        exit(0);
+    }
+
+    HAMC_DATA_TYPE_t *deviceA;
+    HAMC_DATA_TYPE_t *deviceB;
+    HAMC_DATA_TYPE_t *deviceC;
+    
+    bin_matrix C = mat_init_cpu(A->rows, B->cols);
+    
+    cudaMalloc((void **) &deviceA, A->cols * A->rows * sizeof(HAMC_DATA_TYPE_t));
+    cudaMalloc((void **) &deviceB, B->cols * B->rows * sizeof(HAMC_DATA_TYPE_t));
+    cudaMalloc((void **) &deviceC, B->cols * A->rows * sizeof(HAMC_DATA_TYPE_t));
+    
+    cudaMemcpy(deviceA, A->data, A->cols * A->rows * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyHostToDevice);
+    cudaMemcpy(deviceB, B->data, B->cols * B->rows * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyHostToDevice);
+    
+    dim3 DimBlock(TILE_WIDTH, TILE_WIDTH, 1);
+    int x_blocks = ((B->cols - 1)/64) + 1;
+    int y_blocks = ((A->rows - 1)/64) + 1;
+    dim3 DimGrid(x_blocks, y_blocks, 1);
+    
+    mult_kernel<<<DimGrid, DimBlock)>>>(deviceA, deviceB, deviceC, A->rows, B->rows, A->cols, B->cols);
+    
+    cudaError_t cudaerr = cudaDeviceSynchronize();
+    if (cudaerr != cudaSuccess)
+        printf("kernel launch failed with error \"%s\".\n", cudaGetErrorString(cudaerr));
+    
+    cudaMemcpy(C->data, deviceC, C->cols * C->rows * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyDeviceToHost);
+    
+    cudaFree(deviceA);
+    cudaFree(deviceB);
+    cudaFree(deviceC);
+    //printf("C Row: %d, C Col: %d\n", C->rows)
     return C;
 }
 
