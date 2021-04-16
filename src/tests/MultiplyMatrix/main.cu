@@ -80,7 +80,7 @@ void run_time(int x, int y)
         if(C->data[i] != G->data[i]){
             printf("Index failed at: %d\n", i);
             matched = false;
-            break
+            break;
         }
     }
     
