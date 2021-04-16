@@ -15,8 +15,13 @@ bin_matrix decode_gpu(bin_matrix word, mdpc code)
 {
     bin_matrix H = parity_check_matrix_cpu(code);
 
-    //bin_matrix syn  = matrix_mult_cpu(H, transpose_cpu(word));
-    bin_matrix syn = run_mult_kernel(H, run_transpose_kernel(word), 16);
+    bin_matrix syn  = matrix_mult_cpu(H, transpose_cpu(word));
+    //bin_matrix syn = run_mult_kernel(H, run_transpose_kernel(word), 16);
+    //bin_matrix cyn  = matrix_mult_cpu(H, transpose_cpu(word));
+    
+    /*for(int qw = 0; qw < syn->rows * syn->cols; qw++){
+        
+    }*/
 
     int limit = 10;
     int delta = 5;
