@@ -14,7 +14,7 @@ __global__ void mult_kernel_register_blocked(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE
     __shared__ HAMC_DATA_TYPE_t sharedB[64*64];
     
     int tile = 64;
-    HAMC_DATA_TYPE_t *regC[16];
+    HAMC_DATA_TYPE_t regC[16];
     
     int tileRow = blockIdx.y * tile;
     int tileCol = blockIdx.x * tile;
@@ -26,7 +26,7 @@ __global__ void mult_kernel_register_blocked(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE
     for(int i = 0; (i < ((colA - 1)/tile) + 1) && (i < ((rowB - 1)/tile) + 1) ; i++){
         for(int j = 0; j < (tile * tile) / (blockDim.x * blockDim.y); j++){//0-15
             row = j * stride + tilePosY;
-            sharedIndex = row * tile + tilePosX
+            sharedIndex = row * tile + tilePosX;
             if(((tileRow + row) < rowA) && (((i * tile) + tilePosX) < colA)){
                 sharedA[sharedIndex] = A[((tileRow + row) * colA) + (i * tile) + tilePosX];
             }
