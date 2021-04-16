@@ -7,15 +7,9 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include <stdint.h>
 
-#pragma comment(lib, "cuda.lib")
-#pragma comment(lib, "cudart.lib")
-#include <cuda.h>
-#include <math.h>
-#include <cuda_runtime.h>
-#include <cuda_runtime_api.h>
-#include "device_launch_parameters.h"
-#include <cublas_v2.h>
+#include <sys/time.h>
 
 
 #include "../../src/hamc/hamc_cpu_code.c"
@@ -23,198 +17,193 @@
 using namespace std;
 
 
-#define blocksize 8
-
-__global__ void nodiag_normalize(uint8_t *A, uint8_t *I, int n, int i){
-    int x = blockIdx.x * blockDim.x + threadIdx.x;
-    int y = blockIdx.y * blockDim.y + threadIdx.y;
-
-    if (x < n && y < n) {
-        if (x == i && x!=y) {
-            I[x*n + y] ^= A[i*n + i];
-            A[x*n + y] ^= A[i*n + i];
-        }
-    }
-}
-
-__global__ void diag_normalize(uint8_t *A, uint8_t *I, int n, int i){
-    int x = blockIdx.x * blockDim.x + threadIdx.x;
-    int y = blockIdx.y * blockDim.y + threadIdx.y;
-
-    if (x < n && y < n) {
-        if (x == y && x == i){
-            I[x*n + y] ^= A[i*n + i];
-            A[x*n + y] ^= A[i*n + i];
-        }
-    }
-
-}
-
-__global__ void gaussjordan(uint8_t *A, uint8_t *I, int n, int i)
+__global__ void add(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B,
+        HAMC_DATA_TYPE_t *C)
 {
-    int x = blockIdx.x * blockDim.x + threadIdx.x;
-    int y = blockIdx.y * blockDim.y + threadIdx.y;
-
-    if (x < n && y < n){
-        if (x != i){
-            //I[x*n + y] -= I[i*n + y] * A[x*n + i];
-            I[x*n + y] ^= I[i*n + y] & A[x*n + i];
-            if (y != i){
-                //A[x*n + y] -= A[i*n + y] * A[x*n + i];
-                A[x*n + y] ^= A[i*n + y] & A[x*n + i];
-            }
-        }
-    }
-
-}
-
-__global__ void set_zero(uint8_t *A, uint8_t *I, int n, int i){
-    int x = blockIdx.x * blockDim.x + threadIdx.x;
-    int y = blockIdx.y * blockDim.y + threadIdx.y;
-
-    if (x < n && y < n){
-        if (x != i){
-            if (y == i){
-                A[x*n + y] = 0;
-            }
-        }
-    }
+    int tid = blockIdx.x;
+    //C[tid] = A[tid] + B[tid];
+    C[tid] = A[tid] | B[tid];
 }
 
 
-void printMatrix(uint8_t *mat, int n)
+__global__ void scale(HAMC_DATA_TYPE_t *A, int size, int index)
 {
-    for ( int i = 0; i < n; i++) {
-        for ( int j = 0; j < n; j++) {
-            printf("%d  ", mat[i*n+j]);
-        }
-        printf("\n");
+    int i;
+    int start = index*size + index;
+    int end = index*size+size;
+
+    for (i = start+1; i < end;i++) {
+        //A[i]=(A[i]/A[start]);
+        //A[i]=(A[i]^A[start]);
     }
 }
 
-
-
-
-int main()
+__global__ void reduce(HAMC_DATA_TYPE_t *A, int size, int index, int b_size)
 {
-    const int n = 4;
-    // creating input
-    uint8_t *iL = new uint8_t[n*n];
-    uint8_t *L = new uint8_t[n*n];
+    extern __shared__ HAMC_DATA_TYPE_t pivot[];
 
-    bin_matrix CPU = mat_init_cpu(n,n);
 
-    uint8_t val;
-    int seed = 10;
-    // create random nxn binary matrix
-    srand(seed);
-    for ( int i = 0; i < n*2; i++) {
-        val = rand() %2;
-        L[i] = val;
-        CPU->data[i] = val;
+
+    int i;
+
+    int tid=threadIdx.x;
+    int bid=blockIdx.x;
+    int block_size=b_size;
+
+    int pivot_start=(index*size+index);
+    int pivot_end=(index*size+size);
+
+    int start;
+    int end;
+    int pivot_row;
+    int my_row;
+
+    if(tid==0){
+        for(i=index;i<size;i++) pivot[i]=A[(index*size)+i];
     }
 
-    printMatrix(L,n);
-    printf("\n");
+    __syncthreads();
 
-    //savetofile(L, "L.txt", n, n);
+    pivot_row=(index*size);
+    my_row=(((block_size*bid) + tid)*size);
+    start=my_row+index;
+    end=my_row+size;
 
-    cout << "inv\n";
-    uint8_t *d_A, *I, *dI;
-    float time;
-    cudaError_t err;
-    cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-    int ddsize = n*n*sizeof(uint8_t);
-
-    dim3 threadsPerBlock(blocksize, blocksize);
-    dim3 numBlocks((n + blocksize - 1) / blocksize, (n + blocksize - 1) / blocksize);
-
-
-    // memory allocation
-    err = cudaMalloc((void**)&d_A, ddsize);
-    if (err != cudaSuccess){ cout << cudaGetErrorString(err) << " in " << __FILE__ << " at line " << __LINE__ << endl; }
-    err = cudaMalloc((void**)&dI, ddsize);
-    if (err != cudaSuccess){ cout << cudaGetErrorString(err) << " in " << __FILE__ << " at line " << __LINE__ << endl; }
-    I = new uint8_t[n*n];
-
-    for (int i = 0; i<n; i++){
-        for (int j = 0; j<n; j++){
-            if (i == j) I[i*n + i] = 1.0;
-            else I[i*n + j] = 0.0;
+    if(my_row >pivot_row){
+        for(i=start+1;i<end;i++){
+            //A[i]=A[i]-(A[start]*pivot[(i-my_row)]);
+            A[i] ^= (A[start] & pivot[(i-my_row)]);
         }
     }
 
-    //copy data from CPU to GPU
-    err = cudaMemcpy(d_A, L, ddsize, cudaMemcpyHostToDevice);
-    if (err != cudaSuccess){ cout << cudaGetErrorString(err) << " in " << __FILE__ << " at line " << __LINE__ << endl; }
-    err = cudaMemcpy(dI, I, ddsize, cudaMemcpyHostToDevice);
-    if (err != cudaSuccess){ cout << cudaGetErrorString(err) << " in " << __FILE__ << " at line " << __LINE__ << endl; }
 
-    //timer start
-    cudaEventRecord(start, 0);
 
-    // L^(-1)
-    for (int i = 0; i<n; i++){
-        nodiag_normalize <<<numBlocks, threadsPerBlock >>>(d_A, dI, n, i);
-        diag_normalize <<<numBlocks, threadsPerBlock >>>(d_A, dI, n, i);
-        gaussjordan <<<numBlocks, threadsPerBlock >>>(d_A, dI, n, i);
-        set_zero <<<numBlocks, threadsPerBlock >>>(d_A, dI, n, i);
+}
+
+
+int main(int argc, char *argv[]){
+    printf("Scratch test\n");
+    HAMC_DATA_TYPE_t *a;
+    HAMC_DATA_TYPE_t *c;
+    int N;
+    int flag=0;
+
+    HAMC_DATA_TYPE_t **result;
+    HAMC_DATA_TYPE_t **b;
+    int blocks;
+
+    HAMC_DATA_TYPE_t *dev_a;
+    int i;
+    int j;
+
+    double start;
+    double end;
+    struct timeval tv;
+
+    //N=atoi(argv[1]);
+
+    N = 8;
+
+    //allocate memory on CPU
+    a=(HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t)*N*N);
+    c=(HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t)*N*N);
+
+
+    result=(HAMC_DATA_TYPE_t **)malloc(sizeof(HAMC_DATA_TYPE_t *)*N);
+    b=     (HAMC_DATA_TYPE_t **)malloc(sizeof(HAMC_DATA_TYPE_t *)*N);
+
+
+    for(i=0;i<N;i++){
+       result[i]=(HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t)*N);
+       b[i]     =(HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t)*N);
     }
 
-    cudaEventRecord(stop, 0);
-    cudaEventSynchronize(stop);
-    cudaEventElapsedTime(&time, start, stop);
-    cudaEventDestroy(start);
-    cudaEventDestroy(stop);
+    //allocate the memory on the GPU
+    cudaMalloc ( (void**)&dev_a, N*N* sizeof (HAMC_DATA_TYPE_t) );
 
-    //copy data from GPU to CPU
-    err = cudaMemcpy(iL, dI, ddsize, cudaMemcpyDeviceToHost);
-    if (err != cudaSuccess){ cout << cudaGetErrorString(err) << " in " << __FILE__ << " at line " << __LINE__ << endl; }
-    err = cudaMemcpy(I, d_A, ddsize, cudaMemcpyDeviceToHost);
-    if (err != cudaSuccess){ cout << cudaGetErrorString(err) << " in " << __FILE__ << " at line " << __LINE__ << endl; }
 
-    cout << "Cuda Time - inverse: " << time << "ms\n";
-    //savetofile(I, "I.txt", n, n);
-    cudaFree(d_A);
-    cudaFree(dI);
+    bin_matrix sol_raw = mat_init_cpu(N,N);
 
-    printf("iL:\n");
-    printMatrix(iL, n);
+    srand((unsigned)2);
+    //fill the arrays 'a' on the CPU
+    for ( i = 0; i <= (N*N); i++) {
+        HAMC_DATA_TYPE_t val = ((rand()%2));
+        a[i] = val;
+        sol_raw->data[i] = val;
+    }
+
+    printf("Matrix a is :\n");
+    for(i=0; i<(N*N); i++){
+        if(i%N==0)
+            printf("\n %d ", a[i]);
+        else
+            printf("%d ",a[i]);
+    }
+    printf("\n\n");
+
+    bin_matrix sol = circ_matrix_inverse_cpu(sol_raw);
+
+    printf("Expected solution is :\n");
+    for(i=0; i<(N*N); i++){
+        if(i%N==0)
+            printf("\n %d ", sol->data[i]);
+        else
+            printf("%d ",sol->data[i]);
+    }
+
+
+
+
+    cudaMemcpy(dev_a,a,N*N*sizeof(HAMC_DATA_TYPE_t), cudaMemcpyHostToDevice);//copy array to device memory
+
+    gettimeofday(&tv,NULL);
+    start=tv.tv_sec;
+    /*Perform LU Decomposition*/
+    printf("\n==========================================================\n"); 
+    for(i=0;i<N;i++){
+        //scale<<<1,1>>>(dev_a,N,i);
+        // blocks= ((N-i-1)/512)+1;
+        blocks=((N/512));
+        //printf("Number of blocks rxd : %d \n",blocks);
+        reduce<<<blocks,512,N*sizeof(HAMC_DATA_TYPE_t)>>>(dev_a,N,i,512);
+
+    }
+    /*LU decomposition ends here*/
+
+    gettimeofday(&tv,NULL);
+    end=tv.tv_sec;
+    cudaMemcpy( c, dev_a, N*N*sizeof(HAMC_DATA_TYPE_t),cudaMemcpyDeviceToHost );//copy array back to host
+
+    printf("\nThe time for LU decomposition is %lf \n",(end-start));
+       //display the results
+    printf("\nOutput from GPU is \n");
+    for ( i = 0; i < (N*N); i++) {
+               if(i%N==0)
+        printf( "\n%d  ", c[i]);
+               else  printf("%d ",c[i]);
+    }
     printf("\n");
 
+    printf("=======================================================");
+    printf("\n Performing inplace verification \n");
+        /*Inplace verification step*/
 
-    bin_matrix out = circ_matrix_inverse_cpu(CPU);
-
-    free(CPU);
-    free(out);
-
-    printf("CPU output:\n");
-    printMatrix(out->data, n);
-    printf("\n");
-
-
-
-    uint8_t *c = new uint8_t[n*n];
-    for (int i = 0; i<n; i++) {
-        for (int j = 0; j<n; j++) {
-            c[i*n+j] = 0;  //put the initial value to zero
-            for (int x = 0; x<n; x++)
-                //c[i*n + j] = c[i*n + j] + L[i*n+x] * iL[x*n + j];  //matrix multiplication
-                c[i*n + j] = c[i*n + j] + L[i*n+x] & iL[x*n + j];  //matrix multiplication
+    for (int i = 0; i < N*N; i++) {
+        if (sol->data[i] != c[i]) {
+            flag = 1;
+            break;
         }
     }
 
-    printf("output:\n");
-    printMatrix(c, n);
-    printf("\n");
 
+    if(flag==0) printf("correctq: Correct");
+    else printf("correctq: Failure %d \n",flag);
 
+    //free the memory allocated on the GPU
+    cudaFree( dev_a );
 
     return 0;
 }
-
 
 
 

@@ -188,29 +188,16 @@ int main()
 
 
 
-
-
-      create_dataset(1, 2, 200, 10, 30, 10);
-      create_dataset(2, 2, 500, 10, 30, 10);
-      create_dataset(3, 2, 512, 10, 30, 10);
-      create_dataset(4, 2, 1024, 10, 30, 10);
-      create_dataset(5, 2, 2000, 10, 120, 10);
-      create_dataset(6, 2, 4800, 20, 60, 10);
-      create_dataset(7, 2, 6000, 20, 60, 10);
-      create_dataset(8, 2, 32771, 264, 274, 10);
-
-//    create_dataset(10, 4096, 4096);
-//    create_dataset(0, 4, 4);
-//    create_dataset(1, 16, 16);
-//    create_dataset(2, 32, 32);
-//    create_dataset(3, 64, 64);
-//    create_dataset(4, 128, 128);
-//    create_dataset(5, 256, 256);
-//    create_dataset(6, 499, 499);
-//    create_dataset(7, 512, 512);
-//    create_dataset(8, 1024, 1024);
-//    create_dataset(9, 2048, 2048);
-//    create_dataset(11, 8192, 8192);
+      //create_dataset(1, 2, 200, 10, 30, 10);
+      //create_dataset(2, 2, 500, 10, 30, 10);
+      //create_dataset(3, 2, 512, 10, 30, 10);
+      //create_dataset(4, 2, 1024, 10, 30, 10);
+      //create_dataset(5, 2, 2000, 10, 120, 10);
+      //create_dataset(6, 2, 4800, 20, 60, 10);
+      //create_dataset(7, 2, 6000, 20, 60, 10);
+      //create_dataset(8, 2, 12000, 20, 60, 10);
+      create_dataset(9, 2, 24000, 264, 274, 10);
+      create_dataset(10, 2, 32771, 264, 274, 10);
 
   return 0;
 }

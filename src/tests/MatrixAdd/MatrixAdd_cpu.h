@@ -5,7 +5,8 @@
 extern "C" {
 #endif
 
-#define HAMC_DATA_TYPE_t HAMC_DATA_TYPE_t
+#include "../../hamc/hamc_common.h"
+
 
 //FUNCTIONS go in here
 HAMC_DATA_TYPE_t mat_init(int rows, int cols);

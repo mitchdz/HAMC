@@ -19,6 +19,8 @@ __global__ void binary_gaussian_elimination_with_pivot(HAMC_DATA_TYPE_t *in, HAM
 {
     __shared__ HAMC_DATA_TYPE_t A[16*2];
 
+
+
     int idx = threadIdx.x + blockIdx.x * blockDim.x;
     int idy = threadIdx.y + blockIdx.y * blockDim.y;
 
@@ -277,8 +279,6 @@ bin_matrix run_inverse_kernel(bin_matrix A)
         printf("\n");
     }
 
-
-
     printf("Starting Inverse matrix kernel...\n");
 
     // /* determine block and grid dimensions */
@@ -288,8 +288,8 @@ bin_matrix run_inverse_kernel(bin_matrix A)
     //dim3 DimGrid(x_blocks, y_blocks, 1);
 
 
-    binary_inverse_square_matrix_naive<<<1, 4>>>
-        (deviceA, deviceB, A->rows, A->cols);
+    //binary_inverse_square_matrix_naive<<<1, 4>>>
+    //    (deviceA, deviceB, A->rows, A->cols);
 
     cudaError_t cudaerr = cudaDeviceSynchronize();
     if (cudaerr != cudaSuccess)
