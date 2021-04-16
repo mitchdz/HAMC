@@ -77,6 +77,16 @@ void run_time(int x, int y)
     std::cout << "GPU time: " << time_used << std::endl;
     
     for(int i = 0; i < C->rows * C->cols; i++){
+        if((C->rows != G->rows) || (C->cols != G->cols)){
+            if(C->rows != G->rows){
+                printf("Row size doesn't match.\n");
+            }
+            if(C->cols != G->cols){
+                printf("Col size doesn't match.\n");
+            }
+            matched = false;
+            break;
+        }
         if(C->data[i] != G->data[i]){
             printf("Index failed at: %d\n", i);
             matched = false;
