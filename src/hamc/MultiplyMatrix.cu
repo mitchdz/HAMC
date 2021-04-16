@@ -215,7 +215,7 @@ bin_matrix run_mult_kernel_test(bin_matrix A, bin_matrix B)
     int y_blocks = ((A->rows - 1)/64) + 1;
     dim3 DimGrid(x_blocks, y_blocks, 1);
     
-    mult_kernel<<<DimGrid, DimBlock>>>(deviceA, deviceB, deviceC, A->rows, B->rows, A->cols, B->cols);
+    mult_kernel_register_blocked<<<DimGrid, DimBlock>>>(deviceA, deviceB, deviceC, A->rows, B->rows, A->cols, B->cols);
     
     cudaError_t cudaerr = cudaDeviceSynchronize();
     if (cudaerr != cudaSuccess)
