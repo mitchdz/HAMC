@@ -8,7 +8,7 @@ First build the software:
 ```bash
 $ mkdir -p build_dir && cd build_dir
 $ cmake ../src/
-$ make
+$ make hamc
 ```
 
 and then run the test program:

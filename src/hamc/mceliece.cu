@@ -26,17 +26,19 @@ bin_matrix generator_matrix_gpu(mdpc code)
     start = clock();
     //bin_matrix H = parity_check_matrix_cpu(code);
 
+    bin_matrix H = make_matrix_cpu(code->p, code->p, splice_cpu(code->row, (code->n0 - 1) * code->p, code->n), 1);
+
     clock_t inverse_start, inverse_end;
     double inverse_time_used;
     inverse_start = clock();
 
     //End of modified code
     printf("Construction of G started...\n");
-
-    bin_matrix H_inv = circ_matrix_inverse_cpu(make_matrix_cpu(code->p, code->p,
-               splice_cpu(code->row, (code->n0 - 1) * code->p, code->n), 1));
+    //TODO: call GPU inverse
+    bin_matrix H_inv = circ_matrix_inverse_cpu(H);
 
     inverse_end = clock();
+
     inverse_time_used = ((double) (inverse_end - inverse_start))/ CLOCKS_PER_SEC;
     printf("Inverse time used: %f\n", inverse_time_used);
 
@@ -105,11 +107,11 @@ bin_matrix generator_matrix_gpu(mdpc code)
     printf("Time for G: %f\n", cpu_time_used);
     printf("Generator matrix generated....\n");
 
-    printf("\tInverse:   %f - %.2f\%\n",
+    printf("\tInverse:   %f - %.2f%%\n",
             inverse_time_used, 100*(inverse_time_used/cpu_time_used));
-    printf("\tMultiply:  %f - %.2f\%\n",
+    printf("\tMultiply:  %f - %.2f%%\n",
             multiply_time_used, 100*(multiply_time_used/cpu_time_used));
-    printf("\tTranspose: %f - %.2f\%\n",
+    printf("\tTranspose: %f - %.2f%%\n",
             transpose_time_used, 100*(transpose_time_used/cpu_time_used));
 
     return G;

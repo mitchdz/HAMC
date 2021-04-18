@@ -8,7 +8,6 @@
 
 #include "hamc_cpu_code.c"
 
-
 #include "hamc_common.h"
 #include "decrypt.cu"
 #include "encrypt.cu"
@@ -42,13 +41,10 @@ void printWelcome()
 }
 
 
-
 int main(int argc, char *argv[]) {
     printWelcome();
 
     /* variables for timing operations */
-    cudaEvent_t astartEvent, astopEvent;
-    float aelapsedTime;
 
     /* input parameters */
     int n = 2, p = 500, w = 30, t = 10, seed = 10;
@@ -60,7 +56,7 @@ int main(int argc, char *argv[]) {
 
     int c;
     opterr = 0;
-    while ((c = getopt (argc, argv, "a:n:p:w:t:i:o:hs:cs:vz")) != -1)
+    while ((c = getopt (argc, argv, "a:n:p:w:t:i:o:hs:cs:v")) != -1)
         switch(c)
         {
             case 'v':
@@ -123,10 +119,12 @@ int main(int argc, char *argv[]) {
     printf("\tk: %s%d%s\n", YELLOW, k, NC);
     printf("\tseed: %s%d%s\n", YELLOW, seed, NC);
     printf("\taction: %s%s%s\n", YELLOW, action, NC);
+
+
     //TODO: make sure action is null-terminated before passing into strcmp
     if (!strcmp(action, (const char*)"keygen")) {
-        if (cpu) run_keygen_cpu(outputFileName, n, p, t, w, seed);
-        else run_keygen_gpu(outputFileName, n, p, t, w, seed);
+        if (cpu) run_keygen_cpu(n, p, t, w, seed);
+        else run_keygen_gpu(n, p, t, w, seed);
     }
     else if (!strcmp(action, (const char*)"encrypt")) {
         if (cpu) run_encryption_cpu(inputFileName, outputFileName, n, p, t, w, seed);
@@ -146,28 +144,29 @@ int main(int argc, char *argv[]) {
 }
 
 void printHelp(){
-    printf("HAMC - Hardware Accelerated Mceliece Cryptosystem\n");
-    printf("Usage:\n");
-    printf("./hamc <arguments>\n");
+    printf("\n\nHAMC - Hardware Accelerated Mceliece Cryptosystem\n\n");
+
+    printf("Run the program as such:\n");
+    printf("  ./hamc [arguments]\n\n");
+
     printf("Available Arguments:\n");
-    printf("\ta (REQUIRED)\n");
-    printf("\t\t - action: 1)keygen 2)encrypt 3)decrypt\n");
+    printf("[X] denotes that an argument is required\n");
+    printf("\t-a [X] : actions: keygen encrypt decrypt test\n\n");
+    printf("\t-c : Run CPU based execution\n\n");
+    printf("\t-h : Print this help menu\n\n");
+    printf("\t-i [X] : input filename\n\n");
+    printf("\t-n [X] : Weight of generator matrix rows \n\n");
+    printf("\t-o [X] : output filename\n\n");
+    printf("\t-p [X] : Size of matrix during key generation\n\n");
+    printf("\t-s : Seed for random number generation\n\n");
+    printf("\t-t [X] : Weight of Error Matrix rows\n\n");
+    printf("\t-v : Verbose\n\n");
+    printf("\t-w [X] : Weight of QC_MDPC code\n\n");
 
-    printf("\tn\n");
-    printf("\t\t - \n");
+    printf("Example program execution:\n");
+    printf("  ./hamc -a test -n 2 -p 1024 -t 10 -w 30 -s 10\n");
+    printf("  ./hamc -a test -n 2 -p 500 -t 10 -w 30 -s 10\n");
+    printf("  ./hamc -a test -n 2 -p 500 -t 10 -w 30 -s 10 -c\n");
 
-    printf("\tp\n");
-    printf("\t\t - \n");
 
-    printf("\tw\n");
-    printf("\t\t - \n");
-
-    printf("\tt\n");
-    printf("\t\t - \n");
-
-    printf("\ti\n");
-    printf("\t\t - input filename\n");
-
-    printf("\to\n");
-    printf("\t\t - output filename\n");
 }

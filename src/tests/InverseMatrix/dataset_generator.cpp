@@ -164,6 +164,8 @@ static void create_dataset(int datasetNum, int n, int p, int t, int w, int seed)
     }
     ret = inverse_cpu_check(A);
 
+    if (ret == false)
+        printf("Could not find inverse\n");
 
     end = clock();
     time_used = ((double) (end - start))/ CLOCKS_PER_SEC;
