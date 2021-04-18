@@ -348,8 +348,8 @@ bin_matrix run_mult_kernel_test(bin_matrix A, bin_matrix B, int TILE_WIDTH)
         exit(0);
     }
 
-    HAMC_DATA_TYPE_t *deviceA;
-    HAMC_DATA_TYPE_t *deviceB;
+    float *deviceA;
+    float *deviceB;
     HAMC_DATA_TYPE_t *deviceC;
     
     bin_matrix C = mat_init_cpu(A->rows, B->cols);
