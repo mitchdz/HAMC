@@ -55,6 +55,55 @@ __global__ void mult_kernel_register_blocked(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE
     }
 }
 
+/*__global__ void mult_kernel_compressed_data(float *A, float *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB, int TILE_WIDTH)
+{
+    extern __shared__ HAMC_DATA_TYPE_t sharedArray[];
+    //int TILE_WIDTH = (sizeof(sharedArray) / sizeof(sharedArray[0])) / 4;
+    
+    HAMC_DATA_TYPE_t *sharedA = sharedArray;
+    float *sharedFloatA = sharedA;
+    HAMC_DATA_TYPE_t *sharedB = &sharedA[TILE_WIDTH * TILE_WIDTH];
+    float *sharedFloatB = sharedB;
+    //extern __shared__ HAMC_DATA_TYPE_t sharedA[];
+    //extern __shared__ HAMC_DATA_TYPE_t sharedB[];
+    
+    int Row = blockIdx.y * TILE_WIDTH + threadIdx.y;
+    int Col = blockIdx.x * TILE_WIDTH + threadIdx.x;
+    int tid = threadIdx.y * TILE_WIDTH + threadIdx.x;
+    int tilePos = 0;
+
+    HAMC_DATA_TYPE_t pValue = 0;
+    for(int i = 0; (i < (((colA - 1)/TILE_WIDTH) + 1) && (i < (((rowB - 1)/TILE_WIDTH) + 1); i++){
+        for(int j = 0; ; j++){
+            tilePos = i * TILE_WIDTH;
+            if((Row < rowA) && (tilePos + threadIdx.x < colA)){
+                sharedFloatA[tid] = A[Row * colA + tilePos + threadIdx.x];
+            }
+            else{
+                sharedA[tid] = 0;
+            }
+            if((Col < colB) && (tilePos + threadIdx.y < rowB)){
+                sharedFloatB[tid] = B[(tilePos + threadIdx.y) * colB + Col];
+            }
+            else{
+                sharedB[tid] = 0;
+            }
+            __syncthreads();
+        }
+    
+        if((Row < rowA) && (Col < colB)){
+            for(int j = 0; j < TILE_WIDTH; j++){
+                pValue ^= (sharedA[threadIdx.y * TILE_WIDTH + j] & sharedB[j * TILE_WIDTH + threadIdx.x]);
+            }
+        }
+        
+        __syncthreads();
+    }
+    if((Row < rowA) && (Col < colB)){
+        C[Row * colB + Col] = pValue;
+    }
+}*/
+
 __global__ void mult_kernel(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB, int TILE_WIDTH)
 {
     extern __shared__ HAMC_DATA_TYPE_t sharedArray[];
@@ -104,7 +153,7 @@ __global__ void mult_kernel(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_
 
 bin_matrix run_mult_kernel(bin_matrix A, bin_matrix B)
 {
-    int TILE_WIDTH = 16;
+    int TILE_WIDTH = 32;
     
     if (A->cols != B->rows){
         printf("Matrices are incompatible, check dimensions...\n");
