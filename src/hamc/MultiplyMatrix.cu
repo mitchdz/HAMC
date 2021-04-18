@@ -151,6 +151,58 @@ __global__ void mult_kernel(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_
     }
 }
 
+__global__ void mult_kernel_async(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB, int TILE_WIDTH)
+{
+    extern __shared__ HAMC_DATA_TYPE_t sharedArray[];
+    
+    //int TILE_WIDTH = (sizeof(sharedArray) / sizeof(sharedArray[0])) / 4;
+    
+    HAMC_DATA_TYPE_t *sharedA = sharedArray;
+    HAMC_DATA_TYPE_t *sharedB = &sharedA[TILE_WIDTH * TILE_WIDTH];
+    //extern __shared__ HAMC_DATA_TYPE_t sharedA[];
+    //extern __shared__ HAMC_DATA_TYPE_t sharedB[];
+    
+    int Row = blockIdx.y * TILE_WIDTH + threadIdx.y;
+    int Col = blockIdx.x * TILE_WIDTH + threadIdx.x;
+    int tid = threadIdx.y * TILE_WIDTH + threadIdx.x;
+    int tilePos = 0;
+
+    HAMC_DATA_TYPE_t pValue = 0;
+  
+    for(int i = 0; (i < ((colA - 1)/TILE_WIDTH) + 1) && (i < ((rowB - 1)/TILE_WIDTH) + 1); i++){
+        tilePos = i * TILE_WIDTH;
+        if((Row < rowA) && (tilePos + threadIdx.x < colA)){
+            //sharedA[tid] = A[Row * colA + tilePos + threadIdx.x];
+            __pipeline_memcpy_asyc(&sharedA[tid], &A[Row * colA + tilePos + threadIdx.x], sizeof(HAMC_DATA_TYPE_t));
+        }
+        else{
+            sharedA[tid] = 0;
+        }
+        if((Col < colB) && (tilePos + threadIdx.y < rowB)){
+            //sharedB[tid] = B[(tilePos + threadIdx.y) * colB + Col];
+            __pipeline_memcpy_asyc(&sharedB[tid], &B[(tilePos + threadIdx.y) * colB + Col], sizeof(HAMC_DATA_TYPE_t));
+        }
+        else{
+            sharedB[tid] = 0;
+        }
+        __pipeline_commit();
+        __pipeline_wait_prior(0);
+
+        __syncthreads();
+        
+        if((Row < rowA) && (Col < colB)){
+            for(int j = 0; j < TILE_WIDTH; j++){
+                pValue ^= (sharedA[threadIdx.y * TILE_WIDTH + j] & sharedB[j * TILE_WIDTH + threadIdx.x]);
+            }
+        }
+        
+        __syncthreads();
+    }
+    if((Row < rowA) && (Col < colB)){
+        C[Row * colB + Col] = pValue;
+    }
+}
+
 bin_matrix run_mult_kernel(bin_matrix A, bin_matrix B)
 {
     int TILE_WIDTH = 32;
