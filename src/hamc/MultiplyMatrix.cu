@@ -11,7 +11,7 @@
 
 //int TILE_WIDTH = 16;
 
-__global__ void mult_kernel_outer_product(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB, int TILE_WIDTH)
+/*__global__ void mult_kernel_outer_product(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB, int TILE_WIDTH)
 {
     extern __shared__ HAMC_DATA_TYPE_t sharedA[];
     
@@ -27,6 +27,7 @@ __global__ void mult_kernel_outer_product(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t 
     int tid = threadIdx.y * TILE_WIDTH + threadIdx.x;
     int tilePos = 0;
 
+    HAMC_DATA_TYPE_t b = 0;
     HAMC_DATA_TYPE_t pValue = 0;
   
     for(int i = 0; (i < ((colA - 1)/TILE_WIDTH) + 1) && (i < ((rowB - 1)/TILE_WIDTH) + 1); i++){
@@ -38,16 +39,17 @@ __global__ void mult_kernel_outer_product(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t 
             sharedA[tid] = 0;
         }
         if((Col < colB) && (tilePos + threadIdx.y < rowB)){
-            sharedB[tid] = B[(tilePos + threadIdx.y) * colB + Col];
+            b = B[(tilePos + threadIdx.y) * colB + Col];
         }
         else{
-            sharedB[tid] = 0;
+            b = 0;
         }
         __syncthreads();
         
         if((Row < rowA) && (Col < colB)){
             for(int j = 0; j < TILE_WIDTH; j++){
-                pValue ^= (sharedA[threadIdx.y * TILE_WIDTH + j] & sharedB[j * TILE_WIDTH + threadIdx.x]);
+                b = B[(j * colB) +  * (blockDim.x * blockDim.y)];
+                pValue ^= (sharedA[threadIdx.y * TILE_WIDTH + j] & b);
             }
         }
         
@@ -56,9 +58,9 @@ __global__ void mult_kernel_outer_product(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t 
     if((Row < rowA) && (Col < colB)){
         C[Row * colB + Col] = pValue;
     }
-}
+}/**/
 
-__global__ void mult_kernel_register_blocked(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB){
+/*__global__ void mult_kernel_register_blocked(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB){
     __shared__ HAMC_DATA_TYPE_t sharedA[64*64];
     __shared__ HAMC_DATA_TYPE_t sharedB[64*64];
     
@@ -102,9 +104,9 @@ __global__ void mult_kernel_register_blocked(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE
     for(int i = 0; i < blockDim.x; i++){
         C[(tileRow + tid % blockDim.x + blockDim.y * (i / stride) * colB) + tileCol + tid % tile] = regC[i];
     }
-}
+}/**/
 
-/*__global__ void mult_kernel_compressed_data(float *A, float *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB, int TILE_WIDTH)
+__global__ void mult_kernel_compressed_data(float *A, float *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB, int TILE_WIDTH)
 {
     extern __shared__ HAMC_DATA_TYPE_t sharedArray[];
     //int TILE_WIDTH = (sizeof(sharedArray) / sizeof(sharedArray[0])) / 4;
@@ -122,6 +124,7 @@ __global__ void mult_kernel_register_blocked(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE
     int tilePos = 0;
 
     HAMC_DATA_TYPE_t pValue = 0;
+    
     for(int i = 0; (i < (((colA - 1)/TILE_WIDTH) + 1) && (i < (((rowB - 1)/TILE_WIDTH) + 1); i++){
         for(int j = 0; ; j++){
             tilePos = i * TILE_WIDTH;
@@ -151,7 +154,7 @@ __global__ void mult_kernel_register_blocked(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE
     if((Row < rowA) && (Col < colB)){
         C[Row * colB + Col] = pValue;
     }
-}*/
+}/**/
 
 __global__ void mult_kernel(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB, int TILE_WIDTH)
 {
