@@ -102,7 +102,29 @@ void run_time(int x, int y)
     free(G);
 }
 
-void run_gpu_vers(int x, int y){
+run_profile(int x, int y)
+{
+    HAMC_DATA_TYPE_t *dataA = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * x * y);
+    HAMC_DATA_TYPE_t *dataB = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * x * y);
+    
+    for(int i = 0; i < x * y; i++){
+        dataA[i] = (HAMC_DATA_TYPE_t)(rand() % 2);
+        dataB[i] = (HAMC_DATA_TYPE_t)(rand() % 2);
+    }
+    
+    bin_matrix A = mat_init_cpu(x, y);
+    bin_matrix B = mat_init_cpu(y, x);
+    
+    A->data = dataA;
+    B->data = dataB;
+    
+    bin_matrix C = run_mult_kernel(A, B, 32);
+    
+    free(C);
+}
+
+void run_gpu_vers(int x, int y)
+{
     clock_t start, end;
     double time_used;
     bool matched = true;
@@ -222,11 +244,12 @@ int main(int argc, char *argv[])
     bool trial_time = false;
     bool sweep_tile_test = false;
     bool sweep_size_test = false;
+    bool gpu_profile = false;
     bool gpu_V_test = false;
     bool solved = true;
     
     int opt;
-    while ((opt = getopt(argc, argv, "a:b:e:o:cts:gdx:y:h")) != -1){
+    while ((opt = getopt(argc, argv, "a:b:e:o:cts:pgdx:y:h")) != -1){
         switch(opt){
             case 'a':
                 input0 = strdup(optarg);
@@ -249,6 +272,9 @@ int main(int argc, char *argv[])
             case 's':
                 sweep_tile_test = true;
                 upto = atoi(optarg);
+                break;
+            case 'p':
+                gpu_profile = true;
                 break;
             case 'g':
                 gpu_V_test = true;
@@ -277,6 +303,10 @@ int main(int argc, char *argv[])
     }
     if(sweep_tile_test){
         run_tile_sweep(x, y, upto);
+        return 0;
+    }
+    if(gpu_profile){
+        run_profile(x, y);
         return 0;
     }
     if(gpu_V_test){
