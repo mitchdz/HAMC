@@ -3,6 +3,7 @@
 #define HAMC_MULTIPLY_MATRIX_H
 
 #include <stdio.h>
+#include <cuda/pipeline>
 #include "hamc_common.h"
 
 //#define TILE_WIDTH 16
