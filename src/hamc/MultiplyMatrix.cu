@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 include <cuda.h>
+#include <cooperative_groups.h>
 #include <cuda/pipeline>
 #include "hamc_common.h"
 
