@@ -104,154 +104,170 @@ __global__ void reduce(HAMC_DATA_TYPE_t *A, int size, int index, int b_size)
     }
 }
 
+
+void print_bin_matrix(bin_matrix A)
+{
+    printf(" ");
+    for ( int i = 0; i < A->rows; i++) {
+        for ( int j = 0; j < A->cols; j++) {
+            printf("%d ", A->data[i*A->cols + j]);
+        }
+        printf("\n ");
+    }
+}
+
+
 // 1) A = P * L * U
 // 2) y*U = I // y is unkown
 // 3) z*L = y // z is unkown
 // 4) x*P = z // x is unkown, x is the inverse of A
+bin_matrix inverse_gpu(bin_matrix A)
+{
+    bool verbose = true;
+
+    clock_t total_start, total_end, 
+            LU_start, LU_end;
+
+    double LU_time_used,
+           total_time_used;
+
+
+    total_start = clock();
+
+    bin_matrix output_matrix = mat_init_cpu(A->rows, A->cols);
+
+
+    //allocate CPU memory
+    HAMC_DATA_TYPE_t *d_A = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t)*A->rows*A->cols);
+    HAMC_DATA_TYPE_t *d_b = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t)*A->rows*A->cols);
+
+    //allocate GPU memory
+    cudaMalloc ( (void**)&d_A, A->rows*A->cols*sizeof(HAMC_DATA_TYPE_t) );
+
+    // Copy bin_matrix A data to GPU
+    cudaMemcpy(d_A, A->data,
+        A->rows*A->cols*sizeof(HAMC_DATA_TYPE_t),
+        cudaMemcpyHostToDevice);
+
+    if (verbose) printf("\nPerforming LU Decomposition...\n");
+
+    /* LU decomposition */
+    LU_start = clock();
+    for(int i = 0; i < A->cols; i++){
+        int blocks=((A->cols/512));
+        reduce<<<blocks,512,A->cols*sizeof(HAMC_DATA_TYPE_t)>>>
+            (d_A,A->cols,i,512);
+    }
+    LU_end = clock();
+    LU_time_used = ((double) (LU_end - LU_start)) / CLOCKS_PER_SEC;
+
+
+
+    if (verbose) printf("\nPerforming Forward backward substition...\n");
+
+
+    clock_t fb_start = clock();
+
+    /* Forward Backward Substitution */
+    /*
+    for ( int i = 0; i < A->cols; i++) {
+        for (int j = 0; j < A->cols; j++) {
+            // Forward solve
+        }
+        for (int j = A->cols - 1; j >= 0; j++) {
+            // Backwards solve
+        }
+    }
+    */
+
+    clock_t fb_end = clock();
+    double fb_time_used = ((double) (fb_end - fb_start)) / CLOCKS_PER_SEC;
+
+
+    cudaMemcpy( output_matrix->data, d_A,
+        A->rows*A->cols*sizeof(HAMC_DATA_TYPE_t),
+        cudaMemcpyDeviceToHost );
+
+    total_end = clock();
+    total_time_used = ((double) (total_end - total_start)) / CLOCKS_PER_SEC;
+
+    if (verbose) {
+        printf("\nfinal result:\n");
+        print_bin_matrix(output_matrix);
+    }
+
+
+    if (verbose) {
+        printf("\ntotal time used: %.2lfs\n", total_time_used);
+        printf("LU Decomposition time used %.2lfs - %.2lf%%\n", 
+            LU_time_used, 100*(LU_time_used/total_time_used));
+
+        printf("Forward Backward substitution time used %.2lfs - %.2lf%%\n",
+            fb_time_used, 100*(fb_time_used/total_time_used));
+    }
+
+
+    cudaFree(d_A);
+
+    return output_matrix;
+}
+
+
+
+
+
 int main(int argc, char *argv[]){
+
+    bool verbose = true;
+
     printf("Scratch test\n");
-    HAMC_DATA_TYPE_t *a;
-    HAMC_DATA_TYPE_t *c;
     int N;
     int flag=0;
 
-    HAMC_DATA_TYPE_t **result;
-    HAMC_DATA_TYPE_t **b;
-    int blocks;
-
-    HAMC_DATA_TYPE_t *dev_a;
     int i;
 
-    double start;
-    double end;
-    struct timeval tv;
 
     N = 3;
 
-    //allocate memory on CPU
-    a = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t)*N*N);
-    c = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t)*N*N);
-
-
-    result = (HAMC_DATA_TYPE_t **)malloc(sizeof(HAMC_DATA_TYPE_t *)*N);
-    b = (HAMC_DATA_TYPE_t **)malloc(sizeof(HAMC_DATA_TYPE_t *)*N);
-
-
-    for(i = 0; i < N; i++){
-       result[i]=(HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t)*N);
-       b[i]     =(HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t)*N);
-    }
-
-    //allocate the memory on the GPU
-    cudaMalloc ( (void**)&dev_a, N*N*sizeof (HAMC_DATA_TYPE_t) );
-
-    bin_matrix sol_raw = mat_init_cpu(N,N);
+    bin_matrix cpu_raw = mat_init_cpu(N,N);
+    bin_matrix gpu_raw = mat_init_cpu(N,N);
 
     srand((unsigned)2);
     //fill the arrays 'a' on the CPU
     for ( i = 0; i <= (N*N); i++) {
         HAMC_DATA_TYPE_t val = ((rand()%2));
-        a[i] = val;
-        sol_raw->data[i] = val;
+        cpu_raw->data[i] = val;
+        gpu_raw->data[i] = val;
     }
 
-    printf("Matrix a is :\n");
-    for(i=0; i<(N*N); i++){
-        if(i%N==0)
-            printf("\n %d ", a[i]);
-        else
-            printf("%d ",a[i]);
-    }
-    printf("\n\n");
+    bin_matrix cpu_sol = circ_matrix_inverse_cpu(cpu_raw);
 
-    bin_matrix sol = circ_matrix_inverse_cpu(sol_raw);
+    if (verbose) {
+        printf("\nInput matrix:\n");
+        print_bin_matrix(gpu_raw);
 
-    printf("Expected solution is :\n");
-    for(i=0; i<(N*N); i++){
-        if(i%N==0)
-            printf("\n %d ", sol->data[i]);
-        else
-            printf("%d ",sol->data[i]);
+        printf("\nExpected solution is:\n");
+        print_bin_matrix(cpu_sol);
     }
 
-    cudaMemcpy(dev_a,a,N*N*sizeof(HAMC_DATA_TYPE_t), cudaMemcpyHostToDevice);//copy array to device memory
-
-    gettimeofday(&tv,NULL);
-    start=tv.tv_sec;
-
-
-    /* LU decomposition */
-    for(i = 0; i < N; i++){
-        blocks=((N/512));
-        reduce<<<blocks,512,N*sizeof(HAMC_DATA_TYPE_t)>>>(dev_a,N,i,512);
-    }
-
-    // 1) A = P * L * U
-    // 2) y*U = I // y is unkown
-    // 3) z*L = y // z is unkown
-    // 4) x*P = z // x is unkown, x is the inverse of A
-
-    gettimeofday(&tv,NULL);
-    end=tv.tv_sec;
-    cudaMemcpy( c, dev_a, N*N*sizeof(HAMC_DATA_TYPE_t),cudaMemcpyDeviceToHost );//copy array back to host
-
-    printf("\nThe time for LU decomposition is %lf \n",(end-start));
-       //display the results
-
-
-    printf("Output from GPU is \n");
-    for ( i = 0; i < (N*N); i++) {
-               if(i%N==0)
-        printf( "\n%d  ", c[i]);
-               else  printf("%d ",c[i]);
-    }
-    printf("\n");
-
-
-
-    printf("Performing Forward and backwards substition\n");
-
-
-    for ( i = 0; i < N; i++) {
-
-        for (int j = 0; j < N; j++) {
-            // Forward solve
-        }
-
-        for (int j = N - 1; j >= 0; j++) {
-            // Backwards solve
-
-
-        }
-
-    }
-
-
-    cudaMemcpy(c, dev_a, N*N*sizeof(HAMC_DATA_TYPE_t), cudaMemcpyDeviceToHost);
-
-
-
-    printf("final result:\n");
-    for ( i = 0; i < N; i++) {
-        for ( int j = 0; j < N; j++) {
-            printf("%d ", c[i*N + j]);
-        }
-        printf("\n");
-    }
+    bin_matrix gpu_sol = inverse_gpu(gpu_raw);
 
     // check results
     for (int i = 0; i < N*N; i++) {
-        if (sol->data[i] != c[i]) {
+        if (gpu_sol->data[i] != cpu_sol->data[i]) {
             flag = 1;
             break;
         }
     }
 
     if(flag==0) printf("correctq: Correct");
-    else printf("correctq: Failure %d \n",flag);
+    else printf("correctq: Failure\n");
 
-    // free the memory allocated on the GPU
-    cudaFree( dev_a );
+
+    free(cpu_raw);
+    free(gpu_raw);
+    free(cpu_sol);
+    free(gpu_sol);
 
     return 0;
 }

@@ -49,7 +49,8 @@ int main(int argc, char *argv[]) {
     /* input parameters */
     int n = 2, p = 500, w = 30, t = 10, seed = 10;
     char *outputFileName = NULL, *inputFileName = NULL, *action = NULL;
-    /* determines whether to run CPU based implementation */
+
+    /* determines whether to run CPU based implementation, default no */
     bool cpu = false;
 
     bool verbose = false;
@@ -123,20 +124,28 @@ int main(int argc, char *argv[]) {
 
     //TODO: make sure action is null-terminated before passing into strcmp
     if (!strcmp(action, (const char*)"keygen")) {
-        if (cpu) run_keygen_cpu(n, p, t, w, seed);
-        else run_keygen_gpu(n, p, t, w, seed);
+        if (cpu) 
+            run_keygen_cpu(n, p, t, w, seed);
+        else 
+            run_keygen_gpu(n, p, t, w, seed);
     }
     else if (!strcmp(action, (const char*)"encrypt")) {
-        if (cpu) run_encryption_cpu(inputFileName, outputFileName, n, p, t, w, seed);
-        else run_encryption_gpu(inputFileName, outputFileName, n, p, t, w, seed);
+        if (cpu) 
+            run_encryption_cpu(inputFileName, outputFileName, n, p, t, w, seed);
+        else 
+            run_encryption_gpu(inputFileName, outputFileName, n, p, t, w, seed);
     }
     else if (!strcmp(action, (const char*)"decrypt")) {
-        if (cpu) run_decryption_cpu(inputFileName, outputFileName, n, p, t, w, seed);
-        //else decrypt_gpu(outputFileName, n, p, t, w, seed);
+        if (cpu) 
+            run_decryption_cpu(inputFileName, outputFileName, n, p, t, w, seed);
+        //else 
+            //decrypt_gpu(outputFileName, n, p, t, w, seed);
     }
     else if (test) {
-        if (cpu) test_cpu_e2e(n, p, t, w, seed);
-        else test_gpu_e2e(n, p, t, w, seed, verbose);
+        if (cpu) 
+            test_cpu_e2e(n, p, t, w, seed);
+        else 
+            test_gpu_e2e(n, p, t, w, seed, verbose);
     }
     else {
         printf("action %s not recognized\n", action);
