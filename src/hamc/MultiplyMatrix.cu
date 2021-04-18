@@ -132,7 +132,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         }
         __syncthreads();
         for(int j = 0; ; j++){
-            pValue ^= sharedFloatA[threadIdx.y * TILE_WIDTH + j] & sharedFloatB[j * TILE_WIDTH + threadIdx.x];
+            pValue ^= (uint32_t)sharedFloatA[threadIdx.y * TILE_WIDTH + j] & (uint32_t)sharedFloatB[j * TILE_WIDTH + threadIdx.x];
         }
     }
     //TODO: xor all pValue bits
