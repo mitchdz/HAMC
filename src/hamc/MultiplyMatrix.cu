@@ -122,7 +122,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
     int tid = threadIdx.y * TILE_WIDTH + threadIdx.x;
     int tilePos = 0;
 
-    float pValue = 0;
+    uint32_t pValue = 0;
     
     for(int i = 0; i < ((colA - 1)/(TILE_WIDTH / 4)) + 1; i++){
         tilePos = i * TILE_WIDTH;
