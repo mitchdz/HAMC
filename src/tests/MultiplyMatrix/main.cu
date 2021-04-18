@@ -222,10 +222,11 @@ int main(int argc, char *argv[])
     bool trial_time = false;
     bool sweep_tile_test = false;
     bool sweep_size_test = false;
+    bool gpu_V_test = false;
     bool solved = true;
     
     int opt;
-    while ((opt = getopt(argc, argv, "a:b:e:o:cts:dx:y:h")) != -1){
+    while ((opt = getopt(argc, argv, "a:b:e:o:cts:gdx:y:h")) != -1){
         switch(opt){
             case 'a':
                 input0 = strdup(optarg);
@@ -248,6 +249,9 @@ int main(int argc, char *argv[])
             case 's':
                 sweep_tile_test = true;
                 upto = atoi(optarg);
+                break;
+            case 'g':
+                gpu_V_test = true;
                 break;
             case 'd':
                 sweep_size_test = true;
@@ -273,6 +277,10 @@ int main(int argc, char *argv[])
     }
     if(sweep_tile_test){
         run_tile_sweep(x, y, upto);
+        return 0;
+    }
+    if(gpu_V_test){
+        run_gpu_vers(x, y);
         return 0;
     }
     /*if(sweep_size_test){
