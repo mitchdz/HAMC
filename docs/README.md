@@ -11,28 +11,19 @@ $ cmake ../src/
 $ make hamc
 ```
 
-and then run the test program:
+## GPU based execution:
 ```bash
-$ ./hamc -c -a test -n 2 -p 500 -t 10 -w 30
+$ ./hamc -a test
 ```
 
 ## CPU based execution:
 
 ```bash
-HAMC/Varad0612-C-Implementation$ make && ./run
-Starting Encryption...
-Input seed or -1 to use default seed: -1
-MDPC code generated....
-Time for H: 0.037965
-Construction of G started...
-Time for G: 6.039283
-Generator matrix generated....
-Time for H: 0.037504
-Decryption successful...
-Time taken by cryptosystem: 6.139059
+$ ./hamc -a test -c
 ```
-### CPU based execution specs:
-CPU: Intel(R) Core(TM) i5-4670K CPU @ 3.40GHz (1 Socket)
+### Test computer specs:
+CPU: Intel(R) Core(TM) i9-9900KF CPU @ 5.0GHz
+GPU: GTX 980Ti
 
 # Developers
 * Mitchell Dzurick
