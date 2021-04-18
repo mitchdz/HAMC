@@ -22,8 +22,8 @@ $ ./hamc -a test
 $ ./hamc -a test -c
 ```
 ### Test computer specs:
-CPU: Intel(R) Core(TM) i9-9900KF CPU @ 5.0GHz
-GPU: GTX 980Ti
+* CPU: Intel(R) Core(TM) i9-9900KF CPU @ 5.0GHz
+* GPU: GTX 980Ti
 
 # Developers
 * Mitchell Dzurick
