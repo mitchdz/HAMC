@@ -102,6 +102,67 @@ void run_time(int x, int y)
     free(G);
 }
 
+void run_gpu_vers(int x, int y){
+    clock_t start, end;
+    double time_used;
+    bool matched = true;
+    
+    printf("Matrix dimension: %dX%d\n", x, y);
+    
+    HAMC_DATA_TYPE_t *dataA = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * x * y);
+    HAMC_DATA_TYPE_t *dataB = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * x * y);
+    
+    for(int i = 0; i < x * y; i++){
+        dataA[i] = (HAMC_DATA_TYPE_t)(rand() % 2);
+        dataB[i] = (HAMC_DATA_TYPE_t)(rand() % 2);
+    }
+    
+    bin_matrix A = mat_init_cpu(x, y);
+    bin_matrix B = mat_init_cpu(y, x);
+    
+    A->data = dataA;
+    B->data = dataB;
+    
+    start = clock();
+    
+    bin_matrix G1 = run_mult_kernel(A, B, 32);
+    
+    end = clock();
+    time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
+    std::cout << "GPU V1 time: " << time_used << std::endl;
+    
+    start = clock();
+    
+    bin_matrix G2 = run_mult_kernel(A, B, 32);
+    
+    end = clock();
+    time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
+    std::cout << "GPU V2 time: " << time_used << std::endl;
+    
+    for(int i = 0; i < G1->rows * G1->cols; i++){
+        if((G1->rows != G2->rows) || (G1->cols != G2->cols)){
+            if(G1->rows != G->rows){
+                printf("Row size doesn't match.\n");
+            }
+            if(G1->cols != G2->cols){
+                printf("Col size doesn't match.\n");
+            }
+            matched = false;
+            break;
+        }
+        if(G1->data[i] != G2->data[i]){
+            printf("Index failed at: %d\n", i);
+            matched = false;
+            break;
+        }
+    }
+    
+    printf("Matched: %s", matched ? "true" : "false");
+    
+    free(G1);
+    free(G2);
+}
+
 void run_tile_sweep(int x, int y, int upto)
 {
     clock_t start, end;
