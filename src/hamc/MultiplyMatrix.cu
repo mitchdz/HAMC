@@ -367,7 +367,7 @@ bin_matrix run_mult_kernel_test(bin_matrix A, bin_matrix B, int TILE_WIDTH)
     dim3 DimGrid(x_blocks, y_blocks, 1);
     
     //mult_kernel_outer_product<<<DimGrid, DimBlock, 2 * TILE_WIDTH * TILE_WIDTH * sizeof(HAMC_DATA_TYPE_t)>>>(deviceA, deviceB, deviceC, A->rows, B->rows, A->cols, B->cols, TILE_WIDTH);
-    mult_kernel_outer_product<<<DimGrid, DimBlock, TILE_WIDTH * TILE_WIDTH * sizeof(HAMC_DATA_TYPE_t)>>>(deviceA, deviceB, deviceC, A->rows, B->rows, A->cols, B->cols, TILE_WIDTH);
+    mult_kernel_compressed_data<<<DimGrid, DimBlock, TILE_WIDTH * TILE_WIDTH * sizeof(HAMC_DATA_TYPE_t)>>>(deviceA, deviceB, deviceC, A->rows, B->rows, A->cols, B->cols, TILE_WIDTH);
     
     cudaError_t cudaerr = cudaDeviceSynchronize();
     if (cudaerr != cudaSuccess)
