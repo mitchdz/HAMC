@@ -4,7 +4,7 @@
 
 #include <stdio.h>
 #include <cuda.h>
-#include <cuda/pipeline>
+//#include <cuda/pipeline>
 #include "hamc_common.h"
 
 //#define TILE_WIDTH 16
@@ -153,7 +153,7 @@ __global__ void mult_kernel(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_
     }
 }
 
-__global__ void mult_kernel_async(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB, int TILE_WIDTH)
+/*__global__ void mult_kernel_async(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB, int TILE_WIDTH)
 {
     extern __shared__ HAMC_DATA_TYPE_t sharedArray[];
     
@@ -203,7 +203,7 @@ __global__ void mult_kernel_async(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC
     if((Row < rowA) && (Col < colB)){
         C[Row * colB + Col] = pValue;
     }
-}
+}*/
 
 bin_matrix run_mult_kernel(bin_matrix A, bin_matrix B)
 {
