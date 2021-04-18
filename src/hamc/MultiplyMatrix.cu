@@ -106,54 +106,37 @@
     }
 }/**/
 
-__global__ void mult_kernel_compressed_data(float *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB, int TILE_WIDTH)
+__global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB, int TILE_WIDTH)
 {
     extern __shared__ HAMC_DATA_TYPE_t sharedArray[];
-    //int TILE_WIDTH = (sizeof(sharedArray) / sizeof(sharedArray[0])) / 4;
     
     HAMC_DATA_TYPE_t *sharedA = sharedArray;
     float *sharedFloatA = (float *)sharedA;
     HAMC_DATA_TYPE_t *sharedB = &sharedA[TILE_WIDTH * TILE_WIDTH];
     float *sharedFloatB = (float *)sharedB;
-    //extern __shared__ HAMC_DATA_TYPE_t sharedA[];
-    //extern __shared__ HAMC_DATA_TYPE_t sharedB[];
+    
+    float *floatA = (float *)A;
     
     int Row = blockIdx.y * TILE_WIDTH + threadIdx.y;
     int Col = blockIdx.x * TILE_WIDTH + threadIdx.x;
     int tid = threadIdx.y * TILE_WIDTH + threadIdx.x;
     int tilePos = 0;
 
-    HAMC_DATA_TYPE_t pValue = 0;
+    float pValue = 0;
     
-    for(int i = 0; (i < ((colA - 1)/TILE_WIDTH) + 1) && (i < ((rowB - 1)/TILE_WIDTH) + 1); i++){
-        for(int j = 0; ; j++){
-            tilePos = i * TILE_WIDTH;
-            if((Row < rowA) && (tilePos + threadIdx.x < colA)){
-                sharedFloatA[tid] = A[Row * colA + tilePos + threadIdx.x];
-            }
-            else{
-                sharedA[tid] = 0;
-            }
-            if((Col < colB) && (tilePos + threadIdx.y < rowB)){
-                sharedFloatB[tid] = B[(tilePos + threadIdx.y) * colB + Col];
-            }
-            else{
-                sharedB[tid] = 0;
-            }
-            __syncthreads();
+    for(int i = 0; i < ((colA - 1)/(TILE_WIDTH / 4)) + 1; i++){
+        tilePos = i * TILE_WIDTH;
+        sharedFloatA[tid] = floatA[Row * colA + tilePos + threadIdx.x];
+        for(int j = 0; j < 4; j++){
+            sharedB[tid * 4 + j] = B[(j + ((tilePos + threadIdx.y) * 4)) * colB + Col];
         }
-    
-        if((Row < rowA) && (Col < colB)){
-            for(int j = 0; j < TILE_WIDTH; j++){
-                pValue ^= (sharedA[threadIdx.y * TILE_WIDTH + j] & sharedB[j * TILE_WIDTH + threadIdx.x]);
-            }
-        }
-        
         __syncthreads();
+        for(int j = 0; ; j++){
+            pValue ^= sharedFloatA[threadIdx.y * TILE_WIDTH + j] & sharedFloatB[j * TILE_WIDTH + threadIdx.x];
+        }
     }
-    if((Row < rowA) && (Col < colB)){
-        C[Row * colB + Col] = pValue;
-    }
+    //TODO: xor all pValue bits
+    C[Row * colB + Col] = pValue;
 }/**/
 
 __global__ void mult_kernel(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB, int TILE_WIDTH)
@@ -348,7 +331,7 @@ bin_matrix run_mult_kernel_test(bin_matrix A, bin_matrix B, int TILE_WIDTH)
         exit(0);
     }
 
-    float *deviceA;
+    HAMC_DATA_TYPE_t *deviceA;
     HAMC_DATA_TYPE_t *deviceB;
     HAMC_DATA_TYPE_t *deviceC;
     
@@ -366,7 +349,7 @@ bin_matrix run_mult_kernel_test(bin_matrix A, bin_matrix B, int TILE_WIDTH)
     int y_blocks = ((A->rows - 1)/TILE_WIDTH) + 1;
     dim3 DimGrid(x_blocks, y_blocks, 1);
     
-    mult_kernel_compressed_data<<<DimGrid, DimBlock, 2 * TILE_WIDTH * TILE_WIDTH * sizeof(HAMC_DATA_TYPE_t)>>>(deviceA, deviceB, deviceC, A->rows, B->rows, A->cols, B->cols, TILE_WIDTH);
+    mult_kernel_compressed_data<<<DimGrid, DimBlock, 2 * TILE_WIDTH * TILE_WIDTH * sizeof(float)>>>(deviceA, deviceB, deviceC, A->rows, B->rows, A->cols, B->cols, TILE_WIDTH);
     //mult_kernel_outer_product<<<DimGrid, DimBlock, TILE_WIDTH * TILE_WIDTH * sizeof(HAMC_DATA_TYPE_t)>>>(deviceA, deviceB, deviceC, A->rows, B->rows, A->cols, B->cols, TILE_WIDTH);
     
     cudaError_t cudaerr = cudaDeviceSynchronize();
