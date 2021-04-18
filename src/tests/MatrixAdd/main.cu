@@ -6,9 +6,12 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "MatrixAdd_cpu.h"
-#include "../../hamc/MatrixAdd.cu"
+
 #include "../../hamc/hamc_common.h"
+#include "../../hamc/hamc_cpu_code.c"
+
+#include "MatrixAdd_cpu.c"
+#include "../../hamc/MatrixAdd.cu"
 
 #define TILE_WIDTH 16
 
@@ -34,13 +37,28 @@ void printHelp()
 }
 
 
-void run_cpu(const char *in, const char*sol)
+bin_matrix run_cpu(const char *in, HAMC_DATA_TYPE_t *sol)
 {
-    int numARows, numAColumns;
-    HAMC_DATA_TYPE_t *hostA = (HAMC_DATA_TYPE_t *)wbImport(in, &numARows, &numAColumns);
-    HAMC_DATA_TYPE_t *hostC = (HAMC_DATA_TYPE_t *)malloc(numARows*numAColumns * sizeof(HAMC_DATA_TYPE_t));
 
-    matrix_add(hostA, hostC, numARows, numAColumns);
+    int numARows, numAColumns;
+
+
+    HAMC_DATA_TYPE_t *hostA =
+        (HAMC_DATA_TYPE_t *)wbImport(in, &numARows, &numAColumns);
+
+    HAMC_DATA_TYPE_t *hostB =
+        (HAMC_DATA_TYPE_t *)malloc(numARows*numAColumns * sizeof(HAMC_DATA_TYPE_t));
+
+    bin_matrix A = mat_init_cpu(numARows, numAColumns);
+    A->data = hostA;
+
+    bin_matrix B = mat_init_cpu(numARows, numAColumns);
+    B->data = hostB;
+
+
+    //matrix_add(hostA, hostC, numARows, numAColumns);
+    bin_matrix C = add_matrix_cpu(A, B);
+    return C;
 }
 
 

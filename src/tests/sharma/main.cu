@@ -53,6 +53,12 @@ __global__ void fixColumn(HAMC_DATA_TYPE_t *matrix, int size, int colId)
 
 
 
+int getIndex(int cols, int row, int col)
+{
+    return row*cols + col;
+}
+
+
 int main()
 {
     const int n = 4;
@@ -62,7 +68,7 @@ int main()
     bin_matrix CPU = mat_init_cpu(n,n);
 
     uint8_t val;
-    int seed = 10;
+    int seed = 11;
     // create random nxn binary matrix
     srand(seed);
     for ( int i = 0; i < n*2; i++) {
@@ -76,16 +82,50 @@ int main()
     printf("\n");
 
 
+    /* copy host matrix to GPU */
+    HAMC_DATA_TYPE_t *d_matrix;
+
+    cudaMalloc((void **) &d_matrix, n * n * sizeof(HAMC_DATA_TYPE_t));
+
+    cudaMemcpy(d_matrix, h_A,
+            n*n*sizeof(HAMC_DATA_TYPE_t),
+            cudaMemcpyHostToDevice);
+
     int j = 0;
     while (j < n) {
+        // Find k where matrix[k][j] is not 0
+        for (int k = 0; k < CPU->rows; k++) {
+            if (h_A[getIndex(n, k, j)] == 1) {
+                //fix row
+                fixRow<<<1,n>>>(d_matrix, n, k);
 
-
-
-
+                //fix column
+                fixColumn<<<1,n>>>(d_matrix, n, j);
+            }
+        }
         j++;
     }
 
 
+    bin_matrix h_B = mat_init_cpu(n,n);
+
+
+    cudaMemcpy(h_B->data, d_matrix, n*n*sizeof(HAMC_DATA_TYPE_t), cudaMemcpyDeviceToHost);
+
+    printf("GPU output matrix:\n");
+    printMatrix(h_B->data,n);
+    printf("\n");
+
+    bin_matrix CPU_out = circ_matrix_inverse_cpu(CPU);
+
+    printf("CPU output matrix:\n");
+    printMatrix(CPU_out->data,n);
+    printf("\n");
+
+    free(h_A);
+    free(h_B);
+    free(CPU);
+    free(CPU_out);
 
 
     return 0;

@@ -2,11 +2,9 @@
 #include <stdlib.h>
 #include "MatrixAdd_cpu.h"
 
-#define HAMC_DATA_TYPE_t HAMC_DATA_TYPE_t
+#include "../../hamc/hamc_cpu_code.c"
+#include "../../hamc/hamc_common.h"
 
-#define mat_element(mat, cols, row_idx, col_idx) \
-  mat[(row_idx * cols) + col_idx]
-  
 //initialize the matrix
 HAMC_DATA_TYPE_t mat_init(int rows, int cols)
 {

@@ -19,8 +19,8 @@ void test_gpu_e2e(int n0, int p, int t, int w, int seed, bool verbose)
     double cpu_time_used;
     start = clock();
 
-    clock_t error_vector_start, error_vector_end;
-    double error_vector_time_used;
+    //clock_t error_vector_start, error_vector_end;
+    //double error_vector_time_used;
 
     clock_t mceliece_init_start, mceliece_init_end;
     double mceliece_init_time_used;
@@ -62,13 +62,13 @@ void test_gpu_e2e(int n0, int p, int t, int w, int seed, bool verbose)
     }
 
 
-    error_vector_start = clock();
+    //error_vector_start = clock();
 
     bin_matrix error = get_error_vector_cpu(crypt->code->n, crypt->code->t);
 
-    error_vector_end = clock();
-    error_vector_time_used = ((double) (error_vector_end - error_vector_start))
-        / CLOCKS_PER_SEC;
+    //error_vector_end = clock();
+    //error_vector_time_used = ((double) (error_vector_end - error_vector_start))
+    //    / CLOCKS_PER_SEC;
 
 
     if (verbose) {
@@ -124,11 +124,11 @@ void test_gpu_e2e(int n0, int p, int t, int w, int seed, bool verbose)
     delete_mceliece_cpu(crypt);
 
     printf("Time taken by individual phases:\n");
-    printf("\tMcEliece init: %f - %.2f\%\n", mceliece_init_time_used, 100* (mceliece_init_time_used/cpu_time_used));
+    printf("\tMcEliece init: %f - %.2f%%\n", mceliece_init_time_used, 100* (mceliece_init_time_used/cpu_time_used));
     //printf("\terror vector generation time: %f - %.2f\%\n",
     //        error_vector_time_used, 100* (error_vector_time_used/cpu_time_used));
-    printf("\tencryption:    %f - %.2f\%\n", encrypt_time_used, 100*(encrypt_time_used/cpu_time_used));
-    printf("\tdecryption:    %f - %.2f\%\n", decrypt_time_used, 100*(decrypt_time_used/cpu_time_used));
+    printf("\tencryption:    %f - %.2f%%\n", encrypt_time_used, 100*(encrypt_time_used/cpu_time_used));
+    printf("\tdecryption:    %f - %.2f%%\n", decrypt_time_used, 100*(decrypt_time_used/cpu_time_used));
 
     free(v);
     free(s);

@@ -15,19 +15,14 @@ bin_matrix decode_gpu(bin_matrix word, mdpc code)
 {
     bin_matrix H = parity_check_matrix_cpu(code);
 
-    bin_matrix syn  = matrix_mult_cpu(H, transpose_cpu(word));
-    //bin_matrix syn = run_mult_kernel(H, run_transpose_kernel(word), 16);
-    //bin_matrix cyn  = matrix_mult_cpu(H, transpose_cpu(word));
+    //bin_matrix syn  = matrix_mult_cpu(H, transpose_cpu(word));
+    bin_matrix syn = run_mult_kernel(H, run_transpose_kernel(word), 16);
     
-    /*for(int qw = 0; qw < syn->rows * syn->cols; qw++){
-        
-    }*/
-
     int limit = 10;
     int delta = 5;
     int i,j,k,x;
 
-
+    // Syndrome decoding
     for(i = 0; i < limit; i++) {
         //printf("Iteration: %d\n", i);
         int unsatisfied[word->cols];
@@ -54,6 +49,8 @@ bin_matrix decode_gpu(bin_matrix word, mdpc code)
             if(unsatisfied[j] >= b) {
                 set_matrix_element_cpu(word, 0, j, (get_matrix_element_cpu(word, 0, j) ^ 1));
                 syn = add_matrix_cpu(syn, mat_splice_cpu(H, 0, H->rows - 1, j, j));
+
+
             }
         }
         // printf("Syndrome: ");
@@ -81,5 +78,15 @@ bin_matrix decrypt_gpu(bin_matrix word, mcc crypt)
     msg = mat_splice_cpu(msg, 0, msg->rows - 1, 0, crypt->code->k - 1);
     return msg;
 }
+
+
+bin_matrix decrypt_from_file_gpu(const char* inputFileName, bin_matrix word, mcc crypt)
+{
+    // TODO: finish implementation
+    bin_matrix B = mat_init_cpu(word->rows, word->cols);
+    return B;
+}
+
+
 
 #endif /* HAMC_DECRYPT_H */

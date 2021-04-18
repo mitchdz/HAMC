@@ -2,220 +2,275 @@
 #define HAMC_SCRATCH_H
 
 
+#include <cuda_runtime_api.h>
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <string>
+#include <stdint.h>
 
-#pragma comment(lib, "cuda.lib")
-#pragma comment(lib, "cudart.lib")
-#include <cuda.h>
-#include <math.h>
-#include <cuda_runtime.h>
-#include <cuda_runtime_api.h>
-#include "device_launch_parameters.h"
-#include <cublas_v2.h>
+#include <sys/time.h>
 
 
 #include "../../src/hamc/hamc_cpu_code.c"
 
 using namespace std;
 
+#define BLOCK_SIZE_LU 16
+#define BLOCK_SIZE_LU2 256
 
-#define blocksize 8
+__global__ void ForwardSolve(HAMC_DATA_TYPE_t* A, HAMC_DATA_TYPE_t* b, int n, int k, int half_k, int i){
+    int ty = threadIdx.y;
+    int by = blockIdx.y;
+    int tidy = by*BLOCK_SIZE_LU2+ty;
+    int row = tidy + i + 1;
+    __shared__ HAMC_DATA_TYPE_t mult;
 
-__global__ void nodiag_normalize(uint8_t *A, uint8_t *I, int n, int i){
-    int x = blockIdx.x * blockDim.x + threadIdx.x;
-    int y = blockIdx.y * blockDim.y + threadIdx.y;
+    if(ty==0){
+        mult = b[i];
+    }
 
-    if (x < n && y < n) {
-        if (x == i && x!=y) {
-            I[x*n + y] ^= A[i*n + i];
-            A[x*n + y] ^= A[i*n + i];
-        }
+    __syncthreads();
+
+    if(tidy < half_k && row < n){
+        b[row] ^= A[row*k + half_k - 1 - tidy] & mult;
     }
 }
 
-__global__ void diag_normalize(uint8_t *A, uint8_t *I, int n, int i){
-    int x = blockIdx.x * blockDim.x + threadIdx.x;
-    int y = blockIdx.y * blockDim.y + threadIdx.y;
 
-    if (x < n && y < n) {
-        if (x == y && x == i){
-            I[x*n + y] ^= A[i*n + i];
-            A[x*n + y] ^= A[i*n + i];
-        }
-    }
+
+__global__ void BackSolve(HAMC_DATA_TYPE_t* A, HAMC_DATA_TYPE_t* b, int n, int k, int half_k, int i){
+  int ty = threadIdx.y;
+  int by = blockIdx.y;
+  int tidy = by*BLOCK_SIZE_LU2+ty;
+  int row = i - 1 - tidy;
+  __shared__ HAMC_DATA_TYPE_t mult;
+
+  if(ty==0){
+    b[i] = b[i]/A[i*k + half_k];
+    mult = b[i];
+  }
+
+  __syncthreads();
+
+  if(tidy < half_k && row >= 0){
+    b[row] ^=  A[row*k + half_k + 1 + tidy] & mult;
+  }
 
 }
 
-__global__ void gaussjordan(uint8_t *A, uint8_t *I, int n, int i)
+
+__global__ void add(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C)
 {
-    int x = blockIdx.x * blockDim.x + threadIdx.x;
-    int y = blockIdx.y * blockDim.y + threadIdx.y;
+    int tid = blockIdx.x;
 
-    if (x < n && y < n){
-        if (x != i){
-            //I[x*n + y] -= I[i*n + y] * A[x*n + i];
-            I[x*n + y] ^= I[i*n + y] & A[x*n + i];
-            if (y != i){
-                //A[x*n + y] -= A[i*n + y] * A[x*n + i];
-                A[x*n + y] ^= A[i*n + y] & A[x*n + i];
-            }
-        }
-    }
-
+    C[tid] = A[tid] ^ B[tid];
 }
 
-__global__ void set_zero(uint8_t *A, uint8_t *I, int n, int i){
-    int x = blockIdx.x * blockDim.x + threadIdx.x;
-    int y = blockIdx.y * blockDim.y + threadIdx.y;
-
-    if (x < n && y < n){
-        if (x != i){
-            if (y == i){
-                A[x*n + y] = 0;
-            }
-        }
-    }
-}
-
-
-void printMatrix(uint8_t *mat, int n)
+__global__ void reduce(HAMC_DATA_TYPE_t *A, int size, int index, int b_size)
 {
-    for ( int i = 0; i < n; i++) {
-        for ( int j = 0; j < n; j++) {
-            printf("%d  ", mat[i*n+j]);
+    extern __shared__ HAMC_DATA_TYPE_t pivot[];
+
+    int i;
+
+    int tid=threadIdx.x;
+    int bid=blockIdx.x;
+    int block_size=b_size;
+
+    //int pivot_start=(index*size+index);
+    //int pivot_end=(index*size+size);
+
+    int start, end, pivot_row, my_row;
+
+    if(tid==0){
+        for(i=index;i<size;i++)  {
+            pivot[i]=A[(index*size)+i];
         }
-        printf("\n");
+    }
+
+    __syncthreads();
+
+    pivot_row=(index * size);
+    my_row=(((block_size * bid) + tid) * size);
+    start=my_row + index;
+    end=my_row + size;
+
+    if(my_row >pivot_row){
+        for(i=start+1 ; i < end;i++){
+            //A[i]=A[i]-(A[start]*pivot[(i-my_row)]);
+            A[i] ^= (A[start] & pivot[(i-my_row)]);
+        }
     }
 }
 
 
-
-
-int main()
+void print_bin_matrix(bin_matrix A)
 {
-    const int n = 4;
-    // creating input
-    uint8_t *iL = new uint8_t[n*n];
-    uint8_t *L = new uint8_t[n*n];
-
-    bin_matrix CPU = mat_init_cpu(n,n);
-
-    uint8_t val;
-    int seed = 10;
-    // create random nxn binary matrix
-    srand(seed);
-    for ( int i = 0; i < n*2; i++) {
-        val = rand() %2;
-        L[i] = val;
-        CPU->data[i] = val;
+    printf(" ");
+    for ( int i = 0; i < A->rows; i++) {
+        for ( int j = 0; j < A->cols; j++) {
+            printf("%d ", A->data[i*A->cols + j]);
+        }
+        printf("\n ");
     }
-
-    printMatrix(L,n);
-    printf("\n");
-
-    //savetofile(L, "L.txt", n, n);
-
-    cout << "inv\n";
-    uint8_t *d_A, *I, *dI;
-    float time;
-    cudaError_t err;
-    cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-    int ddsize = n*n*sizeof(uint8_t);
-
-    dim3 threadsPerBlock(blocksize, blocksize);
-    dim3 numBlocks((n + blocksize - 1) / blocksize, (n + blocksize - 1) / blocksize);
+}
 
 
-    // memory allocation
-    err = cudaMalloc((void**)&d_A, ddsize);
-    if (err != cudaSuccess){ cout << cudaGetErrorString(err) << " in " << __FILE__ << " at line " << __LINE__ << endl; }
-    err = cudaMalloc((void**)&dI, ddsize);
-    if (err != cudaSuccess){ cout << cudaGetErrorString(err) << " in " << __FILE__ << " at line " << __LINE__ << endl; }
-    I = new uint8_t[n*n];
+// 1) A = P * L * U
+// 2) y*U = I // y is unkown
+// 3) z*L = y // z is unkown
+// 4) x*P = z // x is unkown, x is the inverse of A
+bin_matrix inverse_gpu(bin_matrix A)
+{
+    bool verbose = true;
 
-    for (int i = 0; i<n; i++){
-        for (int j = 0; j<n; j++){
-            if (i == j) I[i*n + i] = 1.0;
-            else I[i*n + j] = 0.0;
+    clock_t total_start, total_end, 
+            LU_start, LU_end;
+
+    double LU_time_used,
+           total_time_used;
+
+
+    total_start = clock();
+
+    bin_matrix output_matrix = mat_init_cpu(A->rows, A->cols);
+
+
+    //allocate CPU memory
+    HAMC_DATA_TYPE_t *d_A = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t)*A->rows*A->cols);
+    HAMC_DATA_TYPE_t *d_b = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t)*A->rows*A->cols);
+
+    //allocate GPU memory
+    cudaMalloc ( (void**)&d_A, A->rows*A->cols*sizeof(HAMC_DATA_TYPE_t) );
+
+    // Copy bin_matrix A data to GPU
+    cudaMemcpy(d_A, A->data,
+        A->rows*A->cols*sizeof(HAMC_DATA_TYPE_t),
+        cudaMemcpyHostToDevice);
+
+    if (verbose) printf("\nPerforming LU Decomposition...\n");
+
+    /* LU decomposition */
+    LU_start = clock();
+    for(int i = 0; i < A->cols; i++){
+        int blocks=((A->cols/512));
+        reduce<<<blocks,512,A->cols*sizeof(HAMC_DATA_TYPE_t)>>>
+            (d_A,A->cols,i,512);
+    }
+    LU_end = clock();
+    LU_time_used = ((double) (LU_end - LU_start)) / CLOCKS_PER_SEC;
+
+
+
+    if (verbose) printf("\nPerforming Forward backward substition...\n");
+
+
+    clock_t fb_start = clock();
+
+    /* Forward Backward Substitution */
+    /*
+    for ( int i = 0; i < A->cols; i++) {
+        for (int j = 0; j < A->cols; j++) {
+            // Forward solve
+        }
+        for (int j = A->cols - 1; j >= 0; j++) {
+            // Backwards solve
         }
     }
+    */
 
-    //copy data from CPU to GPU
-    err = cudaMemcpy(d_A, L, ddsize, cudaMemcpyHostToDevice);
-    if (err != cudaSuccess){ cout << cudaGetErrorString(err) << " in " << __FILE__ << " at line " << __LINE__ << endl; }
-    err = cudaMemcpy(dI, I, ddsize, cudaMemcpyHostToDevice);
-    if (err != cudaSuccess){ cout << cudaGetErrorString(err) << " in " << __FILE__ << " at line " << __LINE__ << endl; }
+    clock_t fb_end = clock();
+    double fb_time_used = ((double) (fb_end - fb_start)) / CLOCKS_PER_SEC;
 
-    //timer start
-    cudaEventRecord(start, 0);
 
-    // L^(-1)
-    for (int i = 0; i<n; i++){
-        nodiag_normalize <<<numBlocks, threadsPerBlock >>>(d_A, dI, n, i);
-        diag_normalize <<<numBlocks, threadsPerBlock >>>(d_A, dI, n, i);
-        gaussjordan <<<numBlocks, threadsPerBlock >>>(d_A, dI, n, i);
-        set_zero <<<numBlocks, threadsPerBlock >>>(d_A, dI, n, i);
+    cudaMemcpy( output_matrix->data, d_A,
+        A->rows*A->cols*sizeof(HAMC_DATA_TYPE_t),
+        cudaMemcpyDeviceToHost );
+
+    total_end = clock();
+    total_time_used = ((double) (total_end - total_start)) / CLOCKS_PER_SEC;
+
+    if (verbose) {
+        printf("\nfinal result:\n");
+        print_bin_matrix(output_matrix);
     }
 
-    cudaEventRecord(stop, 0);
-    cudaEventSynchronize(stop);
-    cudaEventElapsedTime(&time, start, stop);
-    cudaEventDestroy(start);
-    cudaEventDestroy(stop);
 
-    //copy data from GPU to CPU
-    err = cudaMemcpy(iL, dI, ddsize, cudaMemcpyDeviceToHost);
-    if (err != cudaSuccess){ cout << cudaGetErrorString(err) << " in " << __FILE__ << " at line " << __LINE__ << endl; }
-    err = cudaMemcpy(I, d_A, ddsize, cudaMemcpyDeviceToHost);
-    if (err != cudaSuccess){ cout << cudaGetErrorString(err) << " in " << __FILE__ << " at line " << __LINE__ << endl; }
+    if (verbose) {
+        printf("\ntotal time used: %.2lfs\n", total_time_used);
+        printf("LU Decomposition time used %.2lfs - %.2lf%%\n", 
+            LU_time_used, 100*(LU_time_used/total_time_used));
 
-    cout << "Cuda Time - inverse: " << time << "ms\n";
-    //savetofile(I, "I.txt", n, n);
+        printf("Forward Backward substitution time used %.2lfs - %.2lf%%\n",
+            fb_time_used, 100*(fb_time_used/total_time_used));
+    }
+
+
     cudaFree(d_A);
-    cudaFree(dI);
 
-    printf("iL:\n");
-    printMatrix(iL, n);
-    printf("\n");
-
-
-    bin_matrix out = circ_matrix_inverse_cpu(CPU);
-
-    free(CPU);
-    free(out);
-
-    printf("CPU output:\n");
-    printMatrix(out->data, n);
-    printf("\n");
+    return output_matrix;
+}
 
 
 
-    uint8_t *c = new uint8_t[n*n];
-    for (int i = 0; i<n; i++) {
-        for (int j = 0; j<n; j++) {
-            c[i*n+j] = 0;  //put the initial value to zero
-            for (int x = 0; x<n; x++)
-                //c[i*n + j] = c[i*n + j] + L[i*n+x] * iL[x*n + j];  //matrix multiplication
-                c[i*n + j] = c[i*n + j] + L[i*n+x] & iL[x*n + j];  //matrix multiplication
+
+
+int main(int argc, char *argv[]){
+
+    bool verbose = true;
+
+    printf("Scratch test\n");
+    int N;
+    int flag=0;
+
+    int i;
+
+
+    N = 3;
+
+    bin_matrix cpu_raw = mat_init_cpu(N,N);
+    bin_matrix gpu_raw = mat_init_cpu(N,N);
+
+    srand((unsigned)2);
+    //fill the arrays 'a' on the CPU
+    for ( i = 0; i <= (N*N); i++) {
+        HAMC_DATA_TYPE_t val = ((rand()%2));
+        cpu_raw->data[i] = val;
+        gpu_raw->data[i] = val;
+    }
+
+    bin_matrix cpu_sol = circ_matrix_inverse_cpu(cpu_raw);
+
+    if (verbose) {
+        printf("\nInput matrix:\n");
+        print_bin_matrix(gpu_raw);
+
+        printf("\nExpected solution is:\n");
+        print_bin_matrix(cpu_sol);
+    }
+
+    bin_matrix gpu_sol = inverse_gpu(gpu_raw);
+
+    // check results
+    for (int i = 0; i < N*N; i++) {
+        if (gpu_sol->data[i] != cpu_sol->data[i]) {
+            flag = 1;
+            break;
         }
     }
 
-    printf("output:\n");
-    printMatrix(c, n);
-    printf("\n");
+    if(flag==0) printf("correctq: Correct");
+    else printf("correctq: Failure\n");
 
 
+    free(cpu_raw);
+    free(gpu_raw);
+    free(cpu_sol);
+    free(gpu_sol);
 
     return 0;
 }
-
-
 
 
 #endif /* HAMC_SCRATCH_H */
