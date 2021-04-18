@@ -289,9 +289,9 @@ bin_matrix run_mult_kernel(bin_matrix A, bin_matrix B, int TILE_WIDTH)
     return C;
 }
 
-bin_matrix run_mult_kernel_test(bin_matrix A, bin_matrix B)
+bin_matrix run_mult_kernel_test(bin_matrix A, bin_matrix B, int TILE_WIDTH)
 {
-    int TILE_WIDTH = 16;
+    //int TILE_WIDTH = tile_width;
     
     if (A->cols != B->rows){
         printf("Matrices are incompatible, check dimensions...\n");
@@ -312,11 +312,13 @@ bin_matrix run_mult_kernel_test(bin_matrix A, bin_matrix B)
     cudaMemcpy(deviceB, B->data, B->cols * B->rows * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyHostToDevice);
     
     dim3 DimBlock(TILE_WIDTH, TILE_WIDTH, 1);
-    int x_blocks = ((B->cols - 1)/64) + 1;
-    int y_blocks = ((A->rows - 1)/64) + 1;
+    int x_blocks = ((B->cols - 1)/TILE_WIDTH) + 1;
+    int y_blocks = ((A->rows - 1)/TILE_WIDTH) + 1;
     dim3 DimGrid(x_blocks, y_blocks, 1);
     
-    mult_kernel_register_blocked<<<DimGrid, DimBlock>>>(deviceA, deviceB, deviceC, A->rows, B->rows, A->cols, B->cols);
+    mult_kernel_async<<<DimGrid, DimBlock, 2 * TILE_WIDTH * TILE_WIDTH * sizeof(HAMC_DATA_TYPE_t)>>>(deviceA, deviceB, deviceC, A->rows, B->rows, A->cols, B->cols, TILE_WIDTH);
+    
+    //printf("yee");
     
     cudaError_t cudaerr = cudaDeviceSynchronize();
     if (cudaerr != cudaSuccess)
@@ -327,7 +329,7 @@ bin_matrix run_mult_kernel_test(bin_matrix A, bin_matrix B)
     cudaFree(deviceA);
     cudaFree(deviceB);
     cudaFree(deviceC);
-    //printf("C Row: %d, C Col: %d\n", C->rows)
+
     return C;
 }
 
