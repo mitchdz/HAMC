@@ -106,7 +106,7 @@
     }
 }/**/
 
-__global__ void mult_kernel_compressed_data(float *A, float *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB, int TILE_WIDTH)
+__global__ void mult_kernel_compressed_data(float *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB, int TILE_WIDTH)
 {
     extern __shared__ HAMC_DATA_TYPE_t sharedArray[];
     //int TILE_WIDTH = (sizeof(sharedArray) / sizeof(sharedArray[0])) / 4;
@@ -349,7 +349,7 @@ bin_matrix run_mult_kernel_test(bin_matrix A, bin_matrix B, int TILE_WIDTH)
     }
 
     float *deviceA;
-    float *deviceB;
+    HAMC_DATA_TYPE_t *deviceB;
     HAMC_DATA_TYPE_t *deviceC;
     
     bin_matrix C = mat_init_cpu(A->rows, B->cols);
