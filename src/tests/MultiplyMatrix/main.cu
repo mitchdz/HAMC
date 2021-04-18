@@ -141,7 +141,7 @@ void run_gpu_vers(int x, int y){
     
     for(int i = 0; i < G1->rows * G1->cols; i++){
         if((G1->rows != G2->rows) || (G1->cols != G2->cols)){
-            if(G1->rows != G->rows){
+            if(G1->rows != G2->rows){
                 printf("Row size doesn't match.\n");
             }
             if(G1->cols != G2->cols){
