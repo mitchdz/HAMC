@@ -106,7 +106,7 @@
     }
 }/**/
 
-__global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB, int TILE_WIDTH)
+/*__global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB, int TILE_WIDTH)
 {
     extern __shared__ HAMC_DATA_TYPE_t sharedArray[];
     
@@ -134,6 +134,49 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         __syncthreads();
         for(int j = 0; j < TILE_WIDTH; j++){
             pValue ^= (uint32_t)sharedFloatA[threadIdx.y * TILE_WIDTH + j] & (uint32_t)sharedFloatB[j * TILE_WIDTH + threadIdx.x];
+        }
+    }
+    //TODO: xor all pValue bits
+    for(int i = 0; i < 4; i++){
+        shortValue ^= pValue & 1;
+        pValue >>= 8;
+    }
+    C[Row * colB + Col] = pValue;
+}/**/
+
+__global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB, int TILE_WIDTH)
+{
+    extern __shared__ HAMC_DATA_TYPE_t sharedArray[];
+    
+    HAMC_DATA_TYPE_t *sharedA = sharedArray;
+    uint32_t *sharedFloatA = (uint32_t *)sharedA;
+    HAMC_DATA_TYPE_t *sharedB = &sharedA[TILE_WIDTH * TILE_WIDTH];
+    uint32_t *sharedFloatB = (uint32_t *)sharedB;
+    uint8_t tempB[4];
+    uint32_t *tempFloatB = (uint32_t *)tempB;
+    
+    uint32_t *floatA = (uint32_t *)A;
+    uint32_t *floatB = (uint32_t *)B;
+    
+    int Row = blockIdx.y * TILE_WIDTH + threadIdx.y;
+    int Col = blockIdx.x * TILE_WIDTH + threadIdx.x;
+    int tid = threadIdx.y * TILE_WIDTH + threadIdx.x;
+    int tilePos = 0;
+
+    uint32_t pValue = 0;
+    HAMC_DATA_TYPE_t shortValue = 0;
+    
+    for(int i = 0; i < ((colA - 1)/(TILE_WIDTH / 4)) + 1; i++){
+        tilePos = i * TILE_WIDTH;
+        sharedFloatA[tid] = floatA[Row * colA + tilePos + threadIdx.x];
+        tempFloatB = floatB[((threadIdx.x / 8) + ((threadIdx.y + tilePos) * 4)) * colB + (blockIdx.x * TILE_WIDTH / 8) + (threadIdx.x % 8)];
+        for(int j = 0; j < 4; j++){
+            sharedB[(j + threadIdx.y) * TILE_WIDTH + threadIdx.x] = tempB[j];
+            //sharedB[tid * 4 + j] = B[(j + ((tilePos + threadIdx.y) * 4)) * colB + Col];
+        }
+        __syncthreads();
+        for(int j = 0; j < TILE_WIDTH; j++){
+            pValue ^= sharedFloatA[threadIdx.y * TILE_WIDTH + j] & sharedFloatB[j * TILE_WIDTH + threadIdx.x];
         }
     }
     //TODO: xor all pValue bits
