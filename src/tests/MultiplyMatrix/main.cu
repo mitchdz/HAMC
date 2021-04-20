@@ -155,6 +155,13 @@ void run_gpu_vers(int x, int y, int z)
     time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
     std::cout << "GPU V1 time: " << time_used << std::endl;
     
+    for(int i = 0; i < G1->rows; i++){
+        for(int j = 0; j < G1->cols; j++){
+            printf("%d:", G1->data[i * G1->cols + j]);
+        }
+        printf("\n");
+    }/**/
+    
     start = clock();
     
     bin_matrix G2 = run_mult_kernel(A, B, 32);
