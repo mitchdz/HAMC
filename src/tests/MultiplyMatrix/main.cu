@@ -118,7 +118,7 @@ void run_profile(int x, int y)
     A->data = dataA;
     B->data = dataB;
     
-    bin_matrix C = run_mult_kernel(A, B, 32);
+    bin_matrix C = run_mult_kernel_test(A, B, 32);
     
     free(C);
 }
