@@ -297,7 +297,7 @@ int main(int argc, char *argv[])
                 y = atoi(optarg);
                 break;
             case 'z':
-                y = atoi(optarg);
+                z = atoi(optarg);
                 break;
             /*case 'u':
                 upto = atoi(optarg);
