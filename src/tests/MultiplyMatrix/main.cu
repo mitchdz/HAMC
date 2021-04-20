@@ -178,6 +178,9 @@ void run_gpu_vers(int x, int y)
             break;
         }
     }
+    for(int i = 0; i < G1->rows * G1->cols; i++){
+        printf("%d", G1->data[i]);
+    }
     
     printf("Matched: %s", matched ? "true" : "false");
     
