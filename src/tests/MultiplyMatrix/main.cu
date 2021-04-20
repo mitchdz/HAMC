@@ -142,7 +142,7 @@ void run_gpu_vers(int x, int y, int z)
     }
     
     bin_matrix A = mat_init_cpu(x, y);
-    bin_matrix B = mat_init_cpu(y, x);
+    bin_matrix B = mat_init_cpu(y, z);
     
     A->data = dataA;
     B->data = dataB;
