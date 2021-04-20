@@ -180,7 +180,7 @@ void run_gpu_vers(int x, int y)
     }
     for(int i = 0; i < G1->rows; i++){
         for(int j = 0; j < G1->cols; j++){
-            printf("%d", G1->data[i * G1->cols + j]);
+            printf("%d, ", G1->data[i * G1->cols + j]);
         }
         printf("\n");
     }
