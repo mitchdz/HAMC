@@ -123,7 +123,7 @@ void run_profile(int x, int y)
     free(C);
 }
 
-void run_gpu_vers(int x, int y)
+void run_gpu_vers(int x, int y, int z)
 {
     clock_t start, end;
     double time_used;
@@ -136,6 +136,8 @@ void run_gpu_vers(int x, int y)
     
     for(int i = 0; i < x * y; i++){
         dataA[i] = (HAMC_DATA_TYPE_t)(rand() % 2);
+    }
+    for(int i = 0; i < z * y; i++){
         dataB[i] = (HAMC_DATA_TYPE_t)(rand() % 2);
     }
     
@@ -240,7 +242,7 @@ int main(int argc, char *argv[])
     int numColsB;
     int numRowsS;
     int numColsS;
-    int x, y, upto;
+    int x, y, z, upto;
     HAMC_DATA_TYPE_t *hostA;
     HAMC_DATA_TYPE_t *hostB;
     HAMC_DATA_TYPE_t *sol;
@@ -256,7 +258,7 @@ int main(int argc, char *argv[])
     bool solved = true;
     
     int opt;
-    while ((opt = getopt(argc, argv, "a:b:e:o:cts:pgdx:y:h")) != -1){
+    while ((opt = getopt(argc, argv, "a:b:e:o:cts:pgdx:y:z:h")) != -1){
         switch(opt){
             case 'a':
                 input0 = strdup(optarg);
@@ -294,6 +296,9 @@ int main(int argc, char *argv[])
             case 'y':
                 y = atoi(optarg);
                 break;
+            case 'z':
+                y = atoi(optarg);
+                break;
             /*case 'u':
                 upto = atoi(optarg);
                 break;*/
@@ -317,7 +322,7 @@ int main(int argc, char *argv[])
         return 0;
     }
     if(gpu_V_test){
-        run_gpu_vers(x, y);
+        run_gpu_vers(x, y, z);
         return 0;
     }
     /*if(sweep_size_test){
