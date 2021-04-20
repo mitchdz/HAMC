@@ -155,6 +155,11 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
     uint8_t tempB[4];
     uint32_t *tempFloatB = (uint32_t *)tempB;
     
+    uint8_t boundaryA[4];
+    uint32_t *boundaryFloatA = (uint32_t *)boundaryA;
+    uint8_t boundaryB[4];
+    uint32_t *boundaryFloatB = (uint32_t *)boundaryB;
+    
     uint32_t *floatA = (uint32_t *)A;
     uint32_t *floatB = (uint32_t *)B;
     
@@ -168,8 +173,32 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
     
     for(int i = 0; i < ((colA - 1)/(TILE_WIDTH / 4)) + 1; i++){
         tilePos = i * TILE_WIDTH;
-        sharedFloatA[tid] = floatA[Row * colA + tilePos + threadIdx.x];
-        tempFloatB[0] = floatB[((threadIdx.x / 8) + ((threadIdx.y + tilePos) * 4)) * colB + (blockIdx.x * TILE_WIDTH / 8) + (threadIdx.x % 8)];
+        if((Row < rowA) && (tilePos + threadIdx.x < colA / 4)){
+            sharedFloatA[tid] = floatA[Row * colA + tilePos + threadIdx.x];
+        }
+        else if(Row >= rowA){
+            sharedFloatA[tid] = 0;
+        }
+        else{
+            boundaryFloatA[0] = floatA[Row * colA + tilePos + threadIdx.x];
+            for(int j = 0; j < colA % 4; j++){
+                boundaryA[3 - j] &= (uint8_t)0;
+            }
+            sharedFloatA[tid] = boundaryFloatA[0];
+        }
+        if((Col < colB) && (tilePos + threadIdx.y < rowB)){
+            tempFloatB[0] = floatB[((threadIdx.x / 8) + ((threadIdx.y + tilePos) * 4)) * colB + (blockIdx.x * TILE_WIDTH / 8) + (threadIdx.x % 8)];
+        }
+        else if((tilePos + threadIdx.y) * 4 >= rowB){
+            tempFloatB[0] = 0;
+        }
+        else{
+            boundaryFloatB[0] = floatB[((threadIdx.x / 8) + ((threadIdx.y + tilePos) * 4)) * colB + (blockIdx.x * TILE_WIDTH / 8) + (threadIdx.x % 8)];
+            for(int j = 0; j < colB % 4; j++){
+                boundaryB[3 - j] &= (uint8_t)0;
+            }
+            tempFloatB[0] = boundaryFloatB[0];
+        }
         #pragma unroll
         for(int j = 0; j < 4; j++){
             sharedB[(j + threadIdx.y) * TILE_WIDTH + threadIdx.x] = tempB[j];
@@ -179,6 +208,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         for(int j = 0; j < TILE_WIDTH; j++){
             pValue ^= sharedFloatA[threadIdx.y * TILE_WIDTH + j] & sharedFloatB[j * TILE_WIDTH + threadIdx.x];
         }
+        __syncthreads();
     }
     #pragma unroll
     for(int i = 0; i < 4; i++){
