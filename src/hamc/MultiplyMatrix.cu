@@ -185,6 +185,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         shortValue ^= pValue & 1;
         pValue >>= 8;
     }
+    __syncthreads();
     C[Row * colB + Col] = shortValue;
 }/**/
 
