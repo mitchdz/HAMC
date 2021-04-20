@@ -170,6 +170,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         tilePos = i * TILE_WIDTH;
         sharedFloatA[tid] = floatA[Row * colA + tilePos + threadIdx.x];
         tempFloatB[0] = floatB[((threadIdx.x / 8) + ((threadIdx.y + tilePos) * 4)) * colB + (blockIdx.x * TILE_WIDTH / 8) + (threadIdx.x % 8)];
+        #pragma unroll
         for(int j = 0; j < 4; j++){
             sharedB[(j + threadIdx.y) * TILE_WIDTH + threadIdx.x] = tempB[j];
             //sharedB[tid * 4 + j] = B[(j + ((tilePos + threadIdx.y) * 4)) * colB + Col];
@@ -179,7 +180,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
             pValue ^= sharedFloatA[threadIdx.y * TILE_WIDTH + j] & sharedFloatB[j * TILE_WIDTH + threadIdx.x];
         }
     }
-    //TODO: xor all pValue bits
+    #pragma unroll
     for(int i = 0; i < 4; i++){
         shortValue ^= pValue & 1;
         pValue >>= 8;
