@@ -32,13 +32,15 @@ typedef struct mceliece
 #define mat_element(mat, row_idx, col_idx) \
       mat->data[row_idx * (mat->cols) + col_idx]
 
+/* function declarations */
 bin_matrix mat_init_cpu(int rows, int cols);
 void reset_row_cpu(HAMC_DATA_TYPE_t* row, int min, int max);
 bin_matrix get_error_vector_cpu(int len, int t);
-int random_val(int min, int max, int seed);
+int random_val(int min, int max, unsigned seed);
 
 void* safe_malloc(size_t n);
 mdpc qc_mdpc_init_cpu(int n0, int p, int w, int t, unsigned seed);
+
 
 /* matrix function declarations */
 bin_matrix generator_matrix_cpu(mdpc code);
@@ -56,6 +58,7 @@ int is_zero_matrix_cpu(bin_matrix A);
 bin_matrix circ_matrix_inverse_cpu(bin_matrix A);
 bin_matrix mat_splice_cpu(bin_matrix A, int row1, int row2, int col1, int col2);
 int get_max_cpu(int* vec, int len);
+
 
 
 //Set the value of matix element at position given by the indices to "val"
@@ -146,14 +149,12 @@ void run_keygen_cpu(int n, int p, int t, int w,
 
 }
 //Returns a random integer in the range [min, max]
-int random_val(int min, int max, int seed)
+int random_val(int min, int max, unsigned seed)
 {
     int r;
     const unsigned int range = 1 + max - min;
     const unsigned int buckets = RAND_MAX / range;
-    const int limit = buckets * range;
-
-    srand(seed);
+    const unsigned int limit = buckets * range;
 
     do {
         r = rand();
@@ -291,11 +292,12 @@ bin_matrix generator_matrix_cpu(mdpc code)
     clock_t start, end;
     double cpu_time_used;
     start = clock();
-    bin_matrix H = make_matrix_cpu(code->p, code->p, splice_cpu(code->row, (code->n0 - 1) * code->p, code->n), 1);
+    bin_matrix H = parity_check_matrix_cpu(code);
+
 
     //End of modified code
     printf("Construction of G started...\n");
-    bin_matrix H_inv = circ_matrix_inverse_cpu(H);
+    bin_matrix H_inv = circ_matrix_inverse_cpu(make_matrix_cpu(code->p, code->p, splice_cpu(code->row, (code->n0 - 1) * code->p, code->n), 1));
     //printf("H_inv generated...\n");
     //printf("stop\n");
     bin_matrix H_0 = make_matrix_cpu(code->p, code->p, splice_cpu(code->row, 0, code->p), 1);
@@ -350,7 +352,12 @@ mdpc qc_mdpc_init_cpu(int n0, int p, int w, int t, unsigned seed)
     code->row = (HAMC_DATA_TYPE_t*)calloc(n0 * p, sizeof(HAMC_DATA_TYPE_t));
     //printf("Input seed or -1 to use default seed: ");
     //scanf("%u", &seed);
-    srand(seed);
+    time_t tx;
+    if(seed == -1) {
+        srand((unsigned) time(&tx));
+    } else {
+        srand(seed);
+    }
 
     while(1) {
         int flag = 0;
@@ -513,6 +520,7 @@ bin_matrix circ_matrix_inverse_cpu(bin_matrix A)
     make_indentity_cpu(B);
 
     int i;
+    int flag, prev_flag = 0;
 
     for(i = 0; i < A->cols; i++) {
         if(mat_element(A, i, i) == 1) {
@@ -719,6 +727,7 @@ void run_decryption_cpu(const char* inputFileName, const char* outputFileName,
         fprintf(out_file, "%hu", get_matrix_element_cpu(m, 0, i));
     }
 
+cleanup:
     fclose(in_file);
     fclose(out_file);
 
@@ -836,6 +845,7 @@ void run_encryption_cpu(const char* inputFileName, const char* outputFileName,
         fprintf(out_file, "%hu", get_matrix_element_cpu(m, 0, i));
     }
 
+cleanup:
     fclose(in_file);
     fclose(out_file);
 }
