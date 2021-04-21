@@ -84,10 +84,8 @@ bin_matrix inverse_GF2_cpu(bin_matrix A)
 
 
     /* Forward Backward Substitution */
-
-
+    // reference: https://en.wikipedia.org/wiki/LU_decomposition
     bin_matrix IA = mat_init_cpu(n, n);
-
 
     for (int j = 0; j < n; j++) {
         for (int i = 0; i < n; i++) {
