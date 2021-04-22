@@ -19,30 +19,18 @@
 
 
 #include "reference_cpu.c"
-#include "inverse_gpu.cu"
-
+#include "reference_gpu.cu"
 
 
 int main(int argc, char *argv[]){
 
-    bool verbose = true;
+    bool verbose = false;
 
     printf("Scratch test\n");
     int flag=0;
 
-    //bin_matrix cpu_raw = mat_init_cpu(N,N);
-    //bin_matrix gpu_raw = mat_init_cpu(N,N);
-
-    //srand(10);
-    //fill the arrays 'a' on the CPU
-    //for ( i = 0; i <= (N*N); i++) {
-    //    HAMC_DATA_TYPE_t val = ((rand()%2));
-    //    cpu_raw->data[i] = val;
-    //    gpu_raw->data[i] = val;
-    //}
-
     int n = 2;
-    int p = 8;
+    int p = 6;
     int N = p;
     int t = 10;
     int w = 30;
@@ -50,20 +38,36 @@ int main(int argc, char *argv[]){
 
     printf("Generating QC_MDPC code...\n");
     mdpc code = qc_mdpc_init_cpu(n, p, t, w, seed);
-    printf("Generating Invertible Matrix...\n");
-    bin_matrix invertible_matrix = make_matrix_cpu(code->p, code->p, splice_cpu(code->row, (code->n0 - 1) * code->p, code->n), 1);
+    printf("Generating Binary Circulant Matrix...\n");
+    bin_matrix invertible_matrix = make_matrix_cpu(
+        code->p, code->p, 
+        splice_cpu(code->row, (code->n0 - 1) * code->p, code->n), 
+        1);
     bin_matrix extra_matrix = mat_init_cpu(p, p);
+    bin_matrix extra_matrix2 = mat_init_cpu(p, p);
 
     printf("Generated test matrix\n");
 
+
+
+
     for (int i =0; i < p*p; i++) {
-        extra_matrix->data[i] = invertible_matrix->data[i];
+        HAMC_DATA_TYPE_t temp = invertible_matrix->data[i];
+        extra_matrix->data[i] = temp;
+        extra_matrix2->data[i] = temp;
     }
+
+    clock_t hamc_cpu_start = clock();
 
     bin_matrix cpu_sol = circ_matrix_inverse_cpu(extra_matrix);
 
+    clock_t hamc_cpu_end = clock();
+    double hamc_cpu_time_used =
+        ((double) (hamc_cpu_end - hamc_cpu_start))/ CLOCKS_PER_SEC;
+
+
     if (verbose) {
-        printf("\nInput matrix:\n");
+        printf("\nInput matrix A:\n");
         print_bin_matrix(invertible_matrix);
 
         printf("\nExpected solution is:\n");
@@ -71,26 +75,48 @@ int main(int argc, char *argv[]){
     }
 
 
+    clock_t lu_cpu_start = clock();
     bin_matrix new_cpu_sol = inverse_GF2_cpu(invertible_matrix);
+    clock_t lu_cpu_end = clock();
+    double lu_cpu_time_used = ((double) (lu_cpu_end - lu_cpu_start))/ CLOCKS_PER_SEC;
+
+
+    clock_t lu_gpu_start = clock();
+    bin_matrix new_gpu_sol = inverse_GF2_gpu(extra_matrix2);
+    clock_t lu_gpu_end = clock();
+    double lu_gpu_time_used = ((double) (lu_gpu_end - lu_gpu_start))/ CLOCKS_PER_SEC;
+
+
+    if (verbose) print_bin_matrix(new_gpu_sol);
+
 
     //bin_matrix gpu_sol = inverse_GF2_gpu(invertible_matrix);
 
     // check results
     for (int i = 0; i < N*N; i++) {
-        if (new_cpu_sol->data[i] != cpu_sol->data[i]) {
+        if (new_gpu_sol->data[i] != cpu_sol->data[i]) {
             flag = 1;
             break;
         }
     }
 
-    if(flag==0) printf("correctq: Correct");
-    else printf("correctq: Failure\n");
+    if(flag==0) 
+        printf("correctq: true");
+    else 
+        printf("correctq: Failure\n");
+
+
+    printf("\n");
+    printf("Time for HAMC CPU code: %lf\n", hamc_cpu_time_used);
+    printf("Time for LU Decomposition CPU code: %lf\n", lu_cpu_time_used);
+    printf("Time for LU Decomposition GPU code: %lf\n", lu_gpu_time_used);
 
 
     free(invertible_matrix);
     free(extra_matrix);
     free(cpu_sol);
     free(new_cpu_sol);
+    free(new_gpu_sol);
 
     return 0;
 }
