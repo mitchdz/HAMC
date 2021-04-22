@@ -49,8 +49,6 @@ int main(int argc, char *argv[]){
     printf("Generated test matrix\n");
 
 
-
-
     for (int i =0; i < p*p; i++) {
         HAMC_DATA_TYPE_t temp = invertible_matrix->data[i];
         extra_matrix->data[i] = temp;
@@ -76,7 +74,7 @@ int main(int argc, char *argv[]){
 
 
     clock_t lu_cpu_start = clock();
-    bin_matrix new_cpu_sol = inverse_GF2_cpu(invertible_matrix);
+    //bin_matrix new_cpu_sol = inverse_GF2_cpu(invertible_matrix);
     clock_t lu_cpu_end = clock();
     double lu_cpu_time_used = ((double) (lu_cpu_end - lu_cpu_start))/ CLOCKS_PER_SEC;
 
@@ -112,10 +110,13 @@ int main(int argc, char *argv[]){
     printf("Time for LU Decomposition GPU code: %lf\n", lu_gpu_time_used);
 
 
+    printf("Speed difference: %lf\n", lu_gpu_time_used/hamc_cpu_time_used);
+
+
     free(invertible_matrix);
     free(extra_matrix);
     free(cpu_sol);
-    free(new_cpu_sol);
+    //free(new_cpu_sol);
     free(new_gpu_sol);
 
     return 0;
