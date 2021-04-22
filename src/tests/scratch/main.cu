@@ -30,7 +30,7 @@ int main(int argc, char *argv[]){
     int flag=0;
 
     int n = 2;
-    int p = 512;
+    int p = 1024;
     int N = p;
     int t = 10;
     int w = 30;

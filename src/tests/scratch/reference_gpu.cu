@@ -168,12 +168,12 @@ bin_matrix inverse_GF2_gpu(bin_matrix A)
 
     // Unfortunately this has to be asynchronous
     for (int i = 0; i < A->rows; i++) {
-            GF2_LU_decompose_find_max_row<<<dimGrid, dimThreads, 0, stream1>>> 
-                (deviceA, deviceIPIV, A->rows, i);
-
-            GF2_LU_decompose_update_trailing_row<<<dimGrid, 
-                dimThreads, 0, stream1>>>
-                (deviceA, A->rows, i);
+        GF2_LU_decompose_find_max_row<<<dimGrid, dimThreads, 0, stream1>>> 
+            (deviceA, deviceIPIV, A->rows, i);
+        
+        GF2_LU_decompose_update_trailing_row<<<dimGrid, 
+            dimThreads, 0, stream1>>>
+            (deviceA, A->rows, i);
     }
     cudaStreamDestroy(stream0);
     cudaStreamDestroy(stream1);
