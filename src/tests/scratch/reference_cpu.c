@@ -98,15 +98,15 @@ bin_matrix inverse_GF2_cpu(bin_matrix A)
             n);
     }
 
-    if (verbose) {
+    //if (verbose) {
         printf("\nA after LU decomposition (CPU):\n");
-        print_bin_matrix(A);
+        //print_bin_matrix(A);
         printf("\nIPIV:\n");
         for (int i = 0; i < A->rows; i++) {
             printf("%d ", IPIV[i]);
         }
         printf("\n");
-    }
+    //}
 
 
 
