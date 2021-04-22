@@ -4,16 +4,23 @@
 
 #include "../hamc/hamc_common.h"
 #include "../hamc/hamc_cpu_code.c"
+#include <cuda_device_runtime_api.h>
 
 
-
+// to be called with a single threads
 __global__ void make_GF2_identity_gpu(HAMC_DATA_TYPE_t *A, int n)
 {
-    //TODO: actually do this function
-
+    for(int i = 0; i < n; i++) {
+        for(int j = 0; j < n; j++) {
+          if(i == j) {
+              A[i*n + j] = 1;
+          }
+          else {
+              A[i*n + j] = 0;
+          }
+        }
+    }
 }
-
-
 
 // A is input matrix
 // IPIV is integer pivot indeces vector should be sizeof(int)*A->rows,
@@ -22,7 +29,6 @@ __global__ void GF2_square_inverse( HAMC_DATA_TYPE_t *A,
     HAMC_DATA_TYPE_t *B, int n)
 {
     bool verbose = true;
-
 
     extern __shared__ int IPIV[];
 
@@ -60,7 +66,6 @@ __global__ void GF2_square_inverse( HAMC_DATA_TYPE_t *A,
             // have each thread handle a separate column element
             // Make sure you have at least as many threads as n!!!
             if (tid < n) {
-                //printf("tid %d\n", tid);
                 HAMC_DATA_TYPE_t *R1 = &A[k * n]; // kth row
                 HAMC_DATA_TYPE_t *R2 = &A[IPIV[k] * n]; // pivot row
                 HAMC_DATA_TYPE_t temp = R1[tid];
@@ -74,7 +79,6 @@ __global__ void GF2_square_inverse( HAMC_DATA_TYPE_t *A,
 
         // Update trailing matrix C ^= A & B
         // where A is A(k+1:n, k), B is A(k, k+1 : n), C is A(k+1: n, k+1:n)
-
         if (tid == 0) {
             int m = n - k - 1;
             for (int i = 0; i < m; i++) { // row
@@ -101,45 +105,49 @@ __global__ void GF2_square_inverse( HAMC_DATA_TYPE_t *A,
     }
 
     // make B an identity matrix
+    /*
+    // have each thread handle a row
+    if (tid < n) {
+        for(int j = 0; j < n; j++) {
+            if(tid == j) {
+                B[tid*n + j] = 1;
+            }
+            else {
+                B[tid*n + j] = 0;
+            }
+        }
+    }
+    */
 
-    if (tid == 0) {
-        for(int i = 0; i < n; i++) {
-            for(int j = 0; j < n; j++) {
-                if(i == j) {
-                    B[i*n + j] = 1;
-                }
-                else {
-                    B[i*n + j] = 0;
-                }
+    if (tid == 0) printf("\nMade identity matrix\n");
+
+    __syncthreads();
+
+    // Forward
+    if (tid < n) { // cols
+        for (int i = tid - 1; i >= 0; i--) { // rows from bottom to top
+            B[i*n + tid] = A[i*n + tid];
+            for (int k = i+1; k < tid; k++) {
+                B[i*n + tid] ^= B[k*n + tid] & A[i*n + k];
             }
         }
     }
 
     __syncthreads();
+    if (tid == 0) printf("\nForward subsititution done\n");
 
-    if (tid == 0) {
-        // Forward
-        for (int j = 0; j < n; j++) { // cols
-            for (int i = j - 1; i >= 0; i--) { // rows from bottom to top
-                B[i*n + j] = A[i*n + j];
-                for (int k = i+1; k < j; k++) {
-                    B[i*n + j] ^= B[k*n + j] & A[i*n + k];
-                }
-            }
-        }
-
-        // Backward
-        for (int j = n - 1; j >= 0; j--) { // cols from right to left
-            for (int i = 0; i < n; i++) { // rows from top to bottom
-                //IA->data[i*n + j] = A->data[i*n + j];
-                for (int k = j+1; k < n; k++) {
-                    B[i*n + j] ^= B[i*n + k] & A[k*n + j];
-                }
+    // Backward
+    for (int j = n - 1; j >= 0; j--) { // cols from right to left
+        if (tid < n) { // rows from top to bottom
+            //IA->data[i*n + j] = A->data[i*n + j];
+            for (int k = j+1; k < n; k++) {
+                B[tid*n + j] ^= B[tid*n + k] & A[k*n + j];
             }
         }
     }
 
     __syncthreads();
+    if (tid == 0) printf("\nBackward subsititution done\n");
 
     for (int k = n - 1; k >= 0; k--) { // cols from right to left
         // swap cols
@@ -147,7 +155,6 @@ __global__ void GF2_square_inverse( HAMC_DATA_TYPE_t *A,
         
         // each thread handles a row element from C1 and C2
         if (tid < n) {
-            printf("tid %d\n", tid);
             HAMC_DATA_TYPE_t *C1 = &B[k];
             HAMC_DATA_TYPE_t *C2 = &B[IPIV[k]];
             HAMC_DATA_TYPE_t temp = C1[tid*n];
@@ -155,8 +162,6 @@ __global__ void GF2_square_inverse( HAMC_DATA_TYPE_t *A,
             C2[tid*n] = temp;
         }
     }
-
-
 
     // Matrix B already has output, no need to copy the data
 }
@@ -180,10 +185,20 @@ bin_matrix inverse_GF2_gpu(bin_matrix A)
 
 
     // total number of threads should be at least A->cols
-    dim3 dimGrid = dim3(A->cols/512 + 1, 1);
-    dim3 dimThreads = dim3(512, 1);
+    dim3 dimGrid = dim3(A->cols/1024 + 1, 1);
+    dim3 dimThreads = dim3(1024, 1);
 
-    GF2_square_inverse<<<dimGrid, dimThreads, A->rows*sizeof(int)>>> (deviceA, deviceB, A->rows);
+    cudaStream_t stream0;
+    cudaStream_t stream1;
+
+    cudaStreamCreate(&stream0);
+    cudaStreamCreate(&stream1);
+
+    make_GF2_identity_gpu<<<1,1,0,stream0>>>(deviceB, A->rows);
+    GF2_square_inverse<<<dimGrid, dimThreads, A->rows*sizeof(int), stream1>>> (deviceA, deviceB, A->rows);
+
+    cudaStreamDestroy(stream0);
+    cudaStreamDestroy(stream1);
 
     cudaError_t cudaerr = cudaDeviceSynchronize();
     if (cudaerr != cudaSuccess)
