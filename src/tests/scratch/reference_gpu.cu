@@ -21,7 +21,7 @@ __global__ void make_GF2_identity_gpu(HAMC_DATA_TYPE_t *A, int n)
 __global__ void GF2_square_inverse( HAMC_DATA_TYPE_t *A, 
     HAMC_DATA_TYPE_t *B, int n)
 {
-    bool verbose = false;
+    bool verbose = true;
 
 
     extern __shared__ int IPIV[];
@@ -60,6 +60,7 @@ __global__ void GF2_square_inverse( HAMC_DATA_TYPE_t *A,
             // have each thread handle a separate column element
             // Make sure you have at least as many threads as n!!!
             if (tid < n) {
+                //printf("tid %d\n", tid);
                 HAMC_DATA_TYPE_t *R1 = &A[k * n]; // kth row
                 HAMC_DATA_TYPE_t *R2 = &A[IPIV[k] * n]; // pivot row
                 HAMC_DATA_TYPE_t temp = R1[tid];
@@ -138,12 +139,15 @@ __global__ void GF2_square_inverse( HAMC_DATA_TYPE_t *A,
         }
     }
 
+    __syncthreads();
+
     for (int k = n - 1; k >= 0; k--) { // cols from right to left
         // swap cols
         //LU_GF2_swap_cols_cpu(n, &IA->data[k], &IA->data[k], n);
         
         // each thread handles a row element from C1 and C2
         if (tid < n) {
+            printf("tid %d\n", tid);
             HAMC_DATA_TYPE_t *C1 = &B[k];
             HAMC_DATA_TYPE_t *C2 = &B[IPIV[k]];
             HAMC_DATA_TYPE_t temp = C1[tid*n];
@@ -176,10 +180,10 @@ bin_matrix inverse_GF2_gpu(bin_matrix A)
 
 
     // total number of threads should be at least A->cols
-    int numGrids = A->cols/512 + 1;
-    int numThreads = 512;
+    dim3 dimGrid = dim3(A->cols/512 + 1, 1);
+    dim3 dimThreads = dim3(512, 1);
 
-    GF2_square_inverse<<<numGrids, numThreads, A->rows*sizeof(int)>>> (deviceA, deviceB, A->rows);
+    GF2_square_inverse<<<dimGrid, dimThreads, A->rows*sizeof(int)>>> (deviceA, deviceB, A->rows);
 
     cudaError_t cudaerr = cudaDeviceSynchronize();
     if (cudaerr != cudaSuccess)
