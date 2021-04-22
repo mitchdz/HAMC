@@ -174,7 +174,12 @@ bin_matrix inverse_GF2_gpu(bin_matrix A)
 
     printf("Starting Inverse matrix kernel...\n");
 
-    GF2_square_inverse<<<1, A->rows, A->rows*sizeof(int)>>> (deviceA, deviceB, A->rows);
+
+    // total number of threads should be at least A->cols
+    int numGrids = A->cols/512 + 1;
+    int numThreads = 512;
+
+    GF2_square_inverse<<<numGrids, numThreads, A->rows*sizeof(int)>>> (deviceA, deviceB, A->rows);
 
     cudaError_t cudaerr = cudaDeviceSynchronize();
     if (cudaerr != cudaSuccess)
