@@ -151,7 +151,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
     HAMC_DATA_TYPE_t *sharedA = sharedArray;
     uint32_t *sharedFloatA = (uint32_t *)sharedA;
     uint32_t *sharedFloatB = &sharedFloatA[TILE_WIDTH * TILE_WIDTH];
-    HAMC_DATA_TYPE_t *sharedB = (HAMC_DATA_TYPE_t)sharedFloatB;
+    HAMC_DATA_TYPE_t *sharedB = (HAMC_DATA_TYPE_t *)sharedFloatB;
     
     uint8_t tempB[4];
     uint32_t *tempFloatB = (uint32_t *)tempB;
