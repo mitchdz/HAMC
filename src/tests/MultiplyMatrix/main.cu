@@ -164,7 +164,7 @@ void run_gpu_vers(int x, int y, int z)
     
     start = clock();
     
-    bin_matrix G2 = run_mult_kernel(A, B, 32);
+    bin_matrix G2 = run_mult_kernel_test(A, B, 32);
     
     end = clock();
     time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
