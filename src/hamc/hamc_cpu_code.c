@@ -59,7 +59,17 @@ bin_matrix circ_matrix_inverse_cpu(bin_matrix A);
 bin_matrix mat_splice_cpu(bin_matrix A, int row1, int row2, int col1, int col2);
 int get_max_cpu(int* vec, int len);
 
-
+void print_bin_matrix(bin_matrix A)
+{
+    printf("");
+    for ( int i = 0; i < A->rows; i++) {
+        printf("%d  ", i);
+        for ( int j = 0; j < A->cols; j++) {
+            printf("%d ", A->data[i*A->cols + j]);
+        }
+        printf("\n");
+    }
+}
 
 //Set the value of matix element at position given by the indices to "val"
 void set_matrix_element_cpu(bin_matrix A, int row_idx, int col_idx, HAMC_DATA_TYPE_t val)

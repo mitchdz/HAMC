@@ -1,10 +1,8 @@
+#ifndef LU_INVERSE_PLAIN_CU
+#define LU_INVERSE_PLAIN_CU
 
-#ifndef REFERENCE_GPU_CU
-#define REFERENCE_GPU_CU
-
-#include "../hamc/hamc_common.h"
-#include "../hamc/hamc_cpu_code.c"
-#include <cuda_device_runtime_api.h>
+#include "hamc_common.h"
+#include "hamc_cpu_code.c"
 
 
 // to be called with a single threads
@@ -90,6 +88,25 @@ __global__ void GF2_LU_decompose_update_trailing_row( HAMC_DATA_TYPE_t *A,
 }
 
 
+__global__ void GF2_LU_decompose_update_trailing_row_index( HAMC_DATA_TYPE_t *A,
+    int n, int k, int j)
+{
+    int tid = threadIdx.x + blockIdx.x * blockDim.x;
+    // Update trailing matrix C ^= A & B
+    // where A is A(k+1:n, k), B is A(k, k+1 : n), C is A(k+1: n, k+1:n)
+    int m = n - k - 1;
+    if (tid < m) {
+        //printf("tid: %d\n", tid);
+        HAMC_DATA_TYPE_t *Arow = &A[(k + 1) * n + k];
+        HAMC_DATA_TYPE_t *Brow = &A[k * n + k + 1];
+        HAMC_DATA_TYPE_t *Crow = &A[(k + 1) * n + (k + 1)];
+        Crow[tid * n + j] ^= Arow[tid * n] & Brow[j];
+    }
+}
+
+
+
+
 // A is input matrix
 // IPIV is integer pivot indeces vector should be sizeof(int)*A->rows,
 // n is ld (latent dimension) should be A->rows or A->cols
@@ -129,7 +146,7 @@ __global__ void GF2_LU_decompose_find_max_row( HAMC_DATA_TYPE_t *A, int *IPIV,
 }
 
 
-bin_matrix inverse_GF2_gpu(bin_matrix A)
+bin_matrix inverse_GF2_LU_gpu(bin_matrix A)
 {
     // B is output matrix
     bin_matrix B = mat_init_cpu(A->rows, A->cols);
@@ -137,6 +154,9 @@ bin_matrix inverse_GF2_gpu(bin_matrix A)
     /* allocate device memory */
     HAMC_DATA_TYPE_t *deviceA;
     HAMC_DATA_TYPE_t *deviceB;
+
+    int *hostIPIV = (int *)malloc(A->rows*sizeof(int));
+
     int *deviceIPIV;
     cudaMalloc((void **)
         &deviceA, A->rows * A->cols * sizeof(HAMC_DATA_TYPE_t));
@@ -152,9 +172,18 @@ bin_matrix inverse_GF2_gpu(bin_matrix A)
     printf("Starting Inverse matrix kernel...\n");
 
 
+
     // total number of threads should be at least A->cols
-    dim3 dimGrid = dim3(A->cols/1024 + 1, 1);
-    dim3 dimThreads = dim3(1024, 1);
+
+    int numThreadsPerBlock = 4;
+
+    int numGrids = A->cols/numThreadsPerBlock + 1;
+    printf("num grids: %d\n", numGrids);
+    printf("num threads per grid: %d\n", numThreadsPerBlock);
+    printf("Total threads: %d\n", numGrids*numThreadsPerBlock);
+
+    dim3 dimGrid = dim3(numGrids, 1);
+    dim3 dimThreads = dim3(numThreadsPerBlock);
 
     cudaStream_t stream0;
     cudaStream_t stream1;
@@ -162,23 +191,44 @@ bin_matrix inverse_GF2_gpu(bin_matrix A)
     cudaStreamCreate(&stream0);
     cudaStreamCreate(&stream1);
 
+
+    // have one stream operate on each quadrant
+    //GF2_LU_decompose_update_trailing_row<<<dimGrid, dimThreads, 0, stream3>>>(deviceA, A->rows/4, i);
+    //GF2_LU_decompose_update_trailing_row<<<dimGrid, dimThreads, 0, stream3>>>(deviceA+A->rows, A->rows/4, i);
+    //GF2_LU_decompose_update_trailing_row<<<dimGrid, dimThreads, 0, stream3>>>(deviceA+A->rows*2, A->rows/4, i);
+    //GF2_LU_decompose_update_trailing_row<<<dimGrid, dimThreads, 0, stream3>>>(deviceA+A->rows*3, A->rows/4, i);
+
+
     make_GF2_identity_gpu<<<1,1,0,stream0>>>(deviceB, A->rows);
 
     printf("Performing LU Decomposition...\n");
 
-    // Unfortunately this has to be asynchronous
+    // Unfortunately this has to be asynchronous. For each row:
     for (int i = 0; i < A->rows; i++) {
         GF2_LU_decompose_find_max_row<<<dimGrid, dimThreads, 0, stream1>>> 
             (deviceA, deviceIPIV, A->rows, i);
-        
-        GF2_LU_decompose_update_trailing_row<<<dimGrid, 
-            dimThreads, 0, stream1>>>
-            (deviceA, A->rows, i);
+
+        //GF2_LU_decompose_update_trailing_row<<<dimGrid, dimThreads, 0, stream1>>>(deviceA, A->rows, i);
+
+        for (int j = 0; j < A->rows - i - 1; j++) { // cols
+            GF2_LU_decompose_update_trailing_row_index<<<dimGrid, dimThreads, 0, stream1>>>(deviceA, A->rows, i, j);
+        }
+
     }
     cudaStreamDestroy(stream0);
     cudaStreamDestroy(stream1);
 
     cudaDeviceSynchronize();
+
+    cudaMemcpy(hostIPIV, deviceIPIV, A->cols * sizeof(int), 
+        cudaMemcpyDeviceToHost);
+
+    printf("IPIV from GPU:\n");
+    for (int i = 0; i < A->cols; i++)
+        printf("%d ", hostIPIV[i]);
+
+    printf("\n");
+
 
     printf("Performing Forward Substitution...\n");
     GF2_Forward_substitute<<<dimGrid, dimThreads>>> 
@@ -210,8 +260,15 @@ bin_matrix inverse_GF2_gpu(bin_matrix A)
     cudaMemcpy(B->data, deviceB, A->rows * A->cols * sizeof(HAMC_DATA_TYPE_t), 
         cudaMemcpyDeviceToHost);
 
+
+
+
+    print_bin_matrix(B);
+
     cudaFree(deviceA);
     cudaFree(deviceB);
+
+    free(hostIPIV);
 
     return B;
 }

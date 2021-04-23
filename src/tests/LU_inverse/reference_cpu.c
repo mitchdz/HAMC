@@ -4,17 +4,6 @@
 #include "../hamc/hamc_common.h"
 #include "../hamc/hamc_cpu_code.c"
 
-void print_bin_matrix(bin_matrix A)
-{
-    printf("");
-    for ( int i = 0; i < A->rows; i++) {
-        printf("%d  ", i);
-        for ( int j = 0; j < A->cols; j++) {
-            printf("%d ", A->data[i*A->cols + j]);
-        }
-        printf("\n");
-    }
-}
 
 // LU_GF2_find_max_cpu(n - k, &A->data[k * n + k], n, &IPIV[k], k);
 void LU_GF2_find_max_cpu(int n, HAMC_DATA_TYPE_t *A, int ld, int *IPIV, int off) {
