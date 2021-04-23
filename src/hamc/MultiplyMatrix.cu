@@ -121,8 +121,9 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
     int Col = blockIdx.x * TILE_WIDTH + threadIdx.x;
     int tid = threadIdx.y * TILE_WIDTH + threadIdx.x;
     int tilePos = 0;
-
-    uint32_t pValue = 0;
+    
+    HAMC_DATA_TYPE_t pValue[4];
+    uint32_t pValueFloat = (uint32_t *)pValue;
     HAMC_DATA_TYPE_t shortValue = 0;
     
     for(int i = 0; i < ((colA - 1)/(TILE_WIDTH * 4)) + 1; i++){
@@ -133,15 +134,14 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         }
         __syncthreads();
         for(int j = 0; j < TILE_WIDTH; j++){
-            pValue ^= (uint32_t)sharedFloatA[threadIdx.y * TILE_WIDTH + j] & (uint32_t)sharedFloatB[j * TILE_WIDTH + threadIdx.x];
+            pValueFloat[0] ^= sharedFloatA[threadIdx.y * TILE_WIDTH + j] & sharedFloatB[j * TILE_WIDTH + threadIdx.x];
         }
     }
     //TODO: xor all pValue bits
     for(int i = 0; i < 4; i++){
-        shortValue ^= pValue & 1;
-        pValue >>= 8;
+        shortValue ^= pValue[i];
     }
-    C[Row * colB + Col] = pValue;
+    C[Row * colB + Col] = shortValue;
 }/**/
 
 /*__global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB, int TILE_WIDTH)
