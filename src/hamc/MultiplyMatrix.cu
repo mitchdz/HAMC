@@ -123,7 +123,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
     int tilePos = 0;
     
     HAMC_DATA_TYPE_t pValue[4];
-    uint32_t pValueFloat = (uint32_t *)pValue;
+    uint32_t *pValueFloat = (uint32_t *)pValue;
     HAMC_DATA_TYPE_t shortValue = 0;
     
     for(int i = 0; i < ((colA - 1)/(TILE_WIDTH * 4)) + 1; i++){
