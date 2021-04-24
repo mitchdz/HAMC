@@ -15,12 +15,6 @@
 #include "hamc_e2e.cu"
 
 
-#define RED "\033[0;31m"
-#define YELLOW "\033[0;33m"
-#define GREEN "\033[0;32m"
-#define NC "\033[0;0m"
-
-
 #define CUDA_CHECK(ans) \
   { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char *file, int line,

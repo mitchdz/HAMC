@@ -19,7 +19,6 @@
 #include "debug_inverse_c.c"
 
 
-void print_bin_matrix(bin_matrix A);
 bin_matrix my_circ_matrix_inverse_cpu(bin_matrix A);
 
 int main(int argc, char *argv[])
@@ -147,16 +146,5 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-
-void print_bin_matrix(bin_matrix A)
-{
-    for (int i = 0; i < A->rows; i++) {
-        for (int j = 0; j < A->cols; j++) {
-            printf("%hu ", A->data[i*A->cols + j]);
-        }
-        printf("\n");
-    }
-}
-
 
 #endif /* TEST_INVERSE_CPU_H */

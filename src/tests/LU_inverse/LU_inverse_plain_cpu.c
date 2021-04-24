@@ -4,17 +4,6 @@
 #include "../hamc/hamc_common.h"
 #include "../hamc/hamc_cpu_code.c"
 
-void print_bin_matrix(bin_matrix A)
-{
-    printf("");
-    for ( int i = 0; i < A->rows; i++) {
-        printf("%d  ", i);
-        for ( int j = 0; j < A->cols; j++) {
-            printf("%d ", A->data[i*A->cols + j]);
-        }
-        printf("\n");
-    }
-}
 
 // LU_GF2_find_max_cpu(n - k, &A->data[k * n + k], n, &IPIV[k], k);
 void LU_GF2_find_max_cpu(int n, HAMC_DATA_TYPE_t *A, int ld, int *IPIV, int off) {
@@ -68,14 +57,20 @@ void LU_GF2_update_trailing_cpu(int m , int n, HAMC_DATA_TYPE_t *A,
     }
 }
 
-bin_matrix inverse_GF2_cpu(bin_matrix A)
+bin_matrix inverse_GF2_cpu(bin_matrix A, bool verbose)
 {
-    bool verbose = false;
 
     int n = A->rows;
 
+    clock_t LU_start = clock();
+
     // 
     int *IPIV = (int *)malloc(n*sizeof(int));
+
+
+
+    clock_t LU_decompose_start = clock();
+
 
     /* LU decomposition */
     for (int k = 0; k < n; k++) {
@@ -98,16 +93,20 @@ bin_matrix inverse_GF2_cpu(bin_matrix A)
             n);
     }
 
-    //if (verbose) {
-        printf("\nA after LU decomposition (CPU):\n");
-        //print_bin_matrix(A);
-        printf("\nIPIV:\n");
-        for (int i = 0; i < A->rows; i++) {
-            printf("%d ", IPIV[i]);
-        }
-        printf("\n");
-    //}
+    clock_t LU_decompose_end = clock();
+    double LU_decompose_time = ((double) (LU_decompose_end - LU_decompose_start))/ CLOCKS_PER_SEC;
 
+    if (verbose) {
+        if (A->rows < 60) { 
+            printf("\nA after LU decomposition (CPU):\n");
+            print_bin_matrix(A);
+            printf("\nIPIV (CPU):\n");
+            for (int i = 0; i < A->rows; i++) {
+                printf("%d ", IPIV[i]);
+            }
+            printf("\n");
+        }
+    }
 
 
     /* Forward & Backward Substitution */
@@ -116,6 +115,8 @@ bin_matrix inverse_GF2_cpu(bin_matrix A)
     //IA = I
     make_indentity_cpu(IA);
 
+
+    clock_t LU_forward_start = clock();
 
     // Forward
     for (int j = 0; j < n; j++) { // cols
@@ -126,6 +127,10 @@ bin_matrix inverse_GF2_cpu(bin_matrix A)
             }
         }
     }
+    clock_t LU_forward_end = clock();
+    double LU_forward_time = ((double) (LU_forward_end - LU_forward_start))/ CLOCKS_PER_SEC;
+
+    clock_t LU_backward_start = clock();
 
     // Backward
     for (int j = n - 1; j >= 0; j--) { // cols from right to left
@@ -136,20 +141,50 @@ bin_matrix inverse_GF2_cpu(bin_matrix A)
             }
         }
     }
+    clock_t LU_backward_end = clock();
+    double LU_backward_time = ((double) (LU_backward_end - LU_backward_start))/ CLOCKS_PER_SEC;
 
     if (verbose) {
-        printf("\nIA after backwards substition:\n");
-        print_bin_matrix(IA);
+        if (IA->rows < 60) {
+            printf("\nIA after backwards substition (CPU):\n");
+            print_bin_matrix(IA);
+        }
     }
+
+    clock_t LU_swap_start = clock();
+
 
     for (int k = n - 1; k >= 0; k--) { // cols from right to left
         LU_GF2_swap_cols_cpu(n, &IA->data[k], &IA->data[IPIV[k]], n);
     }
 
+    clock_t LU_swap_end = clock();
+    double LU_swap_time = ((double) (LU_swap_end - LU_swap_start))/ CLOCKS_PER_SEC;
+
+
+    clock_t LU_end = clock();
+    double LU_time = ((double) (LU_end - LU_start))/ CLOCKS_PER_SEC;
+
+
     if (verbose) {
-        printf("\nsolution:\n");
-        print_bin_matrix(IA);
+        if (IA->rows < 60) {
+            printf("\nsolution (CPU):\n");
+            print_bin_matrix(IA);
+        }
     }
+
+
+    if (verbose) {
+        printf("Total time for CPU LU Inverse: %.4lf\n", LU_time);
+        printf("\tLU decomposition:       %.4lf\n", LU_decompose_time);
+        printf("\tForward substitution:   %.4lf\n", LU_forward_time);
+        printf("\tBackward substitution:  %.4lf\n", LU_backward_time);
+        printf("\tFinal Swap:             %.4lf\n", LU_swap_time);
+    }
+
+
+
+
 
     return IA;
 }

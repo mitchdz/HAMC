@@ -8,7 +8,7 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/scratch_test",
+            "program": "${workspaceFolder}/build/LU_inverse",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
