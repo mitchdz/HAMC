@@ -379,11 +379,11 @@ int main(int argc, char *argv[])
         }
     }
     
-    std::cout << "solved: " << solved << std::endl;*/
+    std::cout << "solved: " << solved << std::endl;
     
     free(A);
     free(B);
-    free(C);
+    free(C);/**/
     
     return 0;
 }
