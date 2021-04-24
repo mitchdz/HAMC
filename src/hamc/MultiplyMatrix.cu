@@ -143,17 +143,20 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
             sharedB[threadIdx.x * 4 * TILE_WIDTH + threadIdx.y * 4 + j] = B[(j + ((tilePos + threadIdx.y) * 4)) * colB + Col];
         }/**/
         __syncthreads();
-        for(int j = 0; j < TILE_WIDTH; j++){
+        /*for(int j = 0; j < TILE_WIDTH; j++){
             pValueFloat[0] ^= (sharedFloatA[threadIdx.y * TILE_WIDTH + j]) & (transposeFloatB[threadIdx.x * TILE_WIDTH + j]);
+        }/**/
+        for(int j = 0; j < TILE_WIDTH * 4; j++){
+            shortValue ^= (sharedA[threadIdx.y * TILE_WIDTH + j]) & (transposeB[threadIdx.x * TILE_WIDTH + j]);
         }
     }
     //TODO: xor all pValue bits
-    for(int i = 0; i < 4; i++){
+    /*for(int i = 0; i < 4; i++){
         //pValue[0] ^= pValue[i];
         shortValue ^= pValue[i] & 1;
         //shortValue ^= pValueFloat[0] & 1;
         //pValueFloat[0] >>= 8;
-    }
+    }/**/
     C[Row * colB + Col] = shortValue;//pValue[0];
 }/**/
 
