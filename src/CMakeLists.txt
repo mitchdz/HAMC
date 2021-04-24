@@ -159,5 +159,5 @@ if (BUILD_LIBWB_LIBRARY)
 endif (BUILD_LIBWB_LIBRARY)
 
 
-include(hamc/sources.cmake)
+#include(hamc/sources.cmake)
 include(tests/sources.cmake)
