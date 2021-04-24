@@ -49,11 +49,11 @@ bin_matrix read_file_store_bin_matrix(const char *inputFile)
 
 int main(int argc, char *argv[]){
 
-    bool verbose = false;
+    bool verbose = true;
 
     int flag=0;
 
-    int n = 512;
+    int n = 2;
     int p = 6;
     int N = p;
     int t = 10;
@@ -80,7 +80,7 @@ int main(int argc, char *argv[]){
     bool cpu_exec = false;
 
     int opt;
-    while ((opt = getopt(argc, argv, "n:i:e:cv")) != -1){
+    while ((opt = getopt(argc, argv, "n:i:e:cvs")) != -1){
         switch(opt){
             case 'n':
                 p = atoi(optarg);
@@ -97,6 +97,9 @@ int main(int argc, char *argv[]){
             case 'v':
                 verbose = true;
                 break;
+            case 's':
+                verbose = false;
+                break;
         }
     }
 
@@ -104,30 +107,36 @@ int main(int argc, char *argv[]){
     N = p;
 
     if (!inputFile || !expectedFile) {
-        printf("No input or expected matrix, generating matrix...\n");
-        printf("Generating QC_MDPC code...\n");
+        if (verbose) {
+            printf("No input or expected matrix, generating matrix...\n");
+            printf("Generating QC_MDPC code...\n");
+        }
         code = qc_mdpc_init_cpu(n, p, t, w, seed);
-        printf("Generating Binary Circulant Matrix...\n");
+        if (verbose) printf("Generating Binary Circulant Matrix...\n");
         invertible_matrix = make_matrix_cpu(
             code->p, code->p, 
             splice_cpu(code->row, (code->n0 - 1) * code->p, code->n), 
             1);
-        printf("Generated test matrix\n");
+        if (verbose) printf("Generated test matrix\n");
         cpu_exec = true;
     }
     else {
         // Get input and expected solution
 
-        printf("input file: %s\n", inputFile);
-        printf("solution file: %s\n", expectedFile);
+        if (verbose) {
+            printf("input file: %s\n", inputFile);
+            printf("solution file: %s\n", expectedFile);
+        }
 
         invertible_matrix = read_file_store_bin_matrix(inputFile);
         if (!cpu_exec)
             cpu_sol = read_file_store_bin_matrix(expectedFile);
     }
 
-
-    printf("Input matrix size: %dx%d\n", invertible_matrix->rows, invertible_matrix->cols);
+    if (verbose) {
+        printf("Input matrix size: %dx%d\n",
+            invertible_matrix->rows, invertible_matrix->cols);
+    }
 
     p = invertible_matrix->rows;
 
@@ -143,9 +152,9 @@ int main(int argc, char *argv[]){
     hamc_cpu_start = clock();
 
     if (cpu_exec) {
-        printf("Performing CPU based execution...\n");
+        if (verbose) printf("Performing CPU based execution...\n");
         cpu_sol = circ_matrix_inverse_cpu(extra_matrix);
-        printf("Done\n");
+        if (verbose) printf("Done\n");
     }
 
 
@@ -156,15 +165,15 @@ int main(int argc, char *argv[]){
     // Print input and expected result
     if (verbose) {
         printf("\nInput matrix A:\n");
-        print_bin_matrix(invertible_matrix);
+        if (invertible_matrix->rows < 60) print_bin_matrix(invertible_matrix);
 
         printf("\nExpected solution is:\n");
-        print_bin_matrix(cpu_sol);
+        if (cpu_sol->rows < 60) print_bin_matrix(cpu_sol);
         printf("\n");
     }
 
     lu_cpu_start = clock();
-    new_cpu_sol = inverse_GF2_cpu(invertible_matrix);
+    new_cpu_sol = inverse_GF2_cpu(invertible_matrix, verbose);
     lu_cpu_end = clock();
     lu_cpu_time_used = ((double) (lu_cpu_end - lu_cpu_start))/ CLOCKS_PER_SEC;
 
@@ -174,8 +183,8 @@ int main(int argc, char *argv[]){
     lu_gpu_end = clock();
     lu_gpu_time_used = ((double) (lu_gpu_end - lu_gpu_start))/ CLOCKS_PER_SEC;
 
-    printf("\nOutput from GPU:\n");
-    if (verbose) print_bin_matrix(new_gpu_sol);
+    if (verbose) printf("\nOutput from GPU:\n");
+    if (verbose && new_gpu_sol->rows < 60) print_bin_matrix(new_gpu_sol);
 
     // check results
     if (!cpu_exec) {
@@ -187,6 +196,7 @@ int main(int argc, char *argv[]){
         }
     }
 
+
     if(flag==0) 
         printf("correctq: %strue%s", GREEN, NC);
     else 
@@ -196,20 +206,27 @@ int main(int argc, char *argv[]){
     printf("\n");
 
 
-    if (!cpu_exec) {
-        printf("Time for LU Decomposition GPU code: %lf s\n", lu_gpu_time_used);
+
+    if (verbose) {
+        if (!cpu_exec) {
+            printf("Time for LU Decomposition GPU code: %lf s\n",
+                lu_gpu_time_used);
+        }
+
+        if (cpu_exec) {
+            printf("Time for HAMC CPU code: %lf s\n", 
+                hamc_cpu_time_used);
+            printf("Speed difference (GPU LU vs. CPU gauss jordan): %.2lfX ", 
+                lu_gpu_time_used/hamc_cpu_time_used);
+
+            if (lu_gpu_time_used > hamc_cpu_time_used)
+                printf("slower\n");
+            else
+                printf("faster\n");
+        }
     }
 
-    if (cpu_exec) {
-        printf("Time for HAMC CPU code:             %lf s\n", hamc_cpu_time_used);
-        printf("Speed difference: %.2lfX ", lu_gpu_time_used/hamc_cpu_time_used);
-        if (lu_gpu_time_used > hamc_cpu_time_used)
-            printf("slower\n");
-        else
-            printf("faster\n");
-    }
-
-    printf("Freeing allocated memory...\n");
+    if (verbose) printf("Freeing allocated memory...\n");
     if (invertible_matrix != NULL) free(invertible_matrix);
     if (extra_matrix != NULL) free(extra_matrix);
     if (cpu_sol != NULL) free(cpu_sol);

@@ -194,15 +194,20 @@ bin_matrix inverse_GF2_LU_gpu(bin_matrix A, bool verbose)
     cudaMemcpy(deviceA, A->data, A->rows * A->cols * sizeof(HAMC_DATA_TYPE_t), 
         cudaMemcpyHostToDevice);
 
-    printf("Starting Inverse matrix kernel...\n");
+    if (verbose) printf("Starting Inverse matrix kernel...\n");
 
     // total number of threads should be at least A->cols
     int numThreadsPerBlock = 1024;
 
     int numGrids = A->cols/numThreadsPerBlock + 1;
-    printf("\t# threadBlocks: %s%d%s\n", YELLOW, numGrids, NC);
-    printf("\t# threads per block: %s%d%s\n", YELLOW, numThreadsPerBlock, NC);
-    printf("\tTotal threads: %s%d%s\n", YELLOW,numGrids*numThreadsPerBlock, NC);
+
+    if (verbose) {
+        printf("\t# threadBlocks: %s%d%s\n", YELLOW, numGrids, NC);
+        printf("\t# threads per block: %s%d%s\n", YELLOW, numThreadsPerBlock,
+            NC);
+        printf("\tTotal threads: %s%d%s\n", YELLOW,numGrids*numThreadsPerBlock,
+            NC);
+    }
 
     dim3 dimGrid = dim3(numGrids, 1);
     dim3 dimThreads = dim3(numThreadsPerBlock);
@@ -220,7 +225,7 @@ bin_matrix inverse_GF2_LU_gpu(bin_matrix A, bool verbose)
     make_GF2_identity_gpu<<<1,1,0,stream0>>>(deviceB, A->rows);
 
     /******************** LU decomposition ************************************/
-    printf("Performing LU Decomposition...\n");
+    if (verbose) printf("Performing LU Decomposition...\n");
     clock_t LU_decompose_start = clock();
 
     // Unfortunately this has to be asynchronous.
@@ -257,7 +262,7 @@ bin_matrix inverse_GF2_LU_gpu(bin_matrix A, bool verbose)
     /******************** Forward Substitution ********************************/
 
     clock_t LU_forward_start = clock();
-    printf("Performing Forward Substitution...\n");
+    if (verbose) printf("Performing Forward Substitution...\n");
     GF2_Forward_substitute<<<dimGrid, dimThreads>>> 
         (deviceA, deviceB, A->rows);
 
@@ -274,7 +279,7 @@ bin_matrix inverse_GF2_LU_gpu(bin_matrix A, bool verbose)
     /******************** Backward Substitution *******************************/
     clock_t LU_backward_start = clock();
 
-    printf("Performing Backward Substitution...\n");
+    if (verbose) printf("Performing Backward Substitution...\n");
     GF2_Backward_substitute<<<dimGrid, dimThreads>>>
         (deviceA, deviceB, A->rows);
     clock_t LU_backward_end = clock();
@@ -289,7 +294,7 @@ bin_matrix inverse_GF2_LU_gpu(bin_matrix A, bool verbose)
     /******************** Final Swap ******************************************/
     clock_t LU_final_swap_start = clock();
 
-    printf("Performing Final swap...\n");
+    if (verbose) printf("Performing Final swap...\n");
     GF2_swap_rows<<<dimGrid, dimThreads>>>
         (deviceB, deviceIPIV, A->rows);
     clock_t LU_final_swap_end = clock();
@@ -302,7 +307,7 @@ bin_matrix inverse_GF2_LU_gpu(bin_matrix A, bool verbose)
          cudaGetErrorString(cudaerr));
 
 
-    printf("Done!\n");
+    if (verbose) printf("Done!\n");
     cudaerr = cudaDeviceSynchronize();
     if (cudaerr != cudaSuccess)
         printf("kernel launch failed with error \"%s\".\n",
@@ -317,15 +322,17 @@ bin_matrix inverse_GF2_LU_gpu(bin_matrix A, bool verbose)
         ((double) (LU_end - LU_start))/ CLOCKS_PER_SEC;
 
 
-    printf("Total time for LU inverse: %.7lf\n", LU_time);
-    printf("\tLU decomposition:          %.7lf - %.2lf%%\n", LU_decompose_time,
-        100*(LU_decompose_time/LU_time));
-    printf("\tForward Substitution:      %.7lf - %.2lf%%\n", LU_forward_time,
-        100*(LU_forward_time/LU_time));
-    printf("\tBackward Substitution:     %.7lf - %.2lf%%\n", LU_backward_time,
-        100*(LU_backward_time/LU_time));
-    printf("\tFinal Swap:                %.7lf - %.2lf%%\n", LU_final_swap_time,
-        100*(LU_final_swap_time/LU_time));
+    if (verbose) {
+        printf("Total time for LU inverse (GPU): %.7lf\n", LU_time);
+        printf("\tLU decomposition:          %.7lf - %.2lf%%\n", 
+            LU_decompose_time, 100*(LU_decompose_time/LU_time));
+        printf("\tForward Substitution:      %.7lf - %.2lf%%\n",
+            LU_forward_time, 100*(LU_forward_time/LU_time));
+        printf("\tBackward Substitution:     %.7lf - %.2lf%%\n",
+            LU_backward_time, 100*(LU_backward_time/LU_time));
+        printf("\tFinal Swap:                %.7lf - %.2lf%%\n",
+            LU_final_swap_time, 100*(LU_final_swap_time/LU_time));
+    }
 
 
     cudaFree(deviceA);

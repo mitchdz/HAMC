@@ -57,9 +57,8 @@ void LU_GF2_update_trailing_cpu(int m , int n, HAMC_DATA_TYPE_t *A,
     }
 }
 
-bin_matrix inverse_GF2_cpu(bin_matrix A)
+bin_matrix inverse_GF2_cpu(bin_matrix A, bool verbose)
 {
-    bool verbose = false;
 
     int n = A->rows;
 
@@ -98,15 +97,16 @@ bin_matrix inverse_GF2_cpu(bin_matrix A)
     double LU_decompose_time = ((double) (LU_decompose_end - LU_decompose_start))/ CLOCKS_PER_SEC;
 
     if (verbose) {
-        printf("\nA after LU decomposition (CPU):\n");
-        //print_bin_matrix(A);
-        printf("\nIPIV:\n");
-        for (int i = 0; i < A->rows; i++) {
-            printf("%d ", IPIV[i]);
+        if (A->rows < 60) { 
+            printf("\nA after LU decomposition (CPU):\n");
+            print_bin_matrix(A);
+            printf("\nIPIV (CPU):\n");
+            for (int i = 0; i < A->rows; i++) {
+                printf("%d ", IPIV[i]);
+            }
+            printf("\n");
         }
-        printf("\n");
     }
-
 
 
     /* Forward & Backward Substitution */
@@ -145,8 +145,10 @@ bin_matrix inverse_GF2_cpu(bin_matrix A)
     double LU_backward_time = ((double) (LU_backward_end - LU_backward_start))/ CLOCKS_PER_SEC;
 
     if (verbose) {
-        printf("\nIA after backwards substition:\n");
-        print_bin_matrix(IA);
+        if (IA->rows < 60) {
+            printf("\nIA after backwards substition (CPU):\n");
+            print_bin_matrix(IA);
+        }
     }
 
     clock_t LU_swap_start = clock();
@@ -165,15 +167,20 @@ bin_matrix inverse_GF2_cpu(bin_matrix A)
 
 
     if (verbose) {
-        printf("\nsolution:\n");
-        print_bin_matrix(IA);
+        if (IA->rows < 60) {
+            printf("\nsolution (CPU):\n");
+            print_bin_matrix(IA);
+        }
     }
 
-    printf("Total time for CPU LU Inverse: %.4lf\n", LU_time);
-    printf("\tLU decomposition:       %.4lf\n", LU_decompose_time);
-    printf("\tForward substitution:   %.4lf\n", LU_forward_time);
-    printf("\tBackward substitution:  %.4lf\n", LU_backward_time);
-    printf("\tFinal Swap:             %.4lf\n", LU_swap_time);
+
+    if (verbose) {
+        printf("Total time for CPU LU Inverse: %.4lf\n", LU_time);
+        printf("\tLU decomposition:       %.4lf\n", LU_decompose_time);
+        printf("\tForward substitution:   %.4lf\n", LU_forward_time);
+        printf("\tBackward substitution:  %.4lf\n", LU_backward_time);
+        printf("\tFinal Swap:             %.4lf\n", LU_swap_time);
+    }
 
 
 
