@@ -112,8 +112,8 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
     
     HAMC_DATA_TYPE_t *sharedA = sharedArray;
     uint32_t *sharedFloatA = (uint32_t *)sharedA;
-    HAMC_DATA_TYPE_t *sharedB = &sharedA[TILE_WIDTH * TILE_WIDTH];
-    uint32_t *sharedFloatB = (uint32_t *)sharedB;
+    uint32_t *sharedFloatB = &sharedFloatA[TILE_WIDTH * TILE_WIDTH];
+    HAMC_DATA_TYPE_t *sharedB = (uint8_t *)sharedFloatB;
     
     uint32_t *floatA = (uint32_t *)A;
     
@@ -127,7 +127,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
     HAMC_DATA_TYPE_t shortValue = 0;
     
     for(int i = 0; i < ((colA - 1)/(TILE_WIDTH * 4)) + 1; i++){
-        tilePos = i * TILE_WIDTH;
+        tilePos = i / 4 * TILE_WIDTH;
         sharedFloatA[tid] = floatA[Row * colA + tilePos + threadIdx.x];
         for(int j = 0; j < 4; j++){
             sharedB[tid * 4 + j] = B[(j + ((tilePos + threadIdx.y) * 4)) * colB + Col];
