@@ -1,6 +1,6 @@
 #include <cuda_runtime.h>
 #include <stdlib.h>
-#include <wb.h>
+//#include <wb.h>
 #include <stdint.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -239,7 +239,7 @@ void run_size_sweep()
 
 int main(int argc, char *argv[])
 {
-    wbArg_t args;
+    //wbArg_t args;
     bin_matrix A;
     bin_matrix B;
     bin_matrix C;

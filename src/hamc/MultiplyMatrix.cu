@@ -60,7 +60,8 @@
     }
 }/**/
 
-/*__global__ void mult_kernel_register_blocked(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB){
+/*__global__ void mult_kernel_register_blocked(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB)
+{
     __shared__ HAMC_DATA_TYPE_t sharedA[64*64];
     __shared__ HAMC_DATA_TYPE_t sharedB[64*64];
     
@@ -124,7 +125,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
     
     HAMC_DATA_TYPE_t pValue[4];
     uint32_t *pValueFloat = (uint32_t *)pValue;
-    HAMC_DATA_TYPE_t shortValue = 0;
+    //HAMC_DATA_TYPE_t shortValue = 0;
     
     for(int i = 0; i < ((colA - 1)/(TILE_WIDTH * 4)) + 1; i++){
         tilePos = i / 4 * TILE_WIDTH;
@@ -138,10 +139,10 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         }
     }
     //TODO: xor all pValue bits
-    for(int i = 0; i < 4; i++){
-        shortValue ^= pValue[i];
+    for(int i = 1; i < 4; i++){
+        pValue[0] ^= pValue[i];
     }
-    C[Row * colB + Col] = shortValue;
+    C[Row * colB + Col] = pValue[0];
 }/**/
 
 /*__global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB, int TILE_WIDTH)
