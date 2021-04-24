@@ -132,7 +132,8 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         sharedFloatA[tid] = floatA[Row * colA / 4 + tilePos + threadIdx.x];
         //sharedFloatB[tid] = floatB[((tilePos + threadIdx.y) * 4) * colB + Col];
         for(int j = 0; j < 4; j++){
-            sharedB[tid * 4 + j] = B[(j + ((tilePos + threadIdx.y) * 4)) * colB + Col];
+            //sharedB[tid * 4 + j] = B[(j + ((tilePos + threadIdx.y) * 4)) * colB + Col];
+            sharedB[threadIdx.x * 4 * TILE_WIDTH + threadIdx.y * 4 + j] = B[(j + ((tilePos + threadIdx.y) * 4)) * colB + Col];
         }/**/
         __syncthreads();
         for(int j = 0; j < TILE_WIDTH; j++){
