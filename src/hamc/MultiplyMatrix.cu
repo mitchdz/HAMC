@@ -119,6 +119,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
     HAMC_DATA_TYPE_t *transposeB = (uint8_t *)transposeFloatB;
     
     uint32_t *floatA = (uint32_t *)A;
+    uint32_t *floatB = (uint32_t *)B;
     
     int Row = blockIdx.y * TILE_WIDTH + threadIdx.y;
     int Col = blockIdx.x * TILE_WIDTH + threadIdx.x;
