@@ -337,7 +337,7 @@ int main(int argc, char *argv[])
         return 0;
     }*/
     
-    float *floatTemp = (float *)wbImport(input0, &numRowsA, &numColsA);
+    /*float *floatTemp = (float *)wbImport(input0, &numRowsA, &numColsA);
     hostA = (HAMC_DATA_TYPE_t *)malloc(numRowsA*numColsA * sizeof(HAMC_DATA_TYPE_t));
     for(int i = 0; i < numColsA * numRowsA; i++){
         hostA[i] = (HAMC_DATA_TYPE_t)floatTemp[i];
@@ -379,7 +379,7 @@ int main(int argc, char *argv[])
         }
     }
     
-    std::cout << "solved: " << solved << std::endl;
+    std::cout << "solved: " << solved << std::endl;*/
     
     free(A);
     free(B);
