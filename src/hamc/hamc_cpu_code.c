@@ -63,7 +63,7 @@ void print_bin_matrix(bin_matrix A)
 {
     printf("");
     for ( int i = 0; i < A->rows; i++) {
-        printf("%d  ", i);
+        printf("%s%d%s  ", YELLOW, i, NC);
         for ( int j = 0; j < A->cols; j++) {
             printf("%d ", A->data[i*A->cols + j]);
         }

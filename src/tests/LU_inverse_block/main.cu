@@ -2,6 +2,7 @@
 #define HAMC_SCRATCH_H
 
 
+#include <bits/getopt_core.h>
 #include <cuda_device_runtime_api.h>
 #include <cuda_runtime_api.h>
 #include <driver_types.h>
@@ -16,10 +17,7 @@
 
 
 #include "../../src/hamc/hamc_cpu_code.c"
-#include "../../src/hamc/LU_inverse_plain.cu"
-
-
-#include "reference_cpu.c"
+#include "../../src/hamc/LU_inverse_block.cu"
 
 
 int main(int argc, char *argv[]){
@@ -34,6 +32,19 @@ int main(int argc, char *argv[]){
     int t = 10;
     int w = 30;
     int seed = 10;
+
+    int opt;
+    while ((opt = getopt(argc, argv, "n:")) != -1){
+        switch(opt){
+            case 'n':
+                p = atoi(optarg);
+                break;
+        }
+    }
+
+    N = p;
+
+    printf("Size of input matrix: %s%d%s\n", YELLOW, p, NC);
 
     printf("Generating QC_MDPC code...\n");
     mdpc code = qc_mdpc_init_cpu(n, p, t, w, seed);
@@ -70,14 +81,8 @@ int main(int argc, char *argv[]){
         print_bin_matrix(cpu_sol);
     }
 
-    clock_t lu_cpu_start = clock();
-    bin_matrix new_cpu_sol = inverse_GF2_cpu(invertible_matrix);
-    clock_t lu_cpu_end = clock();
-    double lu_cpu_time_used = ((double) (lu_cpu_end - lu_cpu_start))/ CLOCKS_PER_SEC;
-
-
     clock_t lu_gpu_start = clock();
-    bin_matrix new_gpu_sol = inverse_GF2_LU_gpu(extra_matrix2);
+    bin_matrix new_gpu_sol = inverse_GF2_LU_block_gpu(extra_matrix2);
     clock_t lu_gpu_end = clock();
     double lu_gpu_time_used = ((double) (lu_gpu_end - lu_gpu_start))/ CLOCKS_PER_SEC;
 
@@ -113,7 +118,6 @@ int main(int argc, char *argv[]){
     free(invertible_matrix);
     free(extra_matrix);
     free(cpu_sol);
-    free(new_cpu_sol);
     free(new_gpu_sol);
 
     return 0;
