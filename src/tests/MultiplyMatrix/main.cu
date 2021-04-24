@@ -104,6 +104,7 @@ void run_time(int x, int y)
 
 void run_profile(int x, int y)
 {
+    printf("Matrix size: %dX%d\n", x, y);
     HAMC_DATA_TYPE_t *dataA = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * x * y);
     HAMC_DATA_TYPE_t *dataB = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * x * y);
     
