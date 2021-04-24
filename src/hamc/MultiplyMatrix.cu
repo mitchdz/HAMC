@@ -115,6 +115,8 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
     uint32_t *sharedFloatA = (uint32_t *)sharedA;
     uint32_t *sharedFloatB = &sharedFloatA[TILE_WIDTH * TILE_WIDTH];
     HAMC_DATA_TYPE_t *sharedB = (uint8_t *)sharedFloatB;
+    uint32_t *transposeFloatB = sharedFloatB[TILE_WIDTH * TILE_WIDTH];
+    HAMC_DATA_TYPE_t *transposeB = (uint8_t *)transposeFloatB;
     
     uint32_t *floatA = (uint32_t *)A;
     
@@ -130,14 +132,18 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
     for(int i = 0; i < ((colA - 1)/(TILE_WIDTH * 4)) + 1; i++){
         tilePos = i / 4 * TILE_WIDTH;
         sharedFloatA[tid] = floatA[Row * colA / 4 + tilePos + threadIdx.x];
-        //sharedFloatB[tid] = floatB[((tilePos + threadIdx.y) * 4) * colB + Col];
+        sharedFloatB[tid] = floatB[(threadIdx.y * 4 + threadIdx.x / 4) * colB + tilePos + threadIdx.x % 8];
+        __syncthreads();
         for(int j = 0; j < 4; j++){
+            transposeB[threadIdx.x * TILE_WIDTH + threadIdx.y * 4 + j] = sharedB[(threadIdx.y * 4 + j) * TILE_WIDTH + threadIdx.x];
+        }
+        /*for(int j = 0; j < 4; j++){
             //sharedB[tid * 4 + j] = B[(j + ((tilePos + threadIdx.y) * 4)) * colB + Col];
             sharedB[threadIdx.x * 4 * TILE_WIDTH + threadIdx.y * 4 + j] = B[(j + ((tilePos + threadIdx.y) * 4)) * colB + Col];
         }/**/
         __syncthreads();
         for(int j = 0; j < TILE_WIDTH; j++){
-            pValueFloat[0] ^= sharedFloatA[threadIdx.y * TILE_WIDTH + j] & sharedFloatB[j * TILE_WIDTH + threadIdx.x];
+            pValueFloat[0] ^= sharedFloatA[threadIdx.y * TILE_WIDTH + j] & transposeFloatB[threadIdx.x * TILE_WIDTH + j];
         }
     }
     //TODO: xor all pValue bits
@@ -462,7 +468,7 @@ bin_matrix run_mult_kernel_test(bin_matrix A, bin_matrix B, int TILE_WIDTH)
     int y_blocks = ((A->rows - 1)/TILE_WIDTH) + 1;
     dim3 DimGrid(x_blocks, y_blocks, 1);
     
-    mult_kernel_compressed_data<<<DimGrid, DimBlock, 2 * TILE_WIDTH * TILE_WIDTH * sizeof(float)>>>(deviceA, deviceB, deviceC, A->rows, B->rows, A->cols, B->cols, TILE_WIDTH);
+    mult_kernel_compressed_data<<<DimGrid, DimBlock, 3 * TILE_WIDTH * TILE_WIDTH * sizeof(float)>>>(deviceA, deviceB, deviceC, A->rows, B->rows, A->cols, B->cols, TILE_WIDTH);
     //mult_kernel_compressed_data<<<DimGrid, DimBlock, 2 * TILE_WIDTH * TILE_WIDTH * sizeof(float)>>>(deviceA, deviceB, deviceC, A->rows, B->rows, A->cols, B->cols, TILE_WIDTH);
     //mult_kernel_outer_product<<<DimGrid, DimBlock, TILE_WIDTH * TILE_WIDTH * sizeof(HAMC_DATA_TYPE_t)>>>(deviceA, deviceB, deviceC, A->rows, B->rows, A->cols, B->cols, TILE_WIDTH);
     
