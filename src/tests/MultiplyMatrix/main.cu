@@ -221,7 +221,7 @@ void run_tile_sweep(int x, int y, int upto)
     
     A->data = dataA;
     B->data = dataB;
-    for(int i = 1; i <= upto; i *= 2){
+    for(int i = 4; i <= upto; i *= 2){
         start = clock();
     
         C = run_mult_kernel(A, B, i);
