@@ -139,7 +139,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
             sharedFloatA[tid] = floatA[Row * colA / 4 + tilePos + threadIdx.x];
         }
         else{
-            sharedFloatA[tid] = 0;
+            sharedFloatA[tid] = (uint32_t)0;
         }
         //sharedFloatB[tid] = floatB[(threadIdx.y * 4 + threadIdx.x / 4) * colB + tilePos + threadIdx.x % 8];
         __syncthreads();
@@ -156,7 +156,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
                 sharedB[threadIdx.x * 4 * TILE_WIDTH + j * TILE_WIDTH + threadIdx.y] = B[colB * (threadIdx.y + (j + tilePos * 4) * TILE_WIDTH) + Col];
             }
             else{
-                sharedB[threadIdx.x * 4 * TILE_WIDTH + j * TILE_WIDTH + threadIdx.y] = 0;
+                sharedB[threadIdx.x * 4 * TILE_WIDTH + j * TILE_WIDTH + threadIdx.y] = (uint8_t)0;
             }
             //sharedB[tid * 4 + j] = B[(j + ((tilePos + threadIdx.y) * 4)) * colB + Col];
             //sharedB[threadIdx.x * 4 * TILE_WIDTH + threadIdx.y * 4 + j] = B[(j + ((tilePos + threadIdx.y) * 4)) * colB + Col];
@@ -201,7 +201,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
             //pValueFloat[0] ^= (sharedFloatA[threadIdx.y * TILE_WIDTH + j]) & (transposeFloatB[threadIdx.x * TILE_WIDTH + j]);
             pValueFloat ^= sharedFloatA[threadIdx.y * TILE_WIDTH + j] & sharedFloatB[threadIdx.x * TILE_WIDTH + j];
         }/**/
-        if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0){
+        /*if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0){
             uint32_t temp = 0;
             for(int q = 0; q < 32; q++){
                 temp ^= sharedFloatA[q] & sharedFloatB[q];
@@ -220,7 +220,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         /*for(int j = 0; j < TILE_WIDTH; j++){
                 shortValue ^= (sharedA[threadIdx.y * TILE_WIDTH + j] & sharedB[j * TILE_WIDTH + threadIdx.x]);
         }/**/
-        if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0){// && i == ((colA - 1)/(TILE_WIDTH * 4))){
+        /*if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0){// && i == ((colA - 1)/(TILE_WIDTH * 4))){
         printf("pValueFloat: ");
             for(int j = 0; j < 32; j++){
                 char bit = (pValueFloat >> (31 - j)) & 1;
