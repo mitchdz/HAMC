@@ -169,13 +169,13 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
             printf("\n");/**/
         }
         __syncthreads();
-        for(int j = 0; j < 4; j++){
+        /*for(int j = 0; j < 4; j++){
             //transposeB[] = sharedB[];
             transposeB[((threadIdx.x * 4 + j * TILE_WIDTH) * TILE_WIDTH) + threadIdx.y] = sharedB[threadIdx.y * 4 * TILE_WIDTH + threadIdx.x + j * TILE_WIDTH];
             //transposeB[(threadIdx.x * 4 + j) * TILE_WIDTH + threadIdx.y * 4] = sharedB[(threadIdx.y * 4 * TILE_WIDTH) + threadIdx.x * 4 + j];
             //transposeB[threadIdx.x * TILE_WIDTH + threadIdx.y * 4 + j] = sharedB[(threadIdx.y * 4 + j) * TILE_WIDTH + threadIdx.x];
         }/**/
-        /*for(int j = 0; j < 4; j++){
+        for(int j = 0; j < 4; j++){
             //sharedB[tid * 4 + j] = B[(j + ((tilePos + threadIdx.y) * 4)) * colB + Col];
             sharedB[threadIdx.x * 4 * TILE_WIDTH + threadIdx.y * 4 + j] = B[(j + ((tilePos + threadIdx.y) * 4)) * colB + Col];
         }/**/
@@ -215,7 +215,9 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         }
         __syncthreads();
         for(int j = 0; j < TILE_WIDTH; j++){
-            pValueFloat[0] ^= (sharedFloatA[threadIdx.y * TILE_WIDTH + j]) & (/*sharedFloatB[j * TILE_WIDTH + threadIdx.x]);*/transposeFloatB[threadIdx.x * TILE_WIDTH + j]);
+            pValueFloat[0] ^= (sharedFloatA[threadIdx.y * TILE_WIDTH + j]) & (sharedFloatB[j * TILE_WIDTH + threadIdx.x]);
+            //pValueFloat[0] ^= (sharedFloatA[threadIdx.y * TILE_WIDTH + j]) & (transposeFloatB[threadIdx.x * TILE_WIDTH + j]);
+            //pValueFloat[0] ^= (sharedFloatA[threadIdx.y * TILE_WIDTH + j]) & (sharedFloatB[threadIdx.x * TILE_WIDTH + j]);
         }/**/
         /*for(int q = 0; q < 4; q++){
             for(int j = 0; j < TILE_WIDTH; j++){
