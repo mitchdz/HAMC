@@ -170,6 +170,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
                     char bit = (sharedA[q * 4 * tid + k]) & 1;
                     printf("%u", bit);
                 }
+                printf("\n");
             }
             printf("\n");/**/
             printf("sharedB 0 through 3:\n");
