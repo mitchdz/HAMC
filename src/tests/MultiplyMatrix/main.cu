@@ -298,8 +298,8 @@ void run_debug(int x, int y)
             if(G1->data[i * G1->cols + j] != G2->data[i * G2->cols + j]){
                 printf("Index failed at: [%d,%d]\n", i, j);
                 matched = false;
-                //i = 999999;
-                //break;
+                i = 999999;
+                break;
             }
         }
     }
