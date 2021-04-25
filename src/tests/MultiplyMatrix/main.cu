@@ -411,6 +411,7 @@ int main(int argc, char *argv[])
         return 0;
     }
     if(debug_test){
+        printf("yet another test");
         run_debug(x, y);
         return 0;
     }
