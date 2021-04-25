@@ -138,6 +138,9 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         if((Row < rowA) && (tilePos + threadIdx.x < colA)){
             sharedFloatA[tid] = floatA[Row * colA / 4 + tilePos + threadIdx.x];
         }
+        else{
+            sharedFloatA[tid] = 0;
+        }
         //sharedFloatB[tid] = floatB[(threadIdx.y * 4 + threadIdx.x / 4) * colB + tilePos + threadIdx.x % 8];
         __syncthreads();
         
@@ -151,6 +154,9 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
             //sharedB[] = B[];
             if(((threadIdx.y + (j + tilePos * 4) * TILE_WIDTH) < rowB) && (Col < colB)){
                 sharedB[threadIdx.x * 4 * TILE_WIDTH + j * TILE_WIDTH + threadIdx.y] = B[colB * (threadIdx.y + (j + tilePos * 4) * TILE_WIDTH) + Col];
+            }
+            else{
+                sharedB[threadIdx.x * 4 * TILE_WIDTH + j * TILE_WIDTH + threadIdx.y] = 0;
             }
             //sharedB[tid * 4 + j] = B[(j + ((tilePos + threadIdx.y) * 4)) * colB + Col];
             //sharedB[threadIdx.x * 4 * TILE_WIDTH + threadIdx.y * 4 + j] = B[(j + ((tilePos + threadIdx.y) * 4)) * colB + Col];
