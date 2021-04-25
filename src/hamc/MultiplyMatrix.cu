@@ -170,7 +170,9 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         }
         __syncthreads();
         for(int j = 0; j < 4; j++){
-            transposeB[(threadIdx.x * 4 + j) * TILE_WIDTH + threadIdx.y * 4] = sharedB[(threadIdx.y * 4 * TILE_WIDTH) + threadIdx.x * 4 + j];
+            //transposeB[] = sharedB[];
+            transposeB[((threadIdx.x * 4 + j * TILE_WIDTH) * TILE_WIDTH) + threadIdx.y] = sharedB[threadIdx.y * 4 * TILE_WIDTH + threadIdx.x + j * TILE_WIDTH];
+            //transposeB[(threadIdx.x * 4 + j) * TILE_WIDTH + threadIdx.y * 4] = sharedB[(threadIdx.y * 4 * TILE_WIDTH) + threadIdx.x * 4 + j];
             //transposeB[threadIdx.x * TILE_WIDTH + threadIdx.y * 4 + j] = sharedB[(threadIdx.y * 4 + j) * TILE_WIDTH + threadIdx.x];
         }
         /*for(int j = 0; j < 4; j++){
@@ -179,7 +181,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         }/**/
         __syncthreads();
         
-        /*if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0 && i == 0){
+        if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0 && i == 0){
             /*printf("A 0 through 3: ");
             for(int k = 0; k < 4; k++){
                 for(int j = 0; j < 8; j++){
@@ -201,7 +203,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
                 printf("\n");
             }/**/
             
-            /*printf("transposeB 0 through 3: ");
+            printf("transposeB 0 through 3: ");
             for(int k = 0; k < 4; k++){
                 for(int j = 0; j < 8; j++){
                     char bit = (transposeB[tid + k] >> (7 - j)) & 1;
@@ -209,8 +211,8 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
                 }
                 printf(" ");
             }
-            printf("\n");
-        }/**/
+            printf("\n");/**/
+        }
         __syncthreads();
         for(int j = 0; j < TILE_WIDTH; j++){
             pValueFloat[0] ^= (sharedFloatA[threadIdx.y * TILE_WIDTH + j]) & (/*sharedFloatB[j * TILE_WIDTH + threadIdx.x]);*/transposeFloatB[threadIdx.x * TILE_WIDTH + j]);
