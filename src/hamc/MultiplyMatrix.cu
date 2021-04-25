@@ -233,6 +233,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         }
         
         for(int j = 0; j < 4; j++){
+            #pragma unroll
             if(((j * TILE_WIDTH + threadIdx.y + tilePos * 4) < rowB) && (Col < colB)){
                 sharedB[threadIdx.x * 4 * (TILE_WIDTH + 1) + j * (TILE_WIDTH) + threadIdx.y] = B[colB * (j * TILE_WIDTH + threadIdx.y + tilePos * 4) + Col];
                 //sharedB[(threadIdx.x * 4 + j) * TILE_WIDTH + threadIdx.y] = B[colB * (j * TILE_WIDTH + threadIdx.y + tilePos * 4) + Col];
@@ -288,6 +289,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
             printf("\n");/**/
         //}
         for(int j = 0; j < TILE_WIDTH; j++){
+            #pragma unroll
             pValueFloat ^= sharedFloatA[threadIdx.y * TILE_WIDTH + j] & sharedFloatB[threadIdx.x * (TILE_WIDTH + 1) + j];
         }/**/
         __syncthreads();
@@ -302,6 +304,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
     }/**/
     if(Row < rowA && Col < colB){
         for(int i = 0; i < 4; i++){
+            #pragma unroll
             //pValue[0] ^= pValue[i];
             //shortValue ^= pValue[i] & 1;
             shortValue ^= pValueFloat & 1;
