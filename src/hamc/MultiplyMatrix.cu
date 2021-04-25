@@ -130,6 +130,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
     uint32_t *pValueFloat = (uint32_t *)pValue;
     HAMC_DATA_TYPE_t shortValue = 0;
     
+    if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0 && i == 0) printf("1");
     for(int i = 0; i < ((colA - 1)/(TILE_WIDTH * 4)) + 1; i++){
         tilePos = i / 4 * TILE_WIDTH;
         sharedFloatA[tid] = floatA[Row * colA / 4 + tilePos + threadIdx.x];
