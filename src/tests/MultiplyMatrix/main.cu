@@ -303,7 +303,7 @@ void run_debug(int x, int y)
             }
         }
     }
-    for(int i = 0; i < G1->rows; i++){
+    /*for(int i = 0; i < G1->rows; i++){
         for(int j = 0; j < G1->cols; j++){
             printf("%d:", G1->data[i * G1->cols + j]);
             printf("%d, ", G2->data[i * G1->cols + j]);
