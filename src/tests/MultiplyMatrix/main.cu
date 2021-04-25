@@ -283,7 +283,7 @@ void run_debug(int x, int y)
     time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
     std::cout << "GPU V2 time: " << time_used << std::endl;
     
-    /*for(int i = 0; i < G1->rows * G1->cols; i++){
+    for(int i = 0; i < G1->rows * G1->cols; i++){
         if((G1->rows != G2->rows) || (G1->cols != G2->cols)){
             if(G1->rows != G2->rows){
                 printf("Row size doesn't match.\n");
@@ -300,7 +300,7 @@ void run_debug(int x, int y)
             break;
         }
     }
-    for(int i = 0; i < G1->rows; i++){
+    /*for(int i = 0; i < G1->rows; i++){
         for(int j = 0; j < G1->cols; j++){
             printf("%d:", G1->data[i * G1->cols + j]);
             printf("%d, ", G2->data[i * G1->cols + j]);
