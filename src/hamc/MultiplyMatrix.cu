@@ -167,7 +167,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
             }
             printf("\n");/**/
             printf("sharedB 0 through 3:\n");
-            for(int q = 0; q < 4; q++){
+            for(int q = 0; q < 1; q++){
                 for(int k = 0; k < 4; k++){
                     for(int j = 0; j < 8; j++){
                         char bit = (sharedB[q * 4 * TILE_WIDTH + tid + k] >> (7 - j)) & 1;
