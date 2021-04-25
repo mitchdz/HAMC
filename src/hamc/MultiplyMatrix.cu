@@ -195,7 +195,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
             pValueFloat[0] ^= (sharedFloatA[threadIdx.y * TILE_WIDTH + j]) & (sharedFloatB[threadIdx.x * TILE_WIDTH + j]);
         }/**/
         if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0 && i == 0){
-            uint32_t temp = sharedFloatB[0];
+            uint32_t temp = sharedFloatA[0] & sharedFloatB[0];
             for(int j = 0; j < 32; j++){
                 char bit = (temp >> (31 - j)) & 1;
                 printf("%u", bit);
