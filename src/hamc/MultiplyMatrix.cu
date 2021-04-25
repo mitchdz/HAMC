@@ -235,6 +235,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         for(int j = 0; j < 4; j++){
             if(((j * TILE_WIDTH + threadIdx.y + tilePos * 4) < rowB) && (Col < colB)){
                 sharedB[(threadIdx.x * 4 + j) * TILE_WIDTH + threadIdx.y] = B[colB * (j * TILE_WIDTH + threadIdx.y + tilePos * 4) + Col];
+                //sharedB[(threadIdx.x * 4 + j) * TILE_WIDTH + threadIdx.y] = B[colB * (j * TILE_WIDTH + threadIdx.y + tilePos * 4) + Col];
             }
             else{
                 sharedB[(threadIdx.x * 4 + j) * TILE_WIDTH + threadIdx.y] = (uint8_t)0;
