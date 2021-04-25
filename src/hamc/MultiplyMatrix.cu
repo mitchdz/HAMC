@@ -232,11 +232,14 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         }/**/
         __syncthreads();
     }
-    for(int i = 0; i < 4; i++){
+    /*for(int i = 0; i < 4; i++){
         //pValue[0] ^= pValue[i];
         shortValue ^= pValue[i] & 1;
         //shortValue ^= pValueFloat[0] & 1;
         //pValueFloat[0] >>= 8;
+    }/**/
+    for(int i = 1; i < 4; i++){
+        pValue[0] ^= pValue[i];
     }/**/
     C[Row * colB + Col] = shortValue;/**///pValue[0];
     }
