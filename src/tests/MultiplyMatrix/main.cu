@@ -240,6 +240,7 @@ void run_size_sweep()
 
 void run_debug(int x, int y)
 {
+    printf("main test");
     clock_t start, end;
     double time_used;
     bool matched = true;
