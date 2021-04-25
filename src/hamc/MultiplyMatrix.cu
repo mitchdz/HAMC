@@ -165,7 +165,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         
         if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0){// && i == 0){
             printf("A: i = %d\n", i);
-            for(int jk = 0; jk < 4; jk++){
+            for(int jk = 1; jk < 5; jk++){
                 for(int q = 0; q < 32; q++){
                     for(int k = 0; k < 32; k++){
                         char bit = (sharedA[q * jk * TILE_WIDTH + tid + k]) & 1;
@@ -175,7 +175,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
                 }
             }/**/
             printf("B: i = %d\n", i);
-            for(int jk = 0; jk < 4; jk++){
+            for(int jk = 1; jk < 5; jk++){
                 for(int q = 0; q < 32; q++){
                     for(int k = 0; k < 32; k++){
                         char bit = (sharedB[q * jk * TILE_WIDTH + tid + k]) & 1;
