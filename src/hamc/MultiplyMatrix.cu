@@ -268,14 +268,12 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
                 printf("\n");
             }/**/
             for(int q = 0; q < 32; q++){
-                for(int jk = 0; jk < 4; jk++){
                     for(int k = 0; k < 32; k++){
                         for(int asd = 0; asd < 4; asd++){
-                            char bit = (sharedB[(q * 4 + jk) * (TILE_WIDTH + 4) + tid + k] >> (31 - 8 * asd)) & 1;
+                            char bit = (sharedFloatB[q * (TILE_WIDTH + 1) + tid + k] >> (31 - 8 * asd)) & 1;
                             printf("%u,", bit);
                         }
                     }
-                }
                 printf("\n");
             }/**/
             
