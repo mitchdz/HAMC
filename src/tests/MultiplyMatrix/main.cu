@@ -224,8 +224,8 @@ void run_tile_sweep(int x, int y, int upto)
     for(int i = 4; i <= upto; i *= 2){
         start = clock();
     
-        C = run_mult_kernel(A, B, i);
-        //C = run_mult_kernel_test(A, B);
+        //C = run_mult_kernel(A, B, i);
+        C = run_mult_kernel_test(A, B);
         
         end = clock();
         time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
