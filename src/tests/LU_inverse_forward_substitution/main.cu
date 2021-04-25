@@ -107,6 +107,8 @@ void run_find_forward_kernel_row(bin_matrix A)
 
 int main(int argc, char *argv[]){
 
+    printf("Performing LU_inverse_forward_subsitution test\n");
+
     bool verbose = true;
 
     int n = 2;
