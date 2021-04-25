@@ -283,21 +283,23 @@ void run_debug(int x, int y)
     time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
     std::cout << "GPU V2 time: " << time_used << std::endl;
     
-    for(int i = 0; i < G1->rows * G1->cols; i++){
-        if((G1->rows != G2->rows) || (G1->cols != G2->cols)){
-            if(G1->rows != G2->rows){
-                printf("Row size doesn't match.\n");
+    for(int i = 0; i < G1->rows; i++){
+        for(int j = 0; j < G1->cols; j++){
+            if((G1->rows != G2->rows) || (G1->cols != G2->cols)){
+                if(G1->rows != G2->rows){
+                    printf("Row size doesn't match.\n");
+                }
+                if(G1->cols != G2->cols){
+                    printf("Col size doesn't match.\n");
+                }
+                matched = false;
+                break;
             }
-            if(G1->cols != G2->cols){
-                printf("Col size doesn't match.\n");
+            if(G1->data[i * G1->cols + j] != G2->data[i * G2->cols + j]){
+                printf("Index failed at: [%d,%d]\n", i, j);
+                matched = false;
+                break;
             }
-            matched = false;
-            break;
-        }
-        if(G1->data[i] != G2->data[i]){
-            printf("Index failed at: %d\n", i);
-            matched = false;
-            break;
         }
     }
     for(int i = 0; i < 4; i++){
