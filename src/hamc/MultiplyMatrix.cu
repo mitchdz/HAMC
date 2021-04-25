@@ -152,6 +152,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
                     char bit = (sharedA[tid + k] >> (7 - j)) & 1;
                     printf("%u", bit);
                 }
+                printf(" ");
             }
             printf("\n");
             printf("sharedB 0 through 3: ");
@@ -160,6 +161,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
                     char bit = (sharedB[tid + k] >> (7 - j)) & 1;
                     printf("%u", bit);
                 }
+                printf(" ");
             }
             printf("\n");
             printf("transposeB 0 through 3: ");
@@ -168,6 +170,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
                     char bit = (transposeB[tid + k] >> (7 - j)) & 1;
                     printf("%u", bit);
                 }
+                printf(" ");
             }
             printf("\n");
         }
@@ -378,6 +381,7 @@ __global__ void mult_kernel_debug(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC
                     char bit = (sharedA[tid + k] >> (7 - j)) & 1;
                     printf("%u", bit);
                 }
+                printf(" ");
             }
             printf("\n");
             printf("sharedB 0 through 3: ");
@@ -386,6 +390,7 @@ __global__ void mult_kernel_debug(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC
                     char bit = (sharedB[tid + k] >> (7 - j)) & 1;
                     printf("%u", bit);
                 }
+                printf(" ");
             }
             printf("\n");
         }
