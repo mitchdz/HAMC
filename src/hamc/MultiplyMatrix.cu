@@ -218,10 +218,10 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
             pValueFloat[0] ^= (sharedFloatA[threadIdx.y * TILE_WIDTH + j]) & (/*sharedFloatB[j * TILE_WIDTH + threadIdx.x]);*///transposeFloatB[threadIdx.x * TILE_WIDTH + j]);
         //}/**/
         for(int j = 0; j < TILE_WIDTH * 4; j++){
-            shortValue ^= (sharedA[threadIdx.y * TILE_WIDTH + j]) & (sharedFloatB[j * TILE_WIDTH + threadIdx.x]);
+            shortValue ^= (sharedA[threadIdx.y * TILE_WIDTH + j] & sharedB[j * TILE_WIDTH + threadIdx.x]);
         }/**/
     }
-    for(int i = 0; i < 4; i++){
+    /*for(int i = 0; i < 4; i++){
         //pValue[0] ^= pValue[i];
         shortValue ^= pValue[i] & 1;
         //shortValue ^= pValueFloat[0] & 1;
