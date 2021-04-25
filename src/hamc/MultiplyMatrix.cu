@@ -214,7 +214,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         /*for(int j = 0; j < TILE_WIDTH; j++){
                 shortValue ^= (sharedA[threadIdx.y * TILE_WIDTH + j] & sharedB[j * TILE_WIDTH + threadIdx.x]);
         }/**/
-        if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0 && i == 0){
+        if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0 && i == ((colA - 1)/(TILE_WIDTH * 4))){
         printf("pValueFloat: ");
             for(int j = 0; j < 32; j++){
                 char bit = (pValueFloat >> (31 - j)) & 1;
