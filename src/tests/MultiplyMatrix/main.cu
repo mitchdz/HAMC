@@ -308,7 +308,7 @@ void run_debug(int x, int y)
         printf("\n");
     }/**/
     
-    printf("Matched: %s", matched ? "true" : "false");
+    printf("Matched: %s\n", matched ? "true" : "false");
     
     free(G1);
     free(G2);
