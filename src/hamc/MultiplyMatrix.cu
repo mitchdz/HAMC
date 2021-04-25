@@ -168,15 +168,15 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
             for(int q = 0; q < 32 * 4; q++){
                 for(int k = 0; k < 32; k++){
                     char bit = (sharedA[q * TILE_WIDTH + tid + k]) & 1;
-                    printf("%u", bit);
+                    printf("%u,", bit);
                 }
                 printf("\n");
             }/**/
             printf("B: i = %d\n", i);
-            for(int q = 0; q < 32; q++){
+            for(int q = 0; q < 32*4; q++){
                 for(int k = 0; k < 32; k++){
-                    char bit = (sharedB[q * 4 * TILE_WIDTH + tid + k]) & 1;
-                    printf("%u", bit);
+                    char bit = (sharedB[q * TILE_WIDTH + tid + k]) & 1;
+                    printf("%u,", bit);
                 }
                 printf("\n");
             }/**/
@@ -438,7 +438,7 @@ __global__ void mult_kernel_debug(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC
             for(int q = 0; q < 32; q++){
                 for(int k = 0; k < 32; k++){
                     char bit = (sharedA[q * TILE_WIDTH + tid + k]) & 1;
-                    printf("%u", bit);
+                    printf("%u,", bit);
                 }
                 printf("\n");
             }
@@ -446,7 +446,7 @@ __global__ void mult_kernel_debug(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC
             for(int q = 0; q < 32; q++){
                 for(int k = 0; k < 32; k++){
                     char bit = (sharedB[q * TILE_WIDTH + tid + k]) & 1;
-                    printf("%u", bit);
+                    printf("%u,", bit);
                 }
                 printf("\n");
             }
