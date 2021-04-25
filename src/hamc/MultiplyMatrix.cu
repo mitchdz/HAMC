@@ -126,8 +126,9 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
     int tid = threadIdx.y * TILE_WIDTH + threadIdx.x;
     int tilePos = 0;
     
-    HAMC_DATA_TYPE_t pValue[4];
-    uint32_t *pValueFloat = (uint32_t *)pValue;
+    //HAMC_DATA_TYPE_t pValue[4];
+    //uint32_t *pValueFloat = (uint32_t *)pValue;
+    uint32_t pValueFloat = 0;
     HAMC_DATA_TYPE_t shortValue = 0;
     
     //if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0) printf("1");
@@ -192,9 +193,9 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         for(int j = 0; j < TILE_WIDTH; j++){
             //pValueFloat[0] ^= (sharedFloatA[threadIdx.y * TILE_WIDTH + j]) & (sharedFloatB[j * TILE_WIDTH + threadIdx.x]);
             //pValueFloat[0] ^= (sharedFloatA[threadIdx.y * TILE_WIDTH + j]) & (transposeFloatB[threadIdx.x * TILE_WIDTH + j]);
-            pValueFloat[0] ^= (sharedFloatA[threadIdx.y * TILE_WIDTH + j]) & (sharedFloatB[threadIdx.x * TILE_WIDTH + j]);
+            pValueFloat ^= (sharedFloatA[threadIdx.y * TILE_WIDTH + j]) & (sharedFloatB[threadIdx.x * TILE_WIDTH + j]);
         }/**/
-        if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0 && i == 0){
+        /*if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0 && i == 0){
             uint32_t temp = 0;
             for(int q = 0; q < 32; q++){
                 temp ^= sharedFloatA[q] & sharedFloatB[q];
@@ -204,7 +205,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
                 printf("%u", bit);
             }
             printf("\n");
-        }
+        }/**/
         /*for(int q = 0; q < 4; q++){
             for(int j = 0; j < TILE_WIDTH; j++){
                 pValue[q] ^= (sharedA[threadIdx.y * TILE_WIDTH + j] & sharedB[j * TILE_WIDTH + threadIdx.x]);
@@ -215,11 +216,11 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         }/**/
         __syncthreads();
     }
-    /*for(int i = 0; i < 4; i++){
+    for(int i = 0; i < 4; i++){
         //pValue[0] ^= pValue[i];
-        shortValue ^= pValue[i] & 1;
-        //shortValue ^= pValueFloat[0] & 1;
-        //pValueFloat[0] >>= 8;
+        //shortValue ^= pValue[i] & 1;
+        shortValue ^= pValueFloat & 1;
+        pValueFloat >>= 8;
     }/**/
     /*if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0){
         printf("pValue: ");
@@ -231,7 +232,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
             printf(" ");
         }
     }*/
-    for(int i = 1; i < 4; i++){
+    /*for(int i = 1; i < 4; i++){
         pValue[0] ^= pValue[i] & 1;
     }/**/
     //C[Row * colB + Col] = shortValue;
