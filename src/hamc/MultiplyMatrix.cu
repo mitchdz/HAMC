@@ -148,13 +148,15 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         }/**/
         for(int j = 0; j < 4; j++){
             //sharedB[] = B[];
-            sharedB[threadIdx.x * 4 * TILE_WIDTH + j * TILE_WIDTH + threadIdx.y] = B[colB * (threadIdx.y + (j + tilePos * 4) * TILE_WIDTH) + Col];
+            if((true) && (Col < colB)){
+                sharedB[threadIdx.x * 4 * TILE_WIDTH + j * TILE_WIDTH + threadIdx.y] = B[colB * (threadIdx.y + (j + tilePos * 4) * TILE_WIDTH) + Col];
+            }
             //sharedB[tid * 4 + j] = B[(j + ((tilePos + threadIdx.y) * 4)) * colB + Col];
             //sharedB[threadIdx.x * 4 * TILE_WIDTH + threadIdx.y * 4 + j] = B[(j + ((tilePos + threadIdx.y) * 4)) * colB + Col];
         }/**/
         __syncthreads();
         
-        if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0 && i == 0){
+        //if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0 && i == 0){
             /*printf("A 0 through 3: ");
             for(int k = 0; k < 4; k++){
                 for(int j = 0; j < 8; j++){
@@ -185,7 +187,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
                 printf(" ");
             }
             printf("\n");/**/
-        }
+        //}
         __syncthreads();
         for(int j = 0; j < TILE_WIDTH; j++){
             //pValueFloat[0] ^= (sharedFloatA[threadIdx.y * TILE_WIDTH + j]) & (sharedFloatB[j * TILE_WIDTH + threadIdx.x]);
