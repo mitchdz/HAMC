@@ -393,7 +393,7 @@ int main(int argc, char *argv[])
                 return 0;
         }
     }
-    
+    printf("debug_test: %s", debug_test ? "true" : "false");
     if(trial_time){
         run_time(x, y);
         return 0;
