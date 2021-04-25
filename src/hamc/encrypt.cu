@@ -11,6 +11,20 @@
 #include "hamc_cpu_code.c"
 
 
+
+bin_matrix encrypt_gpu(bin_matrix msg, mcc crypt)
+{
+    if(msg->cols != crypt->public_key->rows) {
+        printf("Length of message is incorrect.\n");
+        exit(0);
+    }
+    bin_matrix error = get_error_vector_cpu(crypt->code->n, crypt->code->t);
+    bin_matrix word = add_matrix_cpu(run_mult_kernel(msg, crypt->public_key, 16), error);
+    return word;
+}
+
+
+// Below function is not in use. Do not assume it works.
 void run_encryption_gpu(const char* inputFileName, const char* outputFileName,
         int n, int p, int t, int w, int seed)
 {

@@ -133,28 +133,12 @@ static void create_dataset(int datasetNum, int n, int p, int t, int w, int seed)
     char *input0_file_name = wbPath_join(dir_name, "input.raw");
     char *output_file_name = wbPath_join(dir_name, "output.raw");
 
-    //HAMC_DATA_TYPE_t *output_data = (HAMC_DATA_TYPE_t *)calloc(sizeof(HAMC_DATA_TYPE_t), numARows * numACols);
-
-    //bin_matrix A = mat_init_cpu(numARows, numACols);
-    //bin_matrix B = mat_init_cpu(numARows, numACols);
-
-
     clock_t start, end;
     double time_used;
 
     start = clock();
 
     bool ret;
-
-    //int maxAttempts = 20000;
-    //int i;
-    //for (i = 6000; i < maxAttempts; i++) {
-    //    printf("seed: %d\n", i);
-    //    generate_data(B->data, A->data, numARows, numACols, i);
-
-    //    ret = inverse_cpu_check(B);
-    //    if (ret == true) break;
-    //}
 
     mdpc code = qc_mdpc_init_cpu(n, p, t, w, seed);
     bin_matrix A = make_matrix_cpu(code->p, code->p, splice_cpu(code->row, (code->n0 - 1) * code->p, code->n), 1);
@@ -188,14 +172,21 @@ int main()
 {
     base_dir = wbPath_join(wbDirectory_current(), "inverse", "Dataset");
 
-
-
+      //create_dataset(0, 2, 6, 10, 30, 10);
       //create_dataset(1, 2, 200, 10, 30, 10);
       //create_dataset(2, 2, 500, 10, 30, 10);
-      create_dataset(3, 2, 512, 10, 30, 10);
+      //create_dataset(3, 2, 512, 10, 30, 10);
       //create_dataset(4, 2, 1024, 10, 30, 10);
       //create_dataset(5, 2, 2000, 10, 120, 10);
-      //create_dataset(6, 2, 4800, 20, 60, 10);
+      //create_dataset(6, 2, 3050, 20, 60, 10);
+      //create_dataset(7, 2, 4000, 20, 60, 10);
+      //create_dataset(8, 2, 4200, 20, 60, 10);
+      //create_dataset(9, 2, 4400, 20, 60, 10);
+      //create_dataset(10, 2, 4600, 20, 60, 10);
+      create_dataset(11, 2, 4800, 20, 60, 10);
+      create_dataset(12, 2, 5000, 20, 60, 10);
+
+
       //create_dataset(7, 2, 6000, 20, 60, 10);
       //create_dataset(8, 2, 12000, 20, 60, 10);
       //create_dataset(9, 2, 24000, 264, 274, 10);

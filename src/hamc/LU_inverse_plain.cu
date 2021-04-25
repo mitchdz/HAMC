@@ -42,6 +42,47 @@ __global__ void GF2_Forward_substitute(HAMC_DATA_TYPE_t *A,
     }
 }
 
+// Forward Substitution to be used after LU Decomposition
+//  A - input matrix (modified from LU decomposition)
+//  B - identity matrix of size n
+//  n - size of matrix A
+__global__ void GF2_Forward_substitute(HAMC_DATA_TYPE_t *A,
+    HAMC_DATA_TYPE_t *B, int n, int col)
+{
+    int tid = threadIdx.x + blockIdx.x * blockDim.x;
+
+    //for (int i = col - 1; i >= 0; i--) { // rows from bottom to top
+
+    if (tid < col - 1) {
+        B[tid*n + col] = A[tid*n + col];
+        for (int k = tid+1; k < col; k++) {
+            B[tid*n + col] ^= B[k*n + col] & A[tid*n + k];
+        }
+    }
+}
+
+
+
+
+// Forward Substitution to be used after LU Decomposition
+//  A - input matrix (modified from LU decomposition)
+//  B - identity matrix of size n
+//  n - size of matrix A
+//  row - row to update
+__global__ void GF2_Forward_substitute_row(HAMC_DATA_TYPE_t *A,
+    HAMC_DATA_TYPE_t *B, int n, int row)
+{
+    int tid = threadIdx.x + blockIdx.x * blockDim.x;
+
+    if (tid < n) { // cols
+        B[row*n + tid] = A[row*n + tid];
+        for (int k = row+1; k < tid; k++) {
+            B[row*n + tid] ^= B[k*n + tid] & A[row*n + k];
+        }
+    }
+}
+
+
 
 // Backward Substition to be used after Forward Substitution
 __global__ void GF2_Backward_substitute(HAMC_DATA_TYPE_t *A,
@@ -61,11 +102,11 @@ __global__ void GF2_Backward_substitute(HAMC_DATA_TYPE_t *A,
 
 
 
-// This kernel swaps rows given an IPIV
-//   A - matrix with rows to swap
+// This kernel swaps cols given an IPIV
+//   A - matrix with cols to swap
 //   IPIV - pivot vector
 //   n - size of matrix A
-__global__ void GF2_swap_rows(HAMC_DATA_TYPE_t *A, int *IPIV, int n)
+__global__ void GF2_swap_cols(HAMC_DATA_TYPE_t *A, int *IPIV, int n)
 {
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
 
@@ -236,15 +277,13 @@ bin_matrix inverse_GF2_LU_gpu(bin_matrix A, bool verbose)
         GF2_LU_decompose_pivot_row<<<dimGrid, dimThreads, 0, stream1>>> 
             (deviceA, deviceIPIV, A->rows, i);
 
-        //GF2_LU_decompose_update_trailing_row
-        //    <<<dimGrid, dimThreads, 0, stream1>>>(deviceA, A->rows, i);
+        GF2_LU_decompose_update_trailing_row
+            <<<dimGrid, dimThreads, 0, stream1>>>(deviceA, A->rows, i);
 
-        // above kernel times out if matrix is too large. 
-        // Iterate through each row here.
-        for (int j = 0; j < A->rows - i - 1; j++) { // rows
-            GF2_LU_decompose_update_trailing_row_index
-                <<<dimGrid, dimThreads, 0, stream1>>>(deviceA, A->rows, i, j);
-        }
+        //for (int j = 0; j < A->rows - i - 1; j++) { // rows
+        //    GF2_LU_decompose_update_trailing_row_index
+        //        <<<dimGrid, dimThreads, 0, stream1>>>(deviceA, A->rows, i, j);
+        //}
     }
     cudaStreamDestroy(stream0);
     cudaStreamDestroy(stream1);
@@ -263,8 +302,7 @@ bin_matrix inverse_GF2_LU_gpu(bin_matrix A, bool verbose)
 
     clock_t LU_forward_start = clock();
     if (verbose) printf("Performing Forward Substitution...\n");
-    GF2_Forward_substitute<<<dimGrid, dimThreads>>> 
-        (deviceA, deviceB, A->rows);
+    GF2_Forward_substitute<<<dimGrid, dimThreads>>> (deviceA, deviceB, A->rows);
 
     clock_t LU_forward_end = clock();
     double LU_forward_time = 
@@ -280,8 +318,7 @@ bin_matrix inverse_GF2_LU_gpu(bin_matrix A, bool verbose)
     clock_t LU_backward_start = clock();
 
     if (verbose) printf("Performing Backward Substitution...\n");
-    GF2_Backward_substitute<<<dimGrid, dimThreads>>>
-        (deviceA, deviceB, A->rows);
+    GF2_Backward_substitute<<<dimGrid, dimThreads>>> (deviceA, deviceB, A->rows);
     clock_t LU_backward_end = clock();
     double LU_backward_time = 
         ((double) (LU_backward_end - LU_backward_start))/ CLOCKS_PER_SEC;
@@ -295,7 +332,7 @@ bin_matrix inverse_GF2_LU_gpu(bin_matrix A, bool verbose)
     clock_t LU_final_swap_start = clock();
 
     if (verbose) printf("Performing Final swap...\n");
-    GF2_swap_rows<<<dimGrid, dimThreads>>>
+    GF2_swap_cols<<<dimGrid, dimThreads>>>
         (deviceB, deviceIPIV, A->rows);
     clock_t LU_final_swap_end = clock();
     double LU_final_swap_time = 
