@@ -10,8 +10,7 @@ __global__ void MatrixAdd(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TY
     int row = blockIdx.y*blockDim.y + threadIdx.y;
     int col = blockIdx.x*blockDim.x + threadIdx.x;
 	
-	// Naive Implementation
-    printf("A\n");	
+	// Naive Implementation	
     int index = row * cols + col;
  
     if((row < rows) && (col < cols)) {
