@@ -238,7 +238,17 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         //shortValue ^= pValueFloat[0] & 1;
         //pValueFloat[0] >>= 8;
     }/**/
-    for(int i = 1; i < 4; i++){
+    if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0){
+        printf("pValue: ");
+        for(int k = 0; k < 4; k++){
+            for(int j = 0; j < 8; j++){
+                char bit = (pValue[k] >> (7 - j)) & 1;
+                printf("%u", bit);
+            }
+            printf(" ");
+        }
+    }
+    /*for(int i = 1; i < 4; i++){
         pValue[0] ^= pValue[i];
     }/**/
     //C[Row * colB + Col] = shortValue;
