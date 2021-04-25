@@ -178,7 +178,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
                 }
                 printf("\n");
             }/**/
-            printf("B: i = %d\n", i);
+            /*printf("B: i = %d\n", i);
             for(int q = 0; q < 32; q++){
                 for(int jk = 0; jk < 4; jk++){
                     for(int k = 0; k < 32; k++){
@@ -200,7 +200,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
             printf("\n");/**/
         }
         __syncthreads();
-        /*for(int j = 0; j < TILE_WIDTH; j++){
+        for(int j = 0; j < TILE_WIDTH; j++){
             //pValueFloat[0] ^= (sharedFloatA[threadIdx.y * TILE_WIDTH + j]) & (sharedFloatB[j * TILE_WIDTH + threadIdx.x]);
             //pValueFloat[0] ^= (sharedFloatA[threadIdx.y * TILE_WIDTH + j]) & (transposeFloatB[threadIdx.x * TILE_WIDTH + j]);
             pValueFloat ^= sharedFloatA[threadIdx.y * TILE_WIDTH + j] & sharedFloatB[threadIdx.x * TILE_WIDTH + j];
@@ -242,17 +242,17 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
             }
             printf("\n");
     }/**/
-    /*for(int i = 0; i < 4; i++){
-        //pValue[0] ^= pValue[i];
-        //shortValue ^= pValue[i] & 1;
-        shortValue ^= pValueFloat & 1;
-        pValueFloat >>= 8;
-    }/**/
     /*for(int i = 1; i < 4; i++){
         pValue[0] ^= pValue[i] & 1;
     }/**/
     //C[Row * colB + Col] = shortValue;
-    /*if(Row < rowA && Col < colB){
+    if(Row < rowA && Col < colB){
+        for(int i = 0; i < 4; i++){
+            //pValue[0] ^= pValue[i];
+            //shortValue ^= pValue[i] & 1;
+            shortValue ^= pValueFloat & 1;
+            pValueFloat >>= 8;
+        }
         C[Row * colB + Col] = shortValue;
     }/**/
     //}
