@@ -375,6 +375,7 @@ int main(int argc, char *argv[])
                 break;
             case 'd':
                 debug_test = true;
+                break;
             case 'x':
                 x = atoi(optarg);
                 break;
