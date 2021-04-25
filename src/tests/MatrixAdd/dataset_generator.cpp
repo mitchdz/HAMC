@@ -4,22 +4,21 @@
 #include <errno.h>
 #include "wb.h"
 #include "../../hamc/hamc_cpu_code.c"
-
-#define ushort unsigned short
+#include "../../hamc/hamc_common.h"
 
 static char *base_dir;
 
-static ushort *generate_data(int height, int width) {
-  ushort *data = (ushort *)malloc(sizeof(ushort) * width * height);
+static HAMC_DATA_TYPE_t *generate_data(int height, int width) {
+  HAMC_DATA_TYPE_t *data = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * width * height);
   int i;
   for (i = 0; i < width * height; i++) {
-    //data[i] = ((ushort)(rand() % 20) - 5) / 5.0f;
-    data[i] = (ushort)(rand() % 2);
+    //data[i] = ((HAMC_DATA_TYPE_t)(rand() % 20) - 5) / 5.0f;
+    data[i] = (HAMC_DATA_TYPE_t)(rand() % 2);
   }
   return data;
 }
 
-static void write_data(char *file_name, ushort *data, int height,
+static void write_data(char *file_name, HAMC_DATA_TYPE_t *data, int height,
                        int width) {
   
   int ii, jj;
@@ -53,9 +52,9 @@ static void create_dataset(int datasetNum, int numARows, int numACols,int numBRo
     
     char *output_file_name = wbPath_join(dir_name, "output.raw");
   
-    ushort *input0_data = generate_data(numARows, numACols);
-    ushort *input1_data = generate_data(numBRows, numBCols);
-    ushort *output_data = (ushort *)calloc(sizeof(ushort), numCRows * numCCols);
+    HAMC_DATA_TYPE_t *input0_data = generate_data(numARows, numACols);
+    HAMC_DATA_TYPE_t *input1_data = generate_data(numBRows, numBCols);
+    HAMC_DATA_TYPE_t *output_data = (HAMC_DATA_TYPE_t *)calloc(sizeof(HAMC_DATA_TYPE_t), numCRows * numCCols);
 
     // Create Matricies
     
@@ -66,7 +65,7 @@ static void create_dataset(int datasetNum, int numARows, int numACols,int numBRo
     B->data = input1_data;
     
   
-    bin_matrix output = matrix_add_cpu(A,B);
+    bin_matrix output = add_matrix_cpu(A,B);
 
     
     
@@ -86,11 +85,10 @@ int main() {
   base_dir = wbPath_join(wbDirectory_current(),
                          "MatrixAdd", "Dataset");
     
-   
-  create_dataset(0, 16, 16, 16, 16);
-  create_dataset(1, 4, 4, 4, 4);
-  create_dataset(2, 500, 500, 500, 500);
-  create_dataset(3, 1000, 1000, 1000, 1000);
-  create_dataset(4, 500, 1000, 500, 1000);
+  create_dataset(0, 500, 500, 500, 500);
+  create_dataset(1, 500, 500, 500, 500);
+  create_dataset(2, 1000, 1000, 1000, 1000);
+  create_dataset(3, 550, 550, 550, 550);
+  create_dataset(4, 1500, 1500, 1500, 1500);
   return 0;
 }
