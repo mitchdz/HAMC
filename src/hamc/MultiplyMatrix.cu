@@ -164,7 +164,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         __syncthreads();
         
         if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0){// && i == 0){
-            printf("i = %d:\n", i);
+            printf("A: i = %d\n", i);
             for(int q = 0; q < 4; q++){
                 for(int k = 0; k < 4; k++){
                     char bit = (sharedA[q * 4 * TILE_WIDTH + tid + k]) & 1;
@@ -172,7 +172,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
                 }
                 printf("\n");
             }/**/
-            printf("i = %d:\n", i);
+            printf("B: i = %d\n", i);
             for(int q = 0; q < 4; q++){
                 for(int k = 0; k < 4; k++){
                     char bit = (sharedB[q * 4 * TILE_WIDTH + tid + k]) & 1;
@@ -433,8 +433,8 @@ __global__ void mult_kernel_debug(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC
         }
         __syncthreads();
         
-        if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0 && i == 0){
-            printf("A 0 through 3:\n");
+        if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0){// && i == 0){
+            printf("A: i = %d\n", i);
             for(int q = 0; q < 4; q++){
                 for(int k = 0; k < 4; k++){
                     char bit = (sharedA[q * TILE_WIDTH + tid + k]) & 1;
@@ -442,7 +442,7 @@ __global__ void mult_kernel_debug(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC
                 }
                 printf("\n");
             }
-            printf("sharedB 0 through 3:\n");
+            printf("B: i = %d\n", i);
             for(int q = 0; q < 4; q++){
                 for(int k = 0; k < 4; k++){
                     char bit = (sharedB[q * TILE_WIDTH + tid + k]) & 1;
