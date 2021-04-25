@@ -415,15 +415,18 @@ __global__ void mult_kernel_debug(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC
                 printf(" ");
             }
             printf("\n");
-            printf("sharedB 0 through 3: ");
-            for(int k = 0; k < 4; k++){
-                for(int j = 0; j < 8; j++){
-                    char bit = (sharedB[tid + k] >> (7 - j)) & 1;
-                    printf("%u", bit);
+            printf("sharedB 0 through 3:\n");
+            for(int q = 0; q < 4; q++){
+                for(int k = 0; k < 4; k++){
+                    for(int j = 0; j < 8; j++){
+                        char bit = (sharedB[q * TILE_WIDTH + tid + k] >> (7 - j)) & 1;
+                        printf("%u", bit);
+                    }
+                    printf(" ");
                 }
-                printf(" ");
+                printf("\n");
             }
-            printf("\n");
+            
         }
         
         if((Row < rowA) && (Col < colB)){
