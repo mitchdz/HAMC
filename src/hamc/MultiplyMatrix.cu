@@ -136,7 +136,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0 && i == 0){
             printf("0 through 3: ");
             for(int j = 0; j < 32; j++){
-                char bit = (sharedFloatA[tid] >> j) & 1;
+                char bit = (sharedFloatA[tid] >> 32 - j) & 1;
                 printf("%u", bit);
             }
             printf("\n");
