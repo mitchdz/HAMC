@@ -556,7 +556,7 @@ __global__ void mult_kernel_debug(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC
 
 bin_matrix run_mult_kernel(bin_matrix A, bin_matrix B)
 {
-    int TILE_WIDTH = 32;
+    //int TILE_WIDTH = 32;
     
     if (A->cols != B->rows){
         printf("Matrices are incompatible, check dimensions...\n");
@@ -596,7 +596,7 @@ bin_matrix run_mult_kernel(bin_matrix A, bin_matrix B)
     return C;
 }
 
-bin_matrix run_mult_kernel(bin_matrix A, bin_matrix B, int TILE_WIDTH)
+/* bin_matrix run_mult_kernel(bin_matrix A, bin_matrix B, int TILE_WIDTH)
 {
     //int TILE_WIDTH = tile_width;
     
@@ -636,7 +636,7 @@ bin_matrix run_mult_kernel(bin_matrix A, bin_matrix B, int TILE_WIDTH)
     cudaFree(deviceC);
 
     return C;
-}
+} */
 
 bin_matrix run_mult_kernel_debug(bin_matrix A, bin_matrix B)
 {
