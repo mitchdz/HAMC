@@ -355,6 +355,20 @@ __global__ void mult_kernel_debug(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC
         }
         __syncthreads();
         
+        if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0 && i == 0){
+            printf("0 through 3: ");
+            for(int j = 0; j < 7; j++){
+                char bit = (sharedA[tid] >> (7 - j)) & 1;
+                printf("%u", bit);
+            }/**/
+            //printf("uint8_t: %d\n", sharedA[tid] & 1);
+            /*for(int j = 0; j < 8; j++){
+                char bit = (sharedA[tid] >> (7 - j)) & 1;
+                printf("%u", bit);
+            }/**/
+            printf("\n");
+        }
+        
         if((Row < rowA) && (Col < colB)){
             for(int j = 0; j < TILE_WIDTH; j++){
                 pValue ^= (sharedA[threadIdx.y * TILE_WIDTH + j] & sharedB[j * TILE_WIDTH + threadIdx.x]);
