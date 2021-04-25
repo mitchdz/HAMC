@@ -170,7 +170,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         }
         __syncthreads();
         for(int j = 0; j < 4; j++){
-            transposeB[(threadIdx * 4 + j) * TILE_WIDTH + threadIdx.y * 4] = sharedB[(threadIdx.y * 4 * TILE_WIDTH) + threadIdx.x * 4 + j];
+            transposeB[(threadIdx.x * 4 + j) * TILE_WIDTH + threadIdx.y * 4] = sharedB[(threadIdx.y * 4 * TILE_WIDTH) + threadIdx.x * 4 + j];
             //transposeB[threadIdx.x * TILE_WIDTH + threadIdx.y * 4 + j] = sharedB[(threadIdx.y * 4 + j) * TILE_WIDTH + threadIdx.x];
         }
         /*for(int j = 0; j < 4; j++){
