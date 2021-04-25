@@ -375,7 +375,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
     C[Row * colB + Col] = shortValue;
 }/**/
 
-__global__ void mult_kernel(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB, int TILE_WIDTH)
+__global__ void mult_kernel(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB)
 {   
     HAMC_DATA_TYPE_t *sharedA[TILE_WIDTH * TILE_WIDTH];
     HAMC_DATA_TYPE_t *sharedB[TILE_WIDTH * TILE_WIDTH];
