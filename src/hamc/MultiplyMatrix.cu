@@ -135,8 +135,13 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         sharedFloatA[tid] = floatA[Row * colA / 4 + tilePos + threadIdx.x];
         if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0 && i == 0){
             printf("0 through 3: ");
-            for(int j = 0; j < 32; j++){
-                char bit = (sharedFloatA[tid] >> (32 - j)) & 1;
+            /*for(int j = 0; j < 32; j++){
+                char bit = (sharedFloatA[tid] >> j) & 1;
+                printf("%u", bit);
+            }/**/
+            printf("uint8_t: %d\n", sharedA[tid]);
+            for(int j = 0; j < 8; j++){
+                char bit = (sharedA[tid] >> j) & 1;
                 printf("%u", bit);
             }
             printf("\n");
