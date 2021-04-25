@@ -136,7 +136,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
     for(int i = 0; i < ((colA - 1)/(TILE_WIDTH * 4)) + 1; i++){
         tilePos = i / 4 * TILE_WIDTH;
         if((Row < rowA) && (tilePos + threadIdx.x < colA)){
-            //sharedFloatA[tid] = floatA[Row * colA / 4 + tilePos + threadIdx.x];
+            sharedFloatA[tid] = floatA[Row * colA / 4 + tilePos + threadIdx.x];
         }
         else{
             sharedFloatA[tid] = 0;
@@ -153,7 +153,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         for(int j = 0; j < 4; j++){
             //sharedB[] = B[];
             if(((threadIdx.y + (j + tilePos * 4) * TILE_WIDTH) < rowB) && (Col < colB)){
-                //sharedB[threadIdx.x * 4 * TILE_WIDTH + j * TILE_WIDTH + threadIdx.y] = B[colB * (threadIdx.y + (j + tilePos * 4) * TILE_WIDTH) + Col];
+                sharedB[threadIdx.x * 4 * TILE_WIDTH + j * TILE_WIDTH + threadIdx.y] = B[colB * (threadIdx.y + (j + tilePos * 4) * TILE_WIDTH) + Col];
             }
             else{
                 sharedB[threadIdx.x * 4 * TILE_WIDTH + j * TILE_WIDTH + threadIdx.y] = 0;
@@ -248,7 +248,9 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         pValue[0] ^= pValue[i] & 1;
     }/**/
     //C[Row * colB + Col] = shortValue;
-    //C[Row * colB + Col] = shortValue;
+    if(Row < rowA && Col < colB){
+        C[Row * colB + Col] = shortValue;
+    }
     //}
 }/**/
 
