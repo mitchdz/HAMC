@@ -7,7 +7,7 @@
 //#include <cuda/pipeline>
 #include "hamc_common.h"
 
-//#define TILE_WIDTH 16
+#define TILE_WIDTH 32
 
 //int TILE_WIDTH = 16;
 
@@ -107,14 +107,109 @@
     }
 }/**/
 
-__global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB, int TILE_WIDTH)
+//__global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB, int TILE_WIDTH)
+//{
+//    extern __shared__ HAMC_DATA_TYPE_t sharedArray[];
+//    
+//    HAMC_DATA_TYPE_t *sharedA = sharedArray;
+//    uint32_t *sharedFloatA = (uint32_t *)sharedA;
+//    uint32_t *sharedFloatB = &sharedFloatA[TILE_WIDTH * TILE_WIDTH];
+//    HAMC_DATA_TYPE_t *sharedB = (uint8_t *)sharedFloatB;
+//    
+//    uint32_t *floatA = (uint32_t *)A;
+//    uint32_t *floatB = (uint32_t *)B;
+//    
+//    int Row = blockIdx.y * TILE_WIDTH + threadIdx.y;
+//    int Col = blockIdx.x * TILE_WIDTH + threadIdx.x;
+//    int tid = threadIdx.y * TILE_WIDTH + threadIdx.x;
+//    int tilePos = 0;
+//    
+//    uint32_t pValueFloat = 0;
+//    HAMC_DATA_TYPE_t shortValue = 0;
+//    
+//    for(int i = 0; i < ((colA - 1)/(TILE_WIDTH * 4)) + 1; i++){
+//        tilePos = i * TILE_WIDTH;
+//        if((Row < rowA) && (tilePos + threadIdx.x < colA / 4)){
+//            sharedFloatA[tid] = floatA[Row * colA / 4 + tilePos + threadIdx.x];
+//        }
+//        else{
+//            sharedFloatA[tid] = (uint32_t)0;
+//        }
+//        
+//        for(int j = 0; j < 4; j++){
+//            if(((j * TILE_WIDTH + threadIdx.y + tilePos * 4) < rowB) && (Col < colB)){
+//                sharedB[threadIdx.x * 4 * TILE_WIDTH + j * TILE_WIDTH + threadIdx.y] = B[colB * (j * TILE_WIDTH + threadIdx.y + tilePos * 4) + Col];
+//            }
+//            else{
+//                sharedB[threadIdx.x * 4 * TILE_WIDTH + j * TILE_WIDTH + threadIdx.y] = (uint8_t)0;
+//            }
+//        }
+//        __syncthreads();
+//        
+//        //if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0){// && i == 0){
+//            /*printf("A: i = %d\n", i);
+//            
+//            for(int q = 0; q < 32; q++){
+//                for(int jk = 0; jk < 4; jk++){
+//                    for(int k = 0; k < 32; k++){
+//                        char bit = (sharedA[q * 4 * TILE_WIDTH + tid + k + jk * TILE_WIDTH]) & 1;
+//                        //char bit = (sharedA[q * 4 * TILE_WIDTH + tid + k]) & 1;
+//                        printf("%u,", bit);
+//                    }
+//                }
+//                printf("\n");
+//            }/**/
+//            /*printf("B: i = %d\n", i);
+//            for(int q = 0; q < 32; q++){
+//                for(int jk = 0; jk < 4; jk++){
+//                    for(int k = 0; k < 32; k++){
+//                        char bit = (sharedB[q * 4 * TILE_WIDTH + tid + k + jk * TILE_WIDTH]) & 1;
+//                        printf("%u,", bit);
+//                    }
+//                }
+//                printf("\n");
+//            }/**/
+//            
+//            /*printf("transposeB 0 through 3: ");
+//            for(int k = 0; k < 4; k++){
+//                for(int j = 0; j < 8; j++){
+//                    char bit = (transposeB[tid + k] >> (7 - j)) & 1;
+//                    printf("%u", bit);
+//                }
+//                printf(" ");
+//            }
+//            printf("\n");/**/
+//        //}
+//        for(int j = 0; j < TILE_WIDTH; j++){
+//            pValueFloat ^= sharedFloatA[threadIdx.y * TILE_WIDTH + j] & sharedFloatB[threadIdx.x * TILE_WIDTH + j];
+//        }/**/
+//        __syncthreads();
+//    }
+//    /*if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0){
+//        printf("pValueFloat: ");
+//            for(int j = 0; j < 32; j++){
+//                char bit = (pValueFloat >> (31 - j)) & 1;
+//                printf("%u", bit);
+//            }
+//            printf("\n");
+//    }/**/
+//    if(Row < rowA && Col < colB){
+//        for(int i = 0; i < 4; i++){
+//            //pValue[0] ^= pValue[i];
+//            //shortValue ^= pValue[i] & 1;
+//            shortValue ^= pValueFloat & 1;
+//            pValueFloat >>= 8;
+//        }
+//        C[Row * colB + Col] = shortValue;
+//    }/**/
+//}
+
+__global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB)
 {
-    extern __shared__ HAMC_DATA_TYPE_t sharedArray[];
-    
-    HAMC_DATA_TYPE_t *sharedA = sharedArray;
-    uint32_t *sharedFloatA = (uint32_t *)sharedA;
-    uint32_t *sharedFloatB = &sharedFloatA[TILE_WIDTH * TILE_WIDTH];
-    HAMC_DATA_TYPE_t *sharedB = (uint8_t *)sharedFloatB;
+    uint32_t *sharedFloatA[TILE_WIDTH * TILE_WIDTH];
+    uint32_t *sharedFloatB[TILE_WIDTH * (TILE_WIDTH + 1)];
+    HAMC_DATA_TYPE_t *sharedA = sharedFloatA;
+    HAMC_DATA_TYPE_t *sharedB = sharedFloatB;
     
     uint32_t *floatA = (uint32_t *)A;
     uint32_t *floatB = (uint32_t *)B;
@@ -281,15 +376,9 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
 }/**/
 
 __global__ void mult_kernel(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB, int TILE_WIDTH)
-{
-    extern __shared__ HAMC_DATA_TYPE_t sharedArray[];
-    
-    //int TILE_WIDTH = (sizeof(sharedArray) / sizeof(sharedArray[0])) / 4;
-    
-    HAMC_DATA_TYPE_t *sharedA = sharedArray;
-    HAMC_DATA_TYPE_t *sharedB = &sharedA[TILE_WIDTH * TILE_WIDTH];
-    //extern __shared__ HAMC_DATA_TYPE_t sharedA[];
-    //extern __shared__ HAMC_DATA_TYPE_t sharedB[];
+{   
+    HAMC_DATA_TYPE_t *sharedA[TILE_WIDTH * TILE_WIDTH];
+    HAMC_DATA_TYPE_t *sharedB[TILE_WIDTH * TILE_WIDTH];
     
     int Row = blockIdx.y * TILE_WIDTH + threadIdx.y;
     int Col = blockIdx.x * TILE_WIDTH + threadIdx.x;
@@ -355,14 +444,8 @@ __global__ void mult_kernel(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_
 
 __global__ void mult_kernel_debug(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB, int TILE_WIDTH)
 {
-    extern __shared__ HAMC_DATA_TYPE_t sharedArray[];
-    
-    //int TILE_WIDTH = (sizeof(sharedArray) / sizeof(sharedArray[0])) / 4;
-    
-    HAMC_DATA_TYPE_t *sharedA = sharedArray;
-    HAMC_DATA_TYPE_t *sharedB = &sharedA[TILE_WIDTH * TILE_WIDTH];
-    //extern __shared__ HAMC_DATA_TYPE_t sharedA[];
-    //extern __shared__ HAMC_DATA_TYPE_t sharedB[];
+    HAMC_DATA_TYPE_t *sharedA[TILE_WIDTH * TILE_WIDTH];
+    HAMC_DATA_TYPE_t *sharedB[TILE_WIDTH * TILE_WIDTH];
     
     int Row = blockIdx.y * TILE_WIDTH + threadIdx.y;
     int Col = blockIdx.x * TILE_WIDTH + threadIdx.x;
