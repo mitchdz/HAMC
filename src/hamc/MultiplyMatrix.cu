@@ -134,8 +134,8 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
     //if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0) printf("1");
     //if(blockIdx.x == 0 && blockIdx.y == 0){
     for(int i = 0; i < ((colA - 1)/(TILE_WIDTH * 4)) + 1; i++){
-        tilePos = i / 4 * TILE_WIDTH;
-        if((Row < rowA) && (tilePos + threadIdx.x < colA)){
+        tilePos = i * TILE_WIDTH;
+        if((Row < rowA) && (tilePos + threadIdx.x < colA / 4)){
             sharedFloatA[tid] = floatA[Row * colA / 4 + tilePos + threadIdx.x];
         }
         else{
@@ -152,8 +152,8 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         }/**/
         for(int j = 0; j < 4; j++){
             //sharedB[] = B[];
-            if(((threadIdx.y + (j + tilePos * 4) * TILE_WIDTH) < rowB) && (Col < colB)){
-                sharedB[threadIdx.x * 4 * TILE_WIDTH + j * TILE_WIDTH + threadIdx.y] = B[colB * (threadIdx.y + (j + tilePos * 4) * TILE_WIDTH) + Col];
+            if(((threadIdx.y + (j + tilePos) * TILE_WIDTH) < rowB) && (Col < colB)){
+                sharedB[threadIdx.x * 4 * TILE_WIDTH + j * TILE_WIDTH + threadIdx.y] = B[colB * (threadIdx.y + (j + tilePos) * TILE_WIDTH) + Col];
             }
             else{
                 sharedB[threadIdx.x * 4 * TILE_WIDTH + j * TILE_WIDTH + threadIdx.y] = (uint8_t)0;
