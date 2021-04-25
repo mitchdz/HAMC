@@ -206,8 +206,8 @@
 
 __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB)
 {
-    uint32_t *sharedFloatA[TILE_WIDTH * TILE_WIDTH];
-    uint32_t *sharedFloatB[TILE_WIDTH * (TILE_WIDTH + 1)];
+    __shared__ uint32_t *sharedFloatA[TILE_WIDTH * TILE_WIDTH];
+    __shared__ uint32_t *sharedFloatB[TILE_WIDTH * (TILE_WIDTH + 1)];
     HAMC_DATA_TYPE_t *sharedA = (uint8_t *)sharedFloatA;
     HAMC_DATA_TYPE_t *sharedB = (uint8_t *)sharedFloatB;
     
@@ -377,8 +377,8 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
 
 __global__ void mult_kernel(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB)
 {   
-    HAMC_DATA_TYPE_t *sharedA[TILE_WIDTH * TILE_WIDTH];
-    HAMC_DATA_TYPE_t *sharedB[TILE_WIDTH * TILE_WIDTH];
+    __shared__ HAMC_DATA_TYPE_t *sharedA[TILE_WIDTH * TILE_WIDTH];
+    __shared__ HAMC_DATA_TYPE_t *sharedB[TILE_WIDTH * TILE_WIDTH];
     
     int Row = blockIdx.y * TILE_WIDTH + threadIdx.y;
     int Col = blockIdx.x * TILE_WIDTH + threadIdx.x;
@@ -444,8 +444,8 @@ __global__ void mult_kernel(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_
 
 __global__ void mult_kernel_debug(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C, int rowA, int rowB, int colA, int colB)
 {
-    HAMC_DATA_TYPE_t *sharedA[TILE_WIDTH * TILE_WIDTH];
-    HAMC_DATA_TYPE_t *sharedB[TILE_WIDTH * TILE_WIDTH];
+    __shared__ HAMC_DATA_TYPE_t *sharedA[TILE_WIDTH * TILE_WIDTH];
+    __shared__ HAMC_DATA_TYPE_t *sharedB[TILE_WIDTH * TILE_WIDTH];
     
     int Row = blockIdx.y * TILE_WIDTH + threadIdx.y;
     int Col = blockIdx.x * TILE_WIDTH + threadIdx.x;
