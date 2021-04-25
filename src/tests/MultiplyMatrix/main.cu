@@ -262,7 +262,7 @@ void run_debug(int x, int y)
     
     start = clock();
     
-    bin_matrix G1 = run_mult_kernel_debug(A, B, 32);
+    bin_matrix G1 = run_mult_kernel_debug(A, B);
     
     end = clock();
     time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
@@ -277,7 +277,7 @@ void run_debug(int x, int y)
     
     start = clock();
     
-    bin_matrix G2 = run_mult_kernel_test(A, B, 32);
+    bin_matrix G2 = run_mult_kernel_test(A, B);
     
     end = clock();
     time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
