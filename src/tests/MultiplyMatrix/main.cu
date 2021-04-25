@@ -298,12 +298,13 @@ void run_debug(int x, int y)
             if(G1->data[i * G1->cols + j] != G2->data[i * G2->cols + j]){
                 printf("Index failed at: [%d,%d]\n", i, j);
                 matched = false;
+                //i = 999999;
                 break;
             }
         }
     }
-    for(int i = 0; i < 4; i++){
-        for(int j = 0; j < 4; j++){
+    for(int i = 0; i < G1->rows; i++){
+        for(int j = 0; j < G1->cols; j++){
             printf("%d:", G1->data[i * G1->cols + j]);
             printf("%d, ", G2->data[i * G1->cols + j]);
         }
