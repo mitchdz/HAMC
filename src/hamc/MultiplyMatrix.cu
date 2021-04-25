@@ -218,8 +218,8 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
                 printf("%u", bit);
             }
             printf(" ");
-        }*/
-    }
+        }
+    }*/
     for(int i = 1; i < 4; i++){
         pValue[0] ^= pValue[i];
     }/**/
