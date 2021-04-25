@@ -115,8 +115,8 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
     uint32_t *sharedFloatA = (uint32_t *)sharedA;
     uint32_t *sharedFloatB = &sharedFloatA[TILE_WIDTH * TILE_WIDTH];
     HAMC_DATA_TYPE_t *sharedB = (uint8_t *)sharedFloatB;
-    uint32_t *transposeFloatB = &sharedFloatB[TILE_WIDTH * TILE_WIDTH];
-    HAMC_DATA_TYPE_t *transposeB = (uint8_t *)transposeFloatB;
+    //uint32_t *transposeFloatB = &sharedFloatB[TILE_WIDTH * TILE_WIDTH];
+    //HAMC_DATA_TYPE_t *transposeB = (uint8_t *)transposeFloatB;
     
     uint32_t *floatA = (uint32_t *)A;
     uint32_t *floatB = (uint32_t *)B;
@@ -138,38 +138,6 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         sharedFloatB[tid] = floatB[(threadIdx.y * 4 + threadIdx.x / 4) * colB + tilePos + threadIdx.x % 8];
         __syncthreads();
         
-        if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0 && i == 0){
-            /*printf("A 0 through 3: ");
-            for(int k = 0; k < 4; k++){
-                for(int j = 0; j < 8; j++){
-                    char bit = (sharedA[tid + k] >> (7 - j)) & 1;
-                    printf("%u", bit);
-                }
-                printf(" ");
-            }
-            printf("\n");/**/
-            /*printf("sharedB 0 through 3: ");
-            for(int q = 0; q < 4; q++){
-                for(int k = 0; k < 4; k++){
-                    for(int j = 0; j < 8; j++){
-                        char bit = (sharedB[q * TILE_WIDTH + tid + k] >> (7 - j)) & 1;
-                        printf("%u", bit);
-                    }
-                    printf(" ");
-                }
-                printf("\n");
-            }/**/
-            /*printf("transposeB 0 through 3: ");
-            for(int k = 0; k < 4; k++){
-                for(int j = 0; j < 8; j++){
-                    char bit = (transposeB[tid + k] >> (7 - j)) & 1;
-                    printf("%u", bit);
-                }
-                printf(" ");
-            }
-            printf("\n");/**/
-        }
-        __syncthreads();
         /*for(int j = 0; j < 4; j++){
             //transposeB[] = sharedB[];
             transposeB[((threadIdx.x * 4 + j * TILE_WIDTH) * TILE_WIDTH) + threadIdx.y] = sharedB[threadIdx.y * 4 * TILE_WIDTH + threadIdx.x + j * TILE_WIDTH];
@@ -681,7 +649,7 @@ bin_matrix run_mult_kernel_test(bin_matrix A, bin_matrix B, int TILE_WIDTH)
     int y_blocks = ((A->rows - 1)/TILE_WIDTH) + 1;
     dim3 DimGrid(x_blocks, y_blocks, 1);
     
-    mult_kernel_compressed_data<<<DimGrid, DimBlock, 3 * TILE_WIDTH * TILE_WIDTH * sizeof(float)>>>(deviceA, deviceB, deviceC, A->rows, B->rows, A->cols, B->cols, TILE_WIDTH);
+    mult_kernel_compressed_data<<<DimGrid, DimBlock, 2 * TILE_WIDTH * TILE_WIDTH * sizeof(float)>>>(deviceA, deviceB, deviceC, A->rows, B->rows, A->cols, B->cols, TILE_WIDTH);
     //mult_kernel_compressed_data<<<DimGrid, DimBlock, 2 * TILE_WIDTH * TILE_WIDTH * sizeof(float)>>>(deviceA, deviceB, deviceC, A->rows, B->rows, A->cols, B->cols, TILE_WIDTH);
     //mult_kernel_outer_product<<<DimGrid, DimBlock, TILE_WIDTH * TILE_WIDTH * sizeof(HAMC_DATA_TYPE_t)>>>(deviceA, deviceB, deviceC, A->rows, B->rows, A->cols, B->cols, TILE_WIDTH);
     
