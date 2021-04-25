@@ -9,10 +9,10 @@
 #include <time.h>
 
 #include "../../hamc/hamc_cpu_code.c"
+#include "../../hamc/hamc_common.h"
 #include "../../hamc/MatrixAdd.cu"
 
-#define TILE_WIDTH 16
-#define ushort unsigned short
+#define TILE_WIDTH 32 //32 //16
 
 #define CUDA_CHECK(ans)                                                   \
   { gpuAssert((ans), __FILE__, __LINE__); }
@@ -40,24 +40,25 @@ void printHelp()
 
 bin_matrix run_cpu(bin_matrix A, bin_matrix B)
 {
+    
     if (A->rows != B->rows || A->cols != B->cols){
         printf("Matrices are incompatible, check dimensions...\n");
         exit(0);
     }
-        
+    
     // Run CPU Operation
-    bin_matrix hostC = matrix_add_cpu(A, B);
+    bin_matrix hostC = add_matrix_cpu(A, B);
 
     
     return hostC;
 }
 
-static ushort *generate_data(int height, int width)
+static HAMC_DATA_TYPE_t *generate_data(int height, int width)
 {
-    ushort *data = (ushort *)malloc(sizeof(ushort) * width * height);
+    HAMC_DATA_TYPE_t *data = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * width * height);
     int i;
     for (i = 0; i < width * height; i++) {
-        data[i] = (ushort)(rand() % 2); // 0 or 1
+        data[i] = (HAMC_DATA_TYPE_t)(rand() % 2); // 0 or 1
     }
     return data;
 }
@@ -75,11 +76,11 @@ bin_matrix run_kernel(bin_matrix A, bin_matrix B)
     //cudaEventCreate(&astartEvent);
     //cudaEventCreate(&astopEvent);
     
-
     
-    ushort *deviceA;
-    ushort *deviceB;
-    ushort *deviceC;
+    
+    HAMC_DATA_TYPE_t *deviceA;
+    HAMC_DATA_TYPE_t *deviceB;
+    HAMC_DATA_TYPE_t *deviceC;
     
 
     
@@ -92,23 +93,24 @@ bin_matrix run_kernel(bin_matrix A, bin_matrix B)
     
     /* allocate the memory space on GPU */
   //  wbTime_start(GPU, "Allocating GPU memory.");
-    cudaMalloc((void **) &deviceA, A->cols * A->rows * sizeof(ushort));
-    cudaMalloc((void **) &deviceB, B->cols * B->rows * sizeof(ushort));
-    cudaMalloc((void **) &deviceC, B->cols * A->rows * sizeof(ushort));
+    cudaMalloc((void **) &deviceA, A->cols * A->rows * sizeof(HAMC_DATA_TYPE_t));
+    cudaMalloc((void **) &deviceB, B->cols * B->rows * sizeof(HAMC_DATA_TYPE_t));
+    cudaMalloc((void **) &deviceC, B->cols * A->rows * sizeof(HAMC_DATA_TYPE_t));
    // wbTime_stop(GPU, "Allocating GPU memory.");
     
 
     
-    cudaMemcpy(deviceA, A->data, A->cols * A->rows * sizeof(ushort), cudaMemcpyHostToDevice);
-    cudaMemcpy(deviceB, B->data, B->cols * B->rows * sizeof(ushort), cudaMemcpyHostToDevice);
+    cudaMemcpy(deviceA, A->data, A->cols * A->rows * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyHostToDevice);
+    cudaMemcpy(deviceB, B->data, B->cols * B->rows * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyHostToDevice);
     
+    printf("TILE_WIDTH -> %i \n", TILE_WIDTH);
     dim3 DimBlock(TILE_WIDTH, TILE_WIDTH, 1);
     int x_blocks = ((B->cols - 1)/TILE_WIDTH) + 1;
     int y_blocks = ((A->rows - 1)/TILE_WIDTH) + 1;
     dim3 DimGrid(x_blocks, y_blocks, 1);
-    
+   
    // cudaEventRecord(astartEvent, 0);
-    matrixAdd_kernel<<<DimGrid, DimBlock>>>(deviceA, deviceB, deviceC, A->rows, A->cols);
+    MatrixAdd<<<DimGrid, DimBlock>>>(deviceA, deviceB, deviceC, A->rows, A->cols);
     //cudaDeviceSynchronize();
     //cudaEventRecord(astopEvent, 0);
    // cudaEventSynchronize(astopEvent);
@@ -119,7 +121,7 @@ bin_matrix run_kernel(bin_matrix A, bin_matrix B)
     //printf("\n");
     
    // wbTime_start(Copy, "Copying output memory to the CPU");
-    cudaMemcpy(C->data, deviceC, B->cols * A->rows * sizeof(ushort), cudaMemcpyDeviceToHost);
+    cudaMemcpy(C->data, deviceC, B->cols * A->rows * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyDeviceToHost);
     //wbTime_stop(Copy, "Copying output memory to the CPU");
     
     //wbTime_start(GPU, "Freeing GPU Memory");
@@ -127,7 +129,7 @@ bin_matrix run_kernel(bin_matrix A, bin_matrix B)
     cudaFree(deviceB);
     cudaFree(deviceC);
     //wbTime_stop(GPU, "Freeing GPU Memory");
-
+   
     return C;
 }
 
@@ -141,31 +143,32 @@ void run_test(int x, int y)
     printf("X var = %i \n", x);
     printf("Y var = %i \n", y);
     
-    
     // Matrix A
-    ushort *raw_data0 = (ushort *)malloc(sizeof(ushort) * x * y);
+    HAMC_DATA_TYPE_t *raw_data0 = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * x * y);
     raw_data0 = generate_data(x, y);
 
     bin_matrix input0 = mat_init_cpu(x,y);
     input0->data = raw_data0;
     
     //Matrix B
-    ushort *raw_data1 = (ushort *)malloc(sizeof(ushort) * x * y);
+    HAMC_DATA_TYPE_t *raw_data1 = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * x * y);
     raw_data1 = generate_data(x, y);
 
     bin_matrix input1 = mat_init_cpu(x,y);
     input1->data = raw_data1;
+    
+    
 
     /* CPU execution time */
-    start = clock();
+        start = clock();
 
-    bin_matrix CPU_BIN = run_cpu(input0, input1);
+        bin_matrix CPU_BIN = run_cpu(input0, input1);
 
-    end = clock();
+        end = clock();
+        
+        cpu_time_used = ((double) (end - start))/ CLOCKS_PER_SEC;
+        printf("CPU time: %lf \n", cpu_time_used);
     
-    cpu_time_used = ((double) (end - start))/ CLOCKS_PER_SEC;
-    printf("CPU time: %lf \n", cpu_time_used);
-
 
     /* GPU execution time */
     start = clock();
@@ -175,6 +178,21 @@ void run_test(int x, int y)
     end = clock();
     cpu_time_used = ((double) (end - start))/ CLOCKS_PER_SEC;
     printf("GPU time: %lf \n", cpu_time_used);
+    
+    char * tester = "SUCCESS!";
+    
+    for(int i = 0; i < x*y; i++)
+    {
+    	if(GPU_BIN->data[i] != CPU_BIN->data[i])
+    	{
+    	   tester = "FAIL!";
+    	   printf("Index: %i \n", i);
+    	   printf("Kernel Output: %i \n", GPU_BIN->data[i]);
+    	   printf("Expected: %i \n", CPU_BIN->data[i]);
+    	}
+    }
+    
+    printf("The test was a: %s!\n", tester);
 
     free(input0);
     free(input1);
@@ -182,6 +200,7 @@ void run_test(int x, int y)
     free(raw_data1);
     free(CPU_BIN);
     free(GPU_BIN);
+
 }
 
 // main - should only be handling the initial matrices A and B generation and input files
@@ -220,7 +239,7 @@ int main(int argc, char *argv[])
    
     int c;
     opterr = 0;
-    while ((c = getopt (argc, argv, "t:x:y:i:j:s:hp")) != -1){
+    while ((c = getopt (argc, argv, "t:x:y:i:j:s:lhp")) != -1){
         switch(c)
         {
             case 't':
@@ -237,19 +256,23 @@ int main(int argc, char *argv[])
             case 'i':
             	
                 inputFileName0 = strdup(optarg);
+                printf("i1 -> %s",inputFileName0);
                 break;
             case 'j':
             	
                 inputFileName1 = strdup(optarg);
+                printf("i2 -> %s",inputFileName1);
                 break;
             case 's':
             	
                 solutionFileName = strdup(optarg);
+                printf("o -> %s",solutionFileName);
                 break;
             case 'h':
                 printHelp();
                 return 0;
             case 'n':
+            case 'l':
             case 'p':
             	printf("p check \n\n");
                 cpu_run = true;
@@ -259,43 +282,44 @@ int main(int argc, char *argv[])
         }
    }
     
+    
     if (!strcmp(just_test, (const char*)"test")) {
     	printf("Test is running! \n");
         run_test(x, y);
         return 0;
-    } else {
-    	printf("Input Files are running! \n");
-    	args = wbArg_read(argc, argv);
-    }
+    } //else {
+    	//printf("Input Files are running! \n");
+    	//args = wbArg_read(argc, argv);
+    //}
     
     // Read Input Files
         // Input File 0 - Matrix A
     
     float *hostAFloats = (float *)wbImport(inputFileName0, &numARows, &numAColumns);
-    ushort *hostA = (ushort *)malloc(numARows*numAColumns * sizeof(ushort));
+    HAMC_DATA_TYPE_t *hostA = (HAMC_DATA_TYPE_t *)malloc(numARows*numAColumns * sizeof(HAMC_DATA_TYPE_t));
     for (int i = 0; i < numARows*numAColumns; i++)
     {
-        hostA[i] = (ushort)hostAFloats[i];
+        hostA[i] = (HAMC_DATA_TYPE_t)hostAFloats[i];
     }
-        
+    
         // Input File 1 - Matrix B
     float *hostBFloats = (float *)wbImport(inputFileName1, &numBRows, &numBColumns);
     
-    ushort *hostB = (ushort *)malloc(numBRows*numBColumns * sizeof(ushort));
+    HAMC_DATA_TYPE_t *hostB = (HAMC_DATA_TYPE_t *)malloc(numBRows*numBColumns * sizeof(HAMC_DATA_TYPE_t));
    
     for (int i = 0; i < numBRows*numBColumns; i++)
     {
-        hostB[i] = (ushort)hostBFloats[i];
+        hostB[i] = (HAMC_DATA_TYPE_t)hostBFloats[i];
     }
     
     // Input File 1 - Solution File
     float *hostOutputFile = (float *)wbImport(solutionFileName, &numBRows, &numBColumns);
     
-    ushort *hostOutput = (ushort *)malloc(numBRows*numBColumns * sizeof(ushort));
+    HAMC_DATA_TYPE_t *hostOutput = (HAMC_DATA_TYPE_t *)malloc(numBRows*numBColumns * sizeof(HAMC_DATA_TYPE_t));
    
     for (int i = 0; i < numBRows*numBColumns; i++)
     {
-        hostOutput[i] = (ushort)hostOutputFile[i];
+        hostOutput[i] = (HAMC_DATA_TYPE_t)hostOutputFile[i];
     }
     
     
@@ -323,10 +347,10 @@ int main(int argc, char *argv[])
     // Call Either Kernels
     if(cpu_run)
     {
+        
         hostC = run_cpu(hostABin, hostBBin);
         
     } else {
-
         hostC = run_kernel(hostABin,hostBBin);
         
     }
@@ -335,16 +359,20 @@ int main(int argc, char *argv[])
     
    
     //wbSolution(args, hostC, numARows, numAColumns);
-   
+    
     for(int i = 0; i < numARows*numAColumns; i++)
     {
-    	if(hostC->data[i] != hostOutput[i])
-    	{
-    	   printf("Index: %i \n", i);
-    	   printf("Kernel Output: %i \n", hostC->data[i]);
-    	   printf("Expected: %i \n", hostOutput[i]);
-    	}
-    } 
+//    	if(hostC->data[i] != hostOutput[i])
+//    	{
+//    	   printf("Index: %i \n", i);
+//    	   printf("Kernel Output: %i \n", hostC->data[i]);
+//    	   printf("Expected: %i \n", hostOutput[i]);
+//    	}
+//    	printf("%i \n", i);
+//        printf("hostC->data[%i] -> %i \n",i, hostC->data[i]);
+//        printf("hostOutput[%i] -> %i \n",i, hostOutput[i]);
+    }
+
     
     free(hostABin);
     free(hostBBin);
