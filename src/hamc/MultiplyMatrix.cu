@@ -139,7 +139,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
                 char bit = (sharedFloatA[tid] >> j) & 1;
                 printf("%u", bit);
             }/**/
-            printf("uint8_t: %d\n", sharedA[tid]);
+            printf("uint8_t: %d\n", sharedA[tid] & 1);
             for(int j = 0; j < 8; j++){
                 char bit = (sharedA[tid] >> j) & 1;
                 printf("%u", bit);
