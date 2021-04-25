@@ -244,7 +244,7 @@ void run_debug(int x, int y)
     double time_used;
     bool matched = true;
     
-    printf("Matrix dimensions: %dX%d, %dX%d\n", x, y, y, z);
+    printf("Matrix dimensions: %dX%d\n", x, y);
     
     HAMC_DATA_TYPE_t *dataA = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * x * y);
     HAMC_DATA_TYPE_t *dataB = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * x * y);
