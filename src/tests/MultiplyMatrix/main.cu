@@ -284,7 +284,7 @@ void run_debug(int x, int y)
     std::cout << "GPU V2 time: " << time_used << std::endl;
     
     for(int i = 0; i < G1->rows; i++){
-        for(int j = 8; j < G1->cols; j++){
+        for(int j = 0; j < G1->cols; j++){
             if((G1->rows != G2->rows) || (G1->cols != G2->cols)){
                 if(G1->rows != G2->rows){
                     printf("Row size doesn't match.\n");
@@ -299,7 +299,7 @@ void run_debug(int x, int y)
                 printf("Index failed at: [%d,%d]\n", i, j);
                 matched = false;
                 //i = 999999;
-                break;
+                //break;
             }
         }
     }
