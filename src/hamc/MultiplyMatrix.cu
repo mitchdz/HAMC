@@ -234,9 +234,9 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
     }
     for(int i = 0; i < 4; i++){
         //pValue[0] ^= pValue[i];
-        shortValue ^= pValue[i] & 1;
-        //shortValue ^= pValueFloat[0] & 1;
-        //pValueFloat[0] >>= 8;
+        //shortValue ^= pValue[i] & 1;
+        shortValue ^= pValueFloat[0] & 1;
+        pValueFloat[0] >>= 8;
     }/**/
     C[Row * colB + Col] = shortValue;/**///pValue[0];
     }
