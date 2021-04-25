@@ -251,13 +251,11 @@ void run_debug(int x, int y)
     
     for(int i = 0; i < x * y; i++){
         dataA[i] = (HAMC_DATA_TYPE_t)(rand() % 2);
-    }
-    for(int i = 0; i < z * y; i++){
         dataB[i] = (HAMC_DATA_TYPE_t)(rand() % 2);
     }
     
     bin_matrix A = mat_init_cpu(x, y);
-    bin_matrix B = mat_init_cpu(y, z);
+    bin_matrix B = mat_init_cpu(x, y);
     
     A->data = dataA;
     B->data = dataB;
