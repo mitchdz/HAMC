@@ -137,7 +137,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         sharedFloatB[tid] = floatB[(threadIdx.y * 4 + threadIdx.x / 4) * colB + tilePos + threadIdx.x % 8];
         __syncthreads();
         
-        if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0 && i == 0){
+        /*if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0 && i == 0){
             printf("A 0 through 3: ");
             for(int k = 0; k < 4; k++){
                 for(int j = 0; j < 8; j++){
