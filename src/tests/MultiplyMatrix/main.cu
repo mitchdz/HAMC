@@ -240,7 +240,6 @@ void run_size_sweep()
 
 void run_debug(int x, int y)
 {
-    printf("main test");
     clock_t start, end;
     double time_used;
     bool matched = true;
@@ -394,7 +393,6 @@ int main(int argc, char *argv[])
                 return 0;
         }
     }
-    printf("debug_test: %s", debug_test ? "true" : "false");
     if(trial_time){
         run_time(x, y);
         return 0;
@@ -412,7 +410,6 @@ int main(int argc, char *argv[])
         return 0;
     }
     if(debug_test){
-        printf("yet another test");
         run_debug(x, y);
         return 0;
     }
