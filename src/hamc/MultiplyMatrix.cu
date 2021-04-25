@@ -203,7 +203,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
                 printf("\n");
             }/**/
             
-            printf("transposeB 0 through 3: ");
+            /*printf("transposeB 0 through 3: ");
             for(int k = 0; k < 4; k++){
                 for(int j = 0; j < 8; j++){
                     char bit = (transposeB[tid + k] >> (7 - j)) & 1;
