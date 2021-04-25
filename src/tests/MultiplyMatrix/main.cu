@@ -238,6 +238,84 @@ void run_size_sweep()
     
 }
 
+void run_debug(int x, int y)
+{
+    clock_t start, end;
+    double time_used;
+    bool matched = true;
+    
+    printf("Matrix dimensions: %dX%d, %dX%d\n", x, y, y, z);
+    
+    HAMC_DATA_TYPE_t *dataA = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * x * y);
+    HAMC_DATA_TYPE_t *dataB = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * x * y);
+    
+    for(int i = 0; i < x * y; i++){
+        dataA[i] = (HAMC_DATA_TYPE_t)(rand() % 2);
+    }
+    for(int i = 0; i < z * y; i++){
+        dataB[i] = (HAMC_DATA_TYPE_t)(rand() % 2);
+    }
+    
+    bin_matrix A = mat_init_cpu(x, y);
+    bin_matrix B = mat_init_cpu(y, z);
+    
+    A->data = dataA;
+    B->data = dataB;
+    
+    start = clock();
+    
+    bin_matrix G1 = run_mult_kernel_debug(A, B, 32);
+    
+    end = clock();
+    time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
+    std::cout << "GPU V1 time: " << time_used << std::endl;
+    
+    /*for(int i = 0; i < G1->rows; i++){
+        for(int j = 0; j < G1->cols; j++){
+            printf("%d:", G1->data[i * G1->cols + j]);
+        }
+        printf("\n");
+    }/**/
+    
+    start = clock();
+    
+    bin_matrix G2 = run_mult_kernel_test(A, B, 32);
+    
+    end = clock();
+    time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
+    std::cout << "GPU V2 time: " << time_used << std::endl;
+    
+    /*for(int i = 0; i < G1->rows * G1->cols; i++){
+        if((G1->rows != G2->rows) || (G1->cols != G2->cols)){
+            if(G1->rows != G2->rows){
+                printf("Row size doesn't match.\n");
+            }
+            if(G1->cols != G2->cols){
+                printf("Col size doesn't match.\n");
+            }
+            matched = false;
+            break;
+        }
+        if(G1->data[i] != G2->data[i]){
+            printf("Index failed at: %d\n", i);
+            matched = false;
+            break;
+        }
+    }
+    for(int i = 0; i < G1->rows; i++){
+        for(int j = 0; j < G1->cols; j++){
+            printf("%d:", G1->data[i * G1->cols + j]);
+            printf("%d, ", G2->data[i * G1->cols + j]);
+        }
+        printf("\n");
+    }/**/
+    
+    printf("Matched: %s", matched ? "true" : "false");
+    
+    free(G1);
+    free(G2);
+}
+
 int main(int argc, char *argv[])
 {
     //wbArg_t args;
@@ -260,7 +338,7 @@ int main(int argc, char *argv[])
     bool cpu_exec = false;
     bool trial_time = false;
     bool sweep_tile_test = false;
-    bool sweep_size_test = false;
+    bool debug_test = false;
     bool gpu_profile = false;
     bool gpu_V_test = false;
     bool solved = true;
@@ -297,7 +375,7 @@ int main(int argc, char *argv[])
                 gpu_V_test = true;
                 break;
             case 'd':
-                sweep_size_test = true;
+                debug_test = true;
             case 'x':
                 x = atoi(optarg);
                 break;
@@ -333,10 +411,10 @@ int main(int argc, char *argv[])
         run_gpu_vers(x, y, z);
         return 0;
     }
-    /*if(sweep_size_test){
-        run_size_sweep();
+    if(debug_test){
+        run_debug(x, y);
         return 0;
-    }*/
+    }
     
     /*float *floatTemp = (float *)wbImport(input0, &numRowsA, &numColsA);
     hostA = (HAMC_DATA_TYPE_t *)malloc(numRowsA*numColsA * sizeof(HAMC_DATA_TYPE_t));
