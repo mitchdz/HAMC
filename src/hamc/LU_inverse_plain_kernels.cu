@@ -51,8 +51,7 @@ __global__ void GF2_Forward_substitutev2(HAMC_DATA_TYPE_t *A,
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
 
     if (tid < n) { // cols
-        //for (int i = tid - 1; i >= 0; i--) { // rows from bottom to top
-        for (int i = 0 ; i <= tid - 1; i++) {
+        for (int i = 0 ; i <= tid - 1; i++) { // rows
             int row = tid - 1 - i;
             B[row*n + tid] = A[row*n + tid];
             for (int k = row+1; k < tid; k++) {
@@ -66,18 +65,56 @@ __global__ void GF2_Forward_substitutev2(HAMC_DATA_TYPE_t *A,
 //  A - input matrix (modified from LU decomposition)
 //  B - identity matrix of size n
 //  n - size of matrix A
-//  col - column to operate on
-__global__ void GF2_Forward_substitute_row(HAMC_DATA_TYPE_t *A,
-    HAMC_DATA_TYPE_t *B, int n, int col)
+//  i - row to operate on
+//  j - column to operate on
+// call GF2_Forward_substitute_element_store before this w/ same parameters
+__global__ void GF2_Forward_substitute_element(HAMC_DATA_TYPE_t *A,
+    HAMC_DATA_TYPE_t *B, int n, int i, int j)
 {
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
 
-    if (tid <= col - 1) { // tid equals row
-        int row = col - 1 - tid;
-        B[row*n + col] = A[row*n + col];
-        for (int k = row + 1; k < col; k++) {
-            B[row*n + col] ^= B[k*n + col] & A[row*n + k];
+
+    
+    if (tid == 0) {
+        for (int k = i+1; k < j; k++) {
+            B[i*n + j] ^= B[k*n + j] & A[i*n + k];
         }
+    }
+    
+
+    // example code below:
+    //   for (int k = i+1; k < j; k++) {
+    //      B[i*n + j] ^= B[k*n + j] & A[i*n + k];
+    //   }
+
+
+    /*
+    if (tid == 0) {
+        printf("i: %d j: %d\n", i, j);
+    }
+
+    if ((tid < j) && (tid >= i + 1)) {
+        printf("tid: %d\n",tid);
+        B[i*n + j] ^= B[tid*n + j] & A[i*n + tid];
+    }
+    */
+
+
+}
+
+// Forward Substitution to be used after LU Decomposition
+//  A - input matrix (modified from LU decomposition)
+//  B - identity matrix of size n
+//  n - size of matrix A
+//  i - row to operate on
+//  j - column to operate on
+__global__ void GF2_Forward_substitute_element_store(HAMC_DATA_TYPE_t *A,
+    HAMC_DATA_TYPE_t *B, int n, int i, int j)
+{
+    int tid = threadIdx.x + blockIdx.x * blockDim.x;
+
+    if (tid == 0) {
+        B[i*n + j] = A[i*n + j];
     }
 }
 

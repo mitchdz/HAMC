@@ -215,8 +215,8 @@ int main(int argc, char *argv[]){
         if (cpu_exec) {
             printf("Time for HAMC CPU code: %lf s\n", 
                 hamc_cpu_time_used);
-            printf("Speed difference (GPU LU vs. CPU gauss jordan): %.2lfX ", 
-                lu_gpu_time_used/hamc_cpu_time_used);
+            //printf("Speed difference (GPU LU vs. CPU gauss jordan): %.2lfX ", 
+            //    lu_gpu_time_used/hamc_cpu_time_used);
 
             if (lu_gpu_time_used > hamc_cpu_time_used)
                 printf("slower\n");

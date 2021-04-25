@@ -61,49 +61,6 @@ void run_find_forward_kernel(bin_matrix A)
 }
 
 
-void run_find_forward_kernel_row(bin_matrix A)
-{
-
-    int numThreadsPerBlock = 1024;
-    int numGrids = A->cols/numThreadsPerBlock + 1;
-
-    dim3 dimgrid = dim3(numGrids);
-    dim3 dimBlock = dim3(numThreadsPerBlock);
-
-
-    HAMC_DATA_TYPE_t *deviceA;
-
-    cudaMalloc((void **)
-        &deviceA, A->rows * A->cols * sizeof(HAMC_DATA_TYPE_t));
-
-
-    HAMC_DATA_TYPE_t *deviceB;
-    cudaMalloc((void **)
-        &deviceB, A->rows * A->cols * sizeof(HAMC_DATA_TYPE_t));
-
-    cudaMemcpy(deviceA, A->data, A->rows * A->cols * sizeof(HAMC_DATA_TYPE_t), 
-        cudaMemcpyHostToDevice);
-
-
-    make_GF2_identity_gpu<<<1,1>>>(deviceB, A->rows);
-
-
-    for (int i = 0; i < A->cols; i++) {
-        GF2_Forward_substitute_row<<<dimgrid, dimBlock>>>
-            (deviceA, deviceB, A->rows, i);
-    }
-
-    cudaError_t cudaerr = cudaDeviceSynchronize();
-    if (cudaerr != cudaSuccess)
-        printf("kernel launch failed with error \"%s\".\n",
-         cudaGetErrorString(cudaerr));
-
-    return;
-}
-
-
-
-
 
 int main(int argc, char *argv[]){
 
@@ -146,7 +103,7 @@ int main(int argc, char *argv[]){
             invertible_matrix->rows, invertible_matrix->cols);
     }
 
-    run_find_forward_kernel_row(invertible_matrix);
+    run_find_forward_kernel(invertible_matrix);
 
 
     if (verbose) printf("Freeing allocated memory...\n");

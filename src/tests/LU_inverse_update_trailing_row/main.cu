@@ -54,8 +54,6 @@ void run_update_trailing_row_kernel(bin_matrix A)
 
 
 
-
-
 int main(int argc, char *argv[]){
 
     bool verbose = true;
