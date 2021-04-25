@@ -72,7 +72,7 @@ void run_time(int x, int y)
     
     start = clock();
     
-    bin_matrix G = run_mult_kernel(A, B, 32);
+    bin_matrix G = run_mult_kernel(A, B);
     
     end = clock();
     time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
@@ -119,7 +119,7 @@ void run_profile(int x, int y)
     A->data = dataA;
     B->data = dataB;
     
-    bin_matrix C = run_mult_kernel(A, B, 32);
+    bin_matrix C = run_mult_kernel(A, B);
     
     free(C);
 }
@@ -150,7 +150,7 @@ void run_gpu_vers(int x, int y, int z)
     
     start = clock();
     
-    bin_matrix G1 = run_mult_kernel(A, B, 32);
+    bin_matrix G1 = run_mult_kernel(A, B);
     
     end = clock();
     time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
@@ -165,7 +165,7 @@ void run_gpu_vers(int x, int y, int z)
     
     start = clock();
     
-    bin_matrix G2 = run_mult_kernel_test(A, B, 32);
+    bin_matrix G2 = run_mult_kernel_test(A, B);
     
     end = clock();
     time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
