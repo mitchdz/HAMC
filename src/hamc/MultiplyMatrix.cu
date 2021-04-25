@@ -164,16 +164,16 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         __syncthreads();
         
         if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0 && i == 0){
-            /*printf("A 0 through 3: ");
+            printf("A 0 through 3: ");
             for(int k = 0; k < 4; k++){
                 for(int j = 0; j < 8; j++){
-                    char bit = (sharedA[tid + k] >> (7 - j)) & 1;
+                    char bit = (sharedA[tid + k]) & 1;
                     printf("%u", bit);
                 }
                 printf(" ");
             }
             printf("\n");/**/
-            /*printf("sharedB 0 through 3:\n");
+            printf("sharedB 0 through 3:\n");
             for(int q = 0; q < 1; q++){
                 for(int k = 0; k < 4; k++){
                     for(int j = 0; j < 8; j++){
