@@ -243,10 +243,10 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
                     sharedA[j] = 0;
                 }
             }
-        }/**/
+        }
         else{
             sharedFloatA[tid] = (uint32_t)0;
-        }
+        }/**/
         /*for(int j = 0; j < 4; j++){
             #pragma unroll
             if(((j * TILE_WIDTH + threadIdx.y + tilePos * 4) < rowB) && (Col < colB)){
