@@ -344,7 +344,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
                     }
                 printf("\n");
             }/**/
-        }
+        //}
         /*for(int j = 0; j < TILE_WIDTH; j++){
             #pragma unroll
             pValueFloat ^= sharedFloatA[threadIdx.y * TILE_WIDTH + j] & sharedFloatB[threadIdx.x * (TILE_WIDTH + 1) + j];
