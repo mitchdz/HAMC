@@ -102,7 +102,7 @@ void run_time(int x, int y)
     free(G);
 }
 
-void run_profile(int x, int y)
+void run_profile_og(int x, int y)
 {
     printf("Matrix size: %dX%d\n", x, y);
     HAMC_DATA_TYPE_t *dataA = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * x * y);
@@ -120,6 +120,28 @@ void run_profile(int x, int y)
     B->data = dataB;
     
     bin_matrix C = run_mult_kernel(A, B);
+    
+    free(C);
+}
+
+void run_profile_op(int x, int y)
+{
+    printf("Matrix size: %dX%d\n", x, y);
+    HAMC_DATA_TYPE_t *dataA = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * x * y);
+    HAMC_DATA_TYPE_t *dataB = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * x * y);
+    
+    for(int i = 0; i < x * y; i++){
+        dataA[i] = (HAMC_DATA_TYPE_t)(rand() % 2);
+        dataB[i] = (HAMC_DATA_TYPE_t)(rand() % 2);
+    }
+    
+    bin_matrix A = mat_init_cpu(x, y);
+    bin_matrix B = mat_init_cpu(y, x);
+    
+    A->data = dataA;
+    B->data = dataB;
+    
+    bin_matrix C = run_mult_kernel_test(A, B);
     
     free(C);
 }
@@ -329,7 +351,7 @@ int main(int argc, char *argv[])
     int numColsB;
     int numRowsS;
     int numColsS;
-    int x, y, z, upto;
+    int x, y, z, upto, p;
     HAMC_DATA_TYPE_t *hostA;
     HAMC_DATA_TYPE_t *hostB;
     HAMC_DATA_TYPE_t *sol;
@@ -345,7 +367,7 @@ int main(int argc, char *argv[])
     bool solved = true;
     
     int opt;
-    while ((opt = getopt(argc, argv, "a:b:e:o:cts:pgdx:y:z:h")) != -1){
+    while ((opt = getopt(argc, argv, "a:b:e:o:cts:p:gdx:y:z:h")) != -1){
         switch(opt){
             case 'a':
                 input0 = strdup(optarg);
@@ -371,6 +393,7 @@ int main(int argc, char *argv[])
                 break;
             case 'p':
                 gpu_profile = true;
+                
                 break;
             case 'g':
                 gpu_V_test = true;
@@ -405,7 +428,8 @@ int main(int argc, char *argv[])
         return 0;
     }
     if(gpu_profile){
-        run_profile(x, y);
+        if(p == 0) run_profile_og(x, y);
+        if(p == 1) run_profile_op(x, y);
         return 0;
     }
     if(gpu_V_test){
