@@ -261,8 +261,8 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         
         for(int j = 0; j < 4; j++){
             #pragma unroll
-            if(((j * TILE_WIDTH + threadIdx.y + tilePos * 4) < rowB) && (Col < colB)){
-                sharedB[threadIdx.x * 4 * (TILE_WIDTH + 1) + j * (TILE_WIDTH) + threadIdx.y] = B[colB * (j * TILE_WIDTH + threadIdx.y + tilePos * 4) + Col];
+            if(((j * TILE_WIDTH + threadIdx.y + tilePos * 4) < rowB) && (Col < ((colB - 1)/ 4 + 1))){
+                sharedB[threadIdx.x * 4 * (TILE_WIDTH + 1) + j * (TILE_WIDTH) + threadIdx.y] = B[((colB - 1)/ 4 + 1) * (j * TILE_WIDTH + threadIdx.y + tilePos * 4) + Col];
                 //sharedB[(threadIdx.x * 4 + j) * TILE_WIDTH + threadIdx.y] = B[colB * (j * TILE_WIDTH + threadIdx.y + tilePos * 4) + Col];
             }
             else{
