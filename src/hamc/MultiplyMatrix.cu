@@ -233,7 +233,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         }/**/
         
         if((Row < rowA) && (tilePos + threadIdx.x + 3 < colA / 4)){
-            sharedFloatA[tid] = floatA[Row * colA / 4 + tilePos + threadIdx.x];
+            sharedFloatA[tid] = (uint32_t)A[Row * colA + tilePos * 4 + threadIdx.x * 4];
             //sharedFloatA[tid] = floatA[Row * colA / 4 + tilePos + threadIdx.x];
         }
         else if((Row < rowA) && (tilePos + threadIdx.x < colA / 4 + 4)){
