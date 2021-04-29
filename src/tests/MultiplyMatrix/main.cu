@@ -277,7 +277,7 @@ void run_debug(int x, int y)
     }
     
     bin_matrix A = mat_init_cpu(x, y);
-    bin_matrix B = mat_init_cpu(x, y);
+    bin_matrix B = mat_init_cpu(y, x);
     
     A->data = dataA;
     B->data = dataB;
