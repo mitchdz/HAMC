@@ -260,7 +260,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         else{
             sharedFloatA[tid] = (uint32_t)0;
         }/**/
-        if((Row < rowA) && ((tilePos + threadIdx.x) > colA / 4)){
+        if((Row < rowA) && ((tilePos + threadIdx.x + 1) > colA / 4)){
             int padding = 4 - colA % 4;
             //printf("Padding: %d\n", padding);
             for(int j = 1; j <= padding; j++){
