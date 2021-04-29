@@ -225,25 +225,25 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
     
     for(int i = 0; i < ((colA - 1)/(TILE_WIDTH * 4)) + 1; i++){
         tilePos = i * TILE_WIDTH;
-        /*if((Row < rowA) && (tilePos + threadIdx.x < colA / 4)){
+        if((Row < rowA) && (tilePos + threadIdx.x < colA / 4)){
             sharedFloatA[tid] = floatA[Row * colA / 4 + tilePos + threadIdx.x];
         }
         else{
             sharedFloatA[tid] = (uint32_t)0;
         }/**/
         
-        if((Row < rowA) && (tilePos + threadIdx.x < ((colA - 1)/ 4 + 1))){
+        /*if((Row < rowA) && (tilePos + threadIdx.x < ((colA - 1)/ 4 + 1))){
             //sharedFloatA[tid] = floatA[Row * ((colA - 1)/ 4 + 1) + tilePos + threadIdx.x];
             sharedFloatA[tid] = floatA[Row * colA / 4 + tilePos + threadIdx.x];
-            /*if(tilePos + threadIdx.x + 3 > colA / 4){
+            if(tilePos + threadIdx.x + 3 > colA / 4){
             //int padding = (colA / 4) - (tilePos + threadIdx.x + 3);
             int padding = 4 - colA % 4;
             //printf("Padding: %d\n", padding);
                 for(int j = 1; j <= padding; j++){
                     sharedA[j] = 0;
                 }
-            }/**/
-        }
+            }
+        }/**/
         else{
             sharedFloatA[tid] = (uint32_t)0;
         }
@@ -275,8 +275,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         
         if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0){// && i == 0){
             printf("A: i = %d\n", i);
-            
-            /*for(int q = 0; q < 32; q++){
+            for(int q = 0; q < 32; q++){
                 for(int jk = 0; jk < 4; jk++){
                     for(int k = 0; k < 32; k++){
                         char bit = (sharedA[q * 4 * TILE_WIDTH + tid + k + jk * TILE_WIDTH]) & 1;
@@ -287,7 +286,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
                 printf("\n");
             }/**/
             
-            for(int q = 0; q < 32; q++){
+            /*for(int q = 0; q < 32; q++){
                     for(int k = 0; k < 32; k++){
                         for(int asd = 0; asd < 4; asd++){
                             char bit = (sharedFloatA[q * TILE_WIDTH + tid + k] >> (24 - 8 * asd)) & 1;
