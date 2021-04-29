@@ -267,7 +267,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         else{
             sharedFloatA[tid] = (uint32_t)0;
         }/**/
-        /*for(int j = 0; j < 4; j++){
+        for(int j = 0; j < 4; j++){
             #pragma unroll
             if(((j * TILE_WIDTH + threadIdx.y + tilePos * 4) < rowB) && (Col < colB)){
                 sharedB[threadIdx.x * 4 * (TILE_WIDTH + 1) + j * (TILE_WIDTH) + threadIdx.y] = B[colB * (j * TILE_WIDTH + threadIdx.y + tilePos * 4) + Col];
@@ -293,7 +293,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         
         __syncthreads();
         
-        if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0 /*&& i == 1/**/){
+        /*if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0){
             printf("A: i = %d\n", i);
             for(int q = 0; q < 32; q++){
                 for(int jk = 0; jk < 4; jk++){
