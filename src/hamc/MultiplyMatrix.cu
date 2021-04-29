@@ -232,15 +232,16 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
             sharedFloatA[tid] = (uint32_t)0;
         }/**/
         
-        if((Row < rowA) && (tilePos + threadIdx.x < ((colA - 1)/ 4 + 1))){
-            sharedFloatA[tid] = floatA[Row * ((colA - 1)/ 4 + 1) + tilePos + threadIdx.x];
+        if((Row < rowA) && (tilePos + threadIdx.x + 3 < colA / 4)){
+            sharedFloatA[tid] = floatA[Row * colA / 4 + tilePos + threadIdx.x];
             //sharedFloatA[tid] = floatA[Row * colA / 4 + tilePos + threadIdx.x];
-            if(tilePos + threadIdx.x + 3 > colA / 4){
-            //int padding = (colA / 4) - (tilePos + threadIdx.x + 3);
+        }
+        else if((Row < rowA) && (tilePos + threadIdx.x < colA / 4 + 4)){
+            sharedFloatA[tid] = floatA[Row * colA / 4 + tilePos + threadIdx.x];
             int padding = 4 - colA % 4;
             //printf("Padding: %d\n", padding);
                 for(int j = 1; j <= padding; j++){
-                    sharedA[j] = 0;
+                    sharedA[j] = (uint8_t)0;
                 }
             }
         }
