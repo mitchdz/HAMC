@@ -225,12 +225,35 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
     
     for(int i = 0; i < ((colA - 1)/(TILE_WIDTH * 4)) + 1; i++){
         tilePos = i * TILE_WIDTH;
-        if((Row < rowA) && (tilePos + threadIdx.x < colA / 4)){
+        /*if((Row < rowA) && (tilePos + threadIdx.x < colA / 4)){
             sharedFloatA[tid] = floatA[Row * colA / 4 + tilePos + threadIdx.x];
         }
         else{
             sharedFloatA[tid] = (uint32_t)0;
+        }/**/
+        
+        if((Row < rowA) && (tilePos + threadIdx.x < colA / 4)){
+            sharedFloatA[tid] = floatA[Row * colA / 4 + tilePos + threadIdx.x];
+            int padding = (colA / 4) - (tilePos + threadIdx.x + 3)
+            for(int j = 1; j <= padding; j++){
+                sharedA[j] = 0;
+            }
+            
         }
+        else{
+            sharedFloatA[tid] = (uint32_t)0;
+        
+        /*for(int j = 0; j < 4; j++){
+            #pragma unroll
+            if(((j * TILE_WIDTH + threadIdx.y + tilePos * 4) < rowB) && (Col < colB)){
+                sharedB[threadIdx.x * 4 * (TILE_WIDTH + 1) + j * (TILE_WIDTH) + threadIdx.y] = B[colB * (j * TILE_WIDTH + threadIdx.y + tilePos * 4) + Col];
+                //sharedB[(threadIdx.x * 4 + j) * TILE_WIDTH + threadIdx.y] = B[colB * (j * TILE_WIDTH + threadIdx.y + tilePos * 4) + Col];
+            }
+            else{
+                sharedB[threadIdx.x * 4 * (TILE_WIDTH + 1) + j * (TILE_WIDTH) + threadIdx.y] = (uint8_t)0;
+                //sharedB[(threadIdx.x * 4 + j) * TILE_WIDTH + threadIdx.y] = (uint8_t)0;
+            }
+        }/**/
         
         for(int j = 0; j < 4; j++){
             #pragma unroll
@@ -243,6 +266,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
                 //sharedB[(threadIdx.x * 4 + j) * TILE_WIDTH + threadIdx.y] = (uint8_t)0;
             }
         }
+        
         __syncthreads();
         
         if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0){// && i == 0){
