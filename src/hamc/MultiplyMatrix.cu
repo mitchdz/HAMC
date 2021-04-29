@@ -246,7 +246,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
             int padding = 4 - colA % 4;
             //printf("Padding: %d\n", padding);
             for(int j = 1; j <= padding; j++){
-                sharedA[j] = (uint8_t)0;
+                sharedA[tid + j] = (uint8_t)0;
             }
         }/**/
         else{
