@@ -516,7 +516,7 @@ __global__ void mult_kernel_debug(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC
         }
         __syncthreads();
         
-        if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0){// && i == 0){
+        /*if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0){// && i == 0){
             printf("A: i = %d\n", i);
             for(int q = 0; q < 32; q++){
                 for(int k = 0; k < 32; k++){
@@ -525,7 +525,7 @@ __global__ void mult_kernel_debug(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC
                 }
                 printf("\n");
             }/**/
-            printf("B: i = %d\n", i);
+            /*printf("B: i = %d\n", i);
             for(int q = 0; q < 32; q++){
                 for(int k = 0; k < 32; k++){
                     char bit = (sharedB[k * TILE_WIDTH + tid + q]) & 1;
@@ -533,7 +533,7 @@ __global__ void mult_kernel_debug(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC
                 }
                 printf("\n");
             }/**/
-        }
+        //}
         
         if((Row < rowA) && (Col < colB)){
             for(int j = 0; j < TILE_WIDTH; j++){
