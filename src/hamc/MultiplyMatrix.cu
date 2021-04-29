@@ -249,7 +249,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
                 sharedA[tid + j] = (uint8_t)0;
             }
         }/**/
-        if((Row < rowA) && (tilePos + threadIdx.x < colA)){
+        if((Row < rowA) && (tilePos + threadIdx.x < colA / 4)){
             //sharedFloatA[tid] = (uint32_t)A[Row * colA + tilePos * 4 + threadIdx.x * 4];
             //sharedFloatA[tid] = *(uint32_t *)((uint8_t *)&floatA[Row * colA / 4 + tilePos + threadIdx.x] + 3 * Row);
             //sharedFloatA[tid] = floatA[Row * colA / 4 + tilePos + threadIdx.x];
@@ -257,7 +257,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
             //memcpy(&sharedFloatA[tid], &A[Row * colA + tilePos * 4 + threadIdx.x * 4] + 3 * Row, sizeof(uint32_t));
             memcpy(&sharedFloatA[tid], &A[Row * colA + tilePos * 4 + threadIdx.x * 4], sizeof(uint32_t));
         }
-        else if((Row < rowA) && ((tilePos + threadIdx.x) > colA / 4 - 1)){
+        else if((Row < rowA) && ((tilePos + threadIdx.x) > colA / 4)){
             int padding = 4 - colA % 4;
             //printf("Padding: %d\n", padding);
             for(int j = 1; j <= padding; j++){
