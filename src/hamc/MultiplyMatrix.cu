@@ -293,7 +293,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
         
         __syncthreads();
         
-        if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0){// && i == 0){
+        if(blockIdx.x == 0 && blockIdx.y == 0 && tid == 0 && i == 0/**/){
             printf("A: i = %d\n", i);
             for(int q = 0; q < 32; q++){
                 for(int jk = 0; jk < 4; jk++){
