@@ -393,7 +393,7 @@ int main(int argc, char *argv[])
                 break;
             case 'p':
                 gpu_profile = true;
-                
+                p = atoi(optarg);
                 break;
             case 'g':
                 gpu_V_test = true;
