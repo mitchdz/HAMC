@@ -560,7 +560,6 @@ bin_matrix circ_matrix_inverse_cpu(bin_matrix A)
       exit(-1);
     }
 
-
     return B;
 }
 
@@ -638,7 +637,6 @@ bin_matrix decode_cpu(bin_matrix word, mdpc code)
     printf("Decoding failure...\n");
     exit(0);
 }
-
 
 //Obtain the specified number of rows and columns
 bin_matrix mat_splice_cpu(bin_matrix A, int row1, int row2, int col1, int col2)
@@ -740,9 +738,7 @@ void run_decryption_cpu(const char* inputFileName, const char* outputFileName,
 cleanup:
     fclose(in_file);
     fclose(out_file);
-
 }
-
 
 //Add two matrices
 bin_matrix add_matrix_cpu(bin_matrix A, bin_matrix B)
@@ -760,7 +756,6 @@ bin_matrix add_matrix_cpu(bin_matrix A, bin_matrix B)
     return temp;
 }
 
-
 //Encrypting the message to be sent
 bin_matrix encrypt_cpu(bin_matrix msg, mcc crypt)
 {
@@ -774,7 +769,6 @@ bin_matrix encrypt_cpu(bin_matrix msg, mcc crypt)
     //printf("Messsage encrypted....\n");
     return word;
 }
-
 
 void run_encryption_cpu(const char* inputFileName, const char* outputFileName,
         int n, int p, int t, int w, int seed)
@@ -860,8 +854,6 @@ cleanup:
     fclose(out_file);
 }
 
-
-
 //Checks if two matrices are equal
 int mat_is_equal_cpu(bin_matrix A, bin_matrix B)
 {
@@ -893,67 +885,4 @@ void delete_mceliece_cpu(mcc A)
     free(A);
 }
 
-void test_cpu_e2e(int n0, int p, int t, int w, int seed)
-{
-
-    printf("CPU based mceliece cryptosystem test\n");
-
-
-    printf("Starting Encryption...\n");
-    clock_t start, end;
-    double cpu_time_used;
-    start = clock();
-    mcc crypt = mceliece_init_cpu(n0, p, w, t, seed);
-    bin_matrix msg = mat_init_cpu(1, crypt->code->k);
-    //Initializing the message a random message
-    for(int i = 0; i < crypt->code->k; i++)
-    {
-            int z = rand() % 2;
-            set_matrix_element_cpu(msg, 0, i, z);
-    }
-
-    printf("message:\n");
-    for (int i = 0; i < msg->cols; i++)
-        printf("%hu", msg->data[i]);
-    printf("\n");
-
-    printf("public key:\n");
-    for (int i = 0; i < crypt->public_key->cols; i++)
-        printf("%hu", crypt->public_key->data[i]);
-    printf("\n");
-
-    bin_matrix error = get_error_vector_cpu(crypt->code->n, crypt->code->t);
-
-    printf("error vector:\n");
-    for (int i = 0; i < error->cols; i++)
-        printf("%hu", error->data[i]);
-    printf("\n");
-
-
-    bin_matrix v = encrypt_cpu(msg, crypt);
-
-    printf("encrypted data (message * public key + error):\n");
-    for (int i = 0; i < v->cols; i++)
-        printf("%hu", v->data[i]);
-    printf("\n");
-
-
-    bin_matrix s = decrypt_cpu(v, crypt);
-
-    printf("decrypted data:\n");
-    for (int i = 0; i < s->cols; i++)
-        printf("%hu", s->data[i]);
-    printf("\n");
-
-    if(mat_is_equal_cpu(msg, s)) {
-            end = clock();
-            printf("Decryption successful...\n");
-            cpu_time_used = ((double) (end - start))/ CLOCKS_PER_SEC;
-            printf("Time taken by cryptosystem: %f\n", cpu_time_used);
-    } else {
-            printf("Failure....\n");
-    }
-    delete_mceliece_cpu(crypt);
-    return;
-}
 #endif /* HAMC_CPU_CODE_C */

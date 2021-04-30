@@ -84,7 +84,8 @@ int main(int argc, char *argv[]){
     clock_t lu_gpu_start = clock();
     bin_matrix new_gpu_sol = inverse_GF2_LU_block_gpu(extra_matrix2);
     clock_t lu_gpu_end = clock();
-    double lu_gpu_time_used = ((double) (lu_gpu_end - lu_gpu_start))/ CLOCKS_PER_SEC;
+    double lu_gpu_time_used = ((double) (lu_gpu_end - lu_gpu_start))/
+        CLOCKS_PER_SEC;
 
 
     if (verbose) print_bin_matrix(new_gpu_sol);

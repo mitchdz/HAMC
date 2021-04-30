@@ -4,6 +4,8 @@
 #include "hamc_cpu_code.c"
 #include "encrypt.cu"
 #include "TransposeMatrix.cu"
+#include "LU_inverse_plain.cu"
+
 
 bin_matrix generator_matrix_gpu(mdpc code);
 
@@ -48,7 +50,13 @@ bin_matrix generator_matrix_gpu(mdpc code)
     //End of modified code
     //TODO: call GPU inverse
     inverse_start = clock();
-    bin_matrix H_inv = circ_matrix_inverse_cpu(H);
+
+
+    printf("Performing Inverse...\n");
+    //bin_matrix H_inv = circ_matrix_inverse_cpu(H);
+    bin_matrix H_inv = inverse_GF2_LU_gpu(H, false);
+
+
     inverse_end = clock();
 
     inverse_time_used = ((double) (inverse_end - inverse_start))/ CLOCKS_PER_SEC;
@@ -61,10 +69,11 @@ bin_matrix generator_matrix_gpu(mdpc code)
                code->p), 1);
 
 
+    printf("Performing matrix multiplication..\n");
     multiply_start = clock();
-
-    //bin_matrix H_inv_times_H0 = mat_init_cpu(H_inv->rows, H_inv->cols);
-    bin_matrix H_inv_times_H0 = run_mult_kernel(H_inv, H_0, 16);
+    
+    //bin_matrix H_inv_times_H0 = matrix_mult_cpu(H_inv, H_0);
+    bin_matrix H_inv_times_H0 = run_mult_kernel(H_inv, H_0);
     multiply_end = clock();
     multiply_time_used = ((double) (multiply_end - multiply_start))/ CLOCKS_PER_SEC;
     printf("Multiply time used: %f\n", multiply_time_used);

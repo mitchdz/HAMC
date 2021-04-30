@@ -23,7 +23,7 @@ bin_matrix run_transpose_kernel(bin_matrix A)
     /* transfer host data to device */
     cudaMemcpy(deviceA, A->data, A->rows * A->cols * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyHostToDevice);
 
-    printf("Starting Transpose matrix kernel...\n");
+    //printf("Starting Transpose matrix kernel...\n");
 
      /* determine block and grid dimensions */
     dim3 DimBlock(TRANSPOSE_TILE_WIDTH, TRANSPOSE_TILE_WIDTH, 1);

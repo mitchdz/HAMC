@@ -33,7 +33,8 @@ bin_matrix read_file_store_bin_matrix(const char *inputFile)
     printf("Reading %s\n", inputFile);
     float *floatTemp = (float *)wbImport(inputFile, &numRowsA, &numColsA);
 
-    HAMC_DATA_TYPE_t *Adata = (HAMC_DATA_TYPE_t *)malloc(numRowsA*numColsA * sizeof(HAMC_DATA_TYPE_t));
+    HAMC_DATA_TYPE_t *Adata = (HAMC_DATA_TYPE_t *)malloc(numRowsA*numColsA *
+        sizeof(HAMC_DATA_TYPE_t));
     for(int i = 0; i < numRowsA * numColsA; i++){
         Adata[i] = (HAMC_DATA_TYPE_t)floatTemp[i];
     }
@@ -173,7 +174,7 @@ int main(int argc, char *argv[]){
     }
 
     lu_cpu_start = clock();
-    new_cpu_sol = inverse_GF2_cpu(invertible_matrix, verbose);
+    //new_cpu_sol = inverse_GF2_cpu(invertible_matrix, verbose);
     lu_cpu_end = clock();
     lu_cpu_time_used = ((double) (lu_cpu_end - lu_cpu_start))/ CLOCKS_PER_SEC;
 
@@ -187,12 +188,10 @@ int main(int argc, char *argv[]){
     if (verbose && new_gpu_sol->rows < 60) print_bin_matrix(new_gpu_sol);
 
     // check results
-    if (!cpu_exec) {
-        for (int i = 0; i < N*N; i++) {
-            if (new_gpu_sol->data[i] != cpu_sol->data[i]) {
-                flag = 1;
-                break;
-            }
+    for (int i = 0; i < N*N; i++) {
+        if (new_gpu_sol->data[i] != cpu_sol->data[i]) {
+            flag = 1;
+            break;
         }
     }
 
@@ -216,8 +215,8 @@ int main(int argc, char *argv[]){
         if (cpu_exec) {
             printf("Time for HAMC CPU code: %lf s\n", 
                 hamc_cpu_time_used);
-            printf("Speed difference (GPU LU vs. CPU gauss jordan): %.2lfX ", 
-                lu_gpu_time_used/hamc_cpu_time_used);
+            //printf("Speed difference (GPU LU vs. CPU gauss jordan): %.2lfX ", 
+            //    lu_gpu_time_used/hamc_cpu_time_used);
 
             if (lu_gpu_time_used > hamc_cpu_time_used)
                 printf("slower\n");

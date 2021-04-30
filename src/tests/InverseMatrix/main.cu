@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
 
     // print random input data:
     printf("input matrix %dx%d:\n", A->rows, A->cols);
-    print_bin_matrix(A);
+    if (A->cols < 60) print_bin_matrix(A);
 
 
     cpu_start = clock();
@@ -119,9 +119,9 @@ int main(int argc, char *argv[])
 
 
     printf("Expected matrix:\n");
-    print_bin_matrix(E);
+    if (A->cols < 60) print_bin_matrix(E);
     printf("Inverted matrix from GPU:\n");
-    print_bin_matrix(inverted_gpu);
+    if (A->cols < 60) print_bin_matrix(inverted_gpu);
 
     printf("Time for CPU: %f\n", cpu_time_used);
     printf("Time for GPU: %f\n", gpu_time_used);

@@ -136,10 +136,7 @@ int main(int argc, char *argv[]) {
             //decrypt_gpu(outputFileName, n, p, t, w, seed);
     }
     else if (test) {
-        if (cpu) 
-            test_cpu_e2e(n, p, t, w, seed);
-        else 
-            test_gpu_e2e(n, p, t, w, seed, verbose);
+        test_hamc_e2e(n, p, t, w, seed, cpu, true);
     }
     else {
         printf("action %s not recognized\n", action);

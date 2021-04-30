@@ -6,7 +6,8 @@
 
 
 // LU_GF2_find_max_cpu(n - k, &A->data[k * n + k], n, &IPIV[k], k);
-void LU_GF2_find_max_cpu(int n, HAMC_DATA_TYPE_t *A, int ld, int *IPIV, int off) {
+void LU_GF2_find_max_cpu(int n, HAMC_DATA_TYPE_t *A, int ld, int *IPIV, 
+    int off) {
     int i;
     for (i = 0; i < n; i++) {
         if (A[i*ld] == 1) {
@@ -94,7 +95,8 @@ bin_matrix inverse_GF2_cpu(bin_matrix A, bool verbose)
     }
 
     clock_t LU_decompose_end = clock();
-    double LU_decompose_time = ((double) (LU_decompose_end - LU_decompose_start))/ CLOCKS_PER_SEC;
+    double LU_decompose_time = 
+        ((double) (LU_decompose_end - LU_decompose_start))/ CLOCKS_PER_SEC;
 
     if (verbose) {
         if (A->rows < 60) { 
@@ -128,7 +130,8 @@ bin_matrix inverse_GF2_cpu(bin_matrix A, bool verbose)
         }
     }
     clock_t LU_forward_end = clock();
-    double LU_forward_time = ((double) (LU_forward_end - LU_forward_start))/ CLOCKS_PER_SEC;
+    double LU_forward_time = 
+        ((double) (LU_forward_end - LU_forward_start))/ CLOCKS_PER_SEC;
 
     clock_t LU_backward_start = clock();
 
@@ -142,7 +145,8 @@ bin_matrix inverse_GF2_cpu(bin_matrix A, bool verbose)
         }
     }
     clock_t LU_backward_end = clock();
-    double LU_backward_time = ((double) (LU_backward_end - LU_backward_start))/ CLOCKS_PER_SEC;
+    double LU_backward_time = ((double) (LU_backward_end - LU_backward_start))/
+        CLOCKS_PER_SEC;
 
     if (verbose) {
         if (IA->rows < 60) {
@@ -159,7 +163,8 @@ bin_matrix inverse_GF2_cpu(bin_matrix A, bool verbose)
     }
 
     clock_t LU_swap_end = clock();
-    double LU_swap_time = ((double) (LU_swap_end - LU_swap_start))/ CLOCKS_PER_SEC;
+    double LU_swap_time = ((double) (LU_swap_end - LU_swap_start))/
+        CLOCKS_PER_SEC;
 
 
     clock_t LU_end = clock();
@@ -173,7 +178,6 @@ bin_matrix inverse_GF2_cpu(bin_matrix A, bool verbose)
         }
     }
 
-
     if (verbose) {
         printf("Total time for CPU LU Inverse: %.4lf\n", LU_time);
         printf("\tLU decomposition:       %.4lf\n", LU_decompose_time);
@@ -181,9 +185,6 @@ bin_matrix inverse_GF2_cpu(bin_matrix A, bool verbose)
         printf("\tBackward substitution:  %.4lf\n", LU_backward_time);
         printf("\tFinal Swap:             %.4lf\n", LU_swap_time);
     }
-
-
-
 
 
     return IA;
