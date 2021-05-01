@@ -1,0 +1,19 @@
+==1758== NVPROF is profiling process 1758, command: ./Multiply_test -p 0 -x 24000 -y 24000
+==1758== Profiling application: ./Multiply_test -p 0 -x 24000 -y 24000
+==1758== Profiling result:
+            Type  Time(%)      Time     Calls       Avg       Min       Max  Name
+ GPU activities:   99.05%  33.3320s         1  33.3320s  33.3320s  33.3320s  mult_kernel(unsigned char*, unsigned char*, unsigned char*, int, int, int, int)
+                    0.55%  185.99ms         1  185.99ms  185.99ms  185.99ms  [CUDA memcpy DtoH]
+                    0.40%  133.54ms         2  66.772ms  66.593ms  66.951ms  [CUDA memcpy HtoD]
+      API calls:   98.52%  33.3321s         1  33.3321s  33.3321s  33.3321s  cudaDeviceSynchronize
+                    0.95%  320.11ms         3  106.70ms  66.634ms  186.43ms  cudaMemcpy
+                    0.49%  165.26ms         3  55.087ms  505.91us  164.24ms  cudaMalloc
+                    0.04%  13.406ms         3  4.4686ms  421.72us  6.6727ms  cudaFree
+                    0.00%  1.0898ms         1  1.0898ms  1.0898ms  1.0898ms  cuDeviceGetPCIBusId
+                    0.00%  95.767us         1  95.767us  95.767us  95.767us  cuDeviceTotalMem
+                    0.00%  94.140us       101     932ns      84ns  39.959us  cuDeviceGetAttribute
+                    0.00%  21.375us         1  21.375us  21.375us  21.375us  cudaLaunchKernel
+                    0.00%  13.625us         1  13.625us  13.625us  13.625us  cuDeviceGetName
+                    0.00%     749ns         3     249ns     110ns     491ns  cuDeviceGetCount
+                    0.00%     563ns         2     281ns      95ns     468ns  cuDeviceGet
+                    0.00%     196ns         1     196ns     196ns     196ns  cuDeviceGetUuid
