@@ -31,6 +31,8 @@ module load openmpi
 module load cuda91/toolkit/9.1.85
 ### set directory for job execution, ~netid = home directory path
 ### cd ~mcrussell/ece569/build_dir
+BUILD_DIR="/home/u1/mitchdz/git/HAMC/build"
+cd ${BUILD_DIR}
 
 ###
 ###setenv MPI_DSM_DISTRIBUTE
