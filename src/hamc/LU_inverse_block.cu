@@ -4,12 +4,9 @@
 #include "hamc_common.h"
 #include "hamc_cpu_code.c"
 
-
 #include "LU_inverse_plain.cu"
 
-
 #define LU_BLOCKING_SIZE 64
-
 
 bin_matrix inverse_GF2_LU_block_gpu(bin_matrix A)
 {
@@ -37,7 +34,7 @@ bin_matrix inverse_GF2_LU_block_gpu(bin_matrix A)
     printf("Starting Inverse matrix kernel...\n");
 
     // total number of threads should be at least A->cols
-    int numThreadsPerBlock = 1024;
+    //int numThreadsPerBlock = 1024;
 
 
 

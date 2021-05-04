@@ -24,28 +24,6 @@
 #include "LU_inverse_plain_cpu.c"
 
 
-bin_matrix read_file_store_bin_matrix(const char *inputFile)
-{
-    bin_matrix A;
-
-    int numRowsA, numColsA;
-
-    printf("Reading %s\n", inputFile);
-    float *floatTemp = (float *)wbImport(inputFile, &numRowsA, &numColsA);
-
-    HAMC_DATA_TYPE_t *Adata = (HAMC_DATA_TYPE_t *)malloc(numRowsA*numColsA *
-        sizeof(HAMC_DATA_TYPE_t));
-    for(int i = 0; i < numRowsA * numColsA; i++){
-        Adata[i] = (HAMC_DATA_TYPE_t)floatTemp[i];
-    }
-
-    A = mat_init_cpu(numRowsA, numColsA);
-    A->data = Adata;
-
-    free(floatTemp);
-    return A;
-}
-
 
 
 int main(int argc, char *argv[]){
@@ -204,6 +182,8 @@ int main(int argc, char *argv[]){
 
     printf("\n");
 
+
+    printf("Time for LU Decomposition CPU code: %lf s\n", lu_cpu_time_used);
 
 
     if (verbose) {

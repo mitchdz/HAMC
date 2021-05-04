@@ -51,8 +51,14 @@ static HAMC_DATA_TYPE_t *generate_data(int height, int width)
     return data;
 }
 
-void run_test(int x, int y)
+void run_test(int x, int y, int type, int cpu)
 {
+    printf("matrix dim: %d %d\n",x, y);
+    if (cpu)
+        printf("type: cpu\n");
+    else
+        printf("type: %d\n", type);
+
 
     clock_t start, end;
     double cpu_time_used;
@@ -66,7 +72,9 @@ void run_test(int x, int y)
     /* CPU execution time */
     start = clock();
 
-    bin_matrix CPU_BIN = transpose_cpu(input);
+    bin_matrix CPU_BIN = NULL;
+
+    if (cpu) CPU_BIN = transpose_cpu(input);
 
     end = clock();
     cpu_time_used = ((double) (end - start))/ CLOCKS_PER_SEC;
@@ -75,17 +83,23 @@ void run_test(int x, int y)
 
     /* GPU execution time */
     start = clock();
-
-    bin_matrix GPU_BIN = run_transpose_kernel(input);
+    bin_matrix GPU_BIN = NULL;
+    if (!cpu) {
+        if (type == 1) 
+            GPU_BIN = run_transpose_kernel(input);
+        else if (type == 0) {
+            GPU_BIN = run_transpose_kernel_naive(input);
+        }
+    }
 
     end = clock();
     cpu_time_used = ((double) (end - start))/ CLOCKS_PER_SEC;
     printf("GPU time: %lf\n", cpu_time_used);
 
-    free(input);
-    free(raw_data);
-    free(CPU_BIN);
-    free(GPU_BIN);
+    if (input) free(input);
+    if (raw_data) free(raw_data);
+    if (CPU_BIN) delete_bin_matrix(CPU_BIN);
+    if (GPU_BIN) delete_bin_matrix(GPU_BIN);
 }
 
 
@@ -110,8 +124,11 @@ int main(int argc, char *argv[])
     char *action = NULL;
     int x, y;
 
+    int type = 1;
+
+
     int opt;
-    while ((opt = getopt(argc, argv, "i:b:e:o:cx:y:a:")) != -1){
+    while ((opt = getopt(argc, argv, "i:b:e:o:cx:y:a:t:")) != -1){
         switch(opt){
             case 'y':
                 y = atoi(optarg);
@@ -134,6 +151,9 @@ int main(int argc, char *argv[])
             case 'c':
                 cpu_exec = true;
                 break;
+            case 't':
+                type = atoi(optarg);
+                break;
             case 'h':
             default:
                 printHelp();
@@ -141,8 +161,9 @@ int main(int argc, char *argv[])
         }
     }
 
+
     if (!strcmp(action, (const char*)"test")) {
-        run_test(x, y);
+        run_test(x, y, type, cpu_exec);
         return 0;
     }
 

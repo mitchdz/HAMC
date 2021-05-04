@@ -10,6 +10,15 @@
 #include "encrypt.cu"
 #include "TransposeMatrix.cu"
 
+
+// read either public or private key
+bin_matrix read_code_from_file()
+{
+    printf("TODO: read code from file\n");
+    return NULL;
+}
+
+
 //Decoding the codeword
 bin_matrix decode_gpu(bin_matrix word, mdpc code)
 {
@@ -71,7 +80,7 @@ bin_matrix decrypt_gpu(bin_matrix word, mcc crypt)
 {
     if(word->cols != crypt->code->n) {
         printf("Length of message is incorrect while decrypting.\n");
-        exit(0);
+        return NULL;
     }
     //printf("Decryption started...\n");
     bin_matrix msg = decode_gpu(word, crypt->code);
@@ -85,6 +94,22 @@ bin_matrix decrypt_from_file_gpu(const char* inputFileName, bin_matrix word, mcc
     // TODO: finish implementation
     bin_matrix B = mat_init_cpu(word->rows, word->cols);
     return B;
+}
+
+
+bin_matrix run_decrypt(bin_matrix word, mcc crypt, bool cpu, bool verbose)
+{
+    if (verbose) printf("TODO: finish decryption implementation\n");
+    bin_matrix msg;
+
+    if (cpu)
+        msg = decrypt_cpu(word, crypt);
+    else 
+        msg = decrypt_gpu(word, crypt);
+
+    if (verbose) printf("Done\n");
+
+    return msg;
 }
 
 

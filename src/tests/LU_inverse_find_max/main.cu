@@ -24,14 +24,6 @@
 
 void run_find_max_kernel(bin_matrix A)
 {
-
-    int numThreadsPerBlock = 1024;
-    int numGrids = A->cols/numThreadsPerBlock + 1;
-
-    dim3 dimgrid = dim3(numGrids);
-    dim3 dimBlock = dim3(numThreadsPerBlock);
-
-
     HAMC_DATA_TYPE_t *deviceA;
 
     cudaMalloc((void **)
@@ -54,17 +46,12 @@ void run_find_max_kernel(bin_matrix A)
 }
 
 
-
-
-
-
 int main(int argc, char *argv[]){
 
     bool verbose = true;
 
     int n = 2;
     int p = 512;
-    int N = p;
     int t = 10;
     int w = 30;
     int seed = 10;
@@ -81,9 +68,6 @@ int main(int argc, char *argv[]){
     bin_matrix invertible_matrix;
 
     mdpc code;
-
-    // set N to p if it is changed from the user.
-    N = p;
 
     code = qc_mdpc_init_cpu(n, p, t, w, seed);
     invertible_matrix = make_matrix_cpu(code->p, code->p, splice_cpu(code->row, (code->n0 - 1) * code->p, code->n), 1);
