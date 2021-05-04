@@ -1,6 +1,7 @@
 #ifndef HAMC_CPU_CODE_C
 #define HAMC_CPU_CODE_C
 
+#include "wb.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -59,9 +60,13 @@ bin_matrix circ_matrix_inverse_cpu(bin_matrix A);
 bin_matrix mat_splice_cpu(bin_matrix A, int row1, int row2, int col1, int col2);
 int get_max_cpu(int* vec, int len);
 
+/* Helper Functions */
+bin_matrix read_file_store_bin_matrix(const char *inputFile);
+void print_bin_matrix(bin_matrix A);
+
+
 void print_bin_matrix(bin_matrix A)
 {
-    printf("");
     for ( int i = 0; i < A->rows; i++) {
         printf("%s%d%s  ", YELLOW, i, NC);
         for ( int j = 0; j < A->cols; j++) {
@@ -70,6 +75,48 @@ void print_bin_matrix(bin_matrix A)
         printf("\n");
     }
 }
+
+bin_matrix read_file_store_bin_matrix(const char *inputFile)
+{
+    bin_matrix A;
+
+    int numRowsA, numColsA;
+
+    printf("Reading %s\n", inputFile);
+    float *floatTemp = (float *)wbImport(inputFile, &numRowsA, &numColsA);
+
+    HAMC_DATA_TYPE_t *Adata = (HAMC_DATA_TYPE_t *)malloc(numRowsA*numColsA *
+        sizeof(HAMC_DATA_TYPE_t));
+    for(int i = 0; i < numRowsA * numColsA; i++){
+        Adata[i] = (HAMC_DATA_TYPE_t)floatTemp[i];
+    }
+
+    A = mat_init_cpu(numRowsA, numColsA);
+    A->data = Adata;
+
+    free(floatTemp);
+    return A;
+}
+
+void write_file_bin_matrix(bin_matrix A, const char *outFile)
+{
+    FILE *out_file  = fopen(outFile, "w");
+    fprintf(out_file, "%d %d", A->rows, A->cols);
+    /* write cipher.text to file */
+    for( int i = 0; i < A->rows; i++) {
+        for ( int j = 0; j < A->cols; j++) {
+            fprintf(out_file, "%hu ", A->data[i*A->cols + A->cols]);
+        }
+        fprintf(out_file, "\n");
+    }
+
+    fclose(out_file);
+}
+
+
+
+
+
 
 //Set the value of matix element at position given by the indices to "val"
 void set_matrix_element_cpu(bin_matrix A, int row_idx, int col_idx, HAMC_DATA_TYPE_t val)
@@ -91,6 +138,7 @@ void reset_row_cpu(HAMC_DATA_TYPE_t* row, int min, int max)
         row[i] = 0;
     }
 }
+
 //Generate a random error vector of length len of weight t
 bin_matrix get_error_vector_cpu(int len, int t)
 {
@@ -98,7 +146,7 @@ bin_matrix get_error_vector_cpu(int len, int t)
     int weight = 0;
     int idx;
     while(weight < t) {
-        idx = random_val(1, len - 1, -1);
+        idx = random_val(1, len - 1, UINT32_MAX);
         if(!get_matrix_element_cpu(error, 0, idx)) {
             set_matrix_element_cpu(error, 0, idx, 1);
             weight++;
@@ -168,7 +216,7 @@ int random_val(int min, int max, unsigned seed)
 
     do {
         r = rand();
-    } while (r >= limit);
+    } while ((unsigned int)r >= limit);
 
     return min + (r / buckets);
 }
@@ -302,8 +350,6 @@ bin_matrix generator_matrix_cpu(mdpc code)
     clock_t start, end;
     double cpu_time_used;
     start = clock();
-    bin_matrix H = parity_check_matrix_cpu(code);
-
 
     //End of modified code
     printf("Construction of G started...\n");
@@ -363,7 +409,7 @@ mdpc qc_mdpc_init_cpu(int n0, int p, int w, int t, unsigned seed)
     //printf("Input seed or -1 to use default seed: ");
     //scanf("%u", &seed);
     time_t tx;
-    if(seed == -1) {
+    if(seed == UINT32_MAX) {
         srand((unsigned) time(&tx));
     } else {
         srand(seed);
@@ -530,7 +576,6 @@ bin_matrix circ_matrix_inverse_cpu(bin_matrix A)
     make_indentity_cpu(B);
 
     int i;
-    int flag, prev_flag = 0;
 
     for(i = 0; i < A->cols; i++) {
         if(mat_element(A, i, i) == 1) {
@@ -671,75 +716,6 @@ bin_matrix decrypt_cpu(bin_matrix word, mcc crypt)
     return msg;
 }
 
-void run_decryption_cpu(const char* inputFileName, const char* outputFileName,
-        int n, int p, int t, int w, int seed)
-{
-    mcc crypt;
-    bin_matrix msg, m;
-    long f_size;
-    int c;
-    size_t icc = 0;
-
-    /* open input and output files */
-    FILE *in_file  = fopen(inputFileName, "r");
-    FILE *out_file  = fopen(outputFileName, "w");
-
-    // test for input file not existing
-    if (in_file == NULL) {
-        printf("Error! Could not open file\n");
-        exit(-1);
-    }
-
-    /* determine filesize */
-    fseek(in_file, 0, SEEK_END);
-    f_size = ftell(in_file);
-    fseek(in_file, 0, SEEK_SET);
-
-    char *input_message = (char *)malloc(f_size);
-
-    /* read and write file data into local array */
-    icc = 0;
-    while ((c = fgetc(in_file)) != EOF) {
-        input_message[icc++] = (char)c;
-    }
-    input_message[icc] = '\0';
-
-
-    printf("Input message:\n");
-    for (int i = 0; i < (int)icc; i++)
-        printf("%c",  input_message[i]);
-    printf("\n");
-
-
-    /* check that input file is within size */
-    int k = (n - 1) * p;
-    if ((int)icc > k) {
-        printf("ERROR: intput message is too long for k\n");
-        printf("input message is length %d while k is %d\n", (int)icc, k);
-    }
-
-
-    /* set up basic encryption primitives */
-    crypt = mceliece_init_cpu(n, p, w, t, seed);
-    msg = mat_init_cpu(1, k);
-    for(int i = 0; i < k; i++) {
-        set_matrix_element_cpu(msg, 0, i,
-                (HAMC_DATA_TYPE_t)strtoul(input_message, NULL, 0));
-    }
-
-    /* run CPU based execution code */
-    m = decrypt_cpu(msg, crypt);
-
-    /* write cipher.text to file */
-    for( int i = 0; i < m->cols; i++) {
-        fprintf(out_file, "%hu", get_matrix_element_cpu(m, 0, i));
-    }
-
-cleanup:
-    fclose(in_file);
-    fclose(out_file);
-}
-
 //Add two matrices
 bin_matrix add_matrix_cpu(bin_matrix A, bin_matrix B)
 {
@@ -770,90 +746,6 @@ bin_matrix encrypt_cpu(bin_matrix msg, mcc crypt)
     return word;
 }
 
-void run_encryption_cpu(const char* inputFileName, const char* outputFileName,
-        int n, int p, int t, int w, int seed)
-{
-    mcc crypt;
-    bin_matrix msg, m;
-    long f_size;
-    int c;
-    size_t icc = 0;
-
-    /* open input and output files */
-    FILE *in_file  = fopen(inputFileName, "r");
-    FILE *out_file  = fopen(outputFileName, "w");
-
-    // test for input file not existing
-    if (in_file == NULL) {
-        printf("Error! Could not open file\n");
-        exit(-1);
-    }
-
-    /* determine filesize */
-    fseek(in_file, 0, SEEK_END);
-    f_size = ftell(in_file);
-    fseek(in_file, 0, SEEK_SET);
-
-    char *input_message = (char *)malloc(f_size);
-
-    /* read and write file data into local array */
-    icc = 0;
-    while ((c = fgetc(in_file)) != EOF) {
-        input_message[icc++] = (char)c;
-    }
-    input_message[icc] = '\0';
-
-
-    printf("\n");
-    printf("Input message (char):\n");
-    for (int i = 0; i < (int)icc; i++)
-        printf("%c",  input_message[i]);
-    printf("\n");
-
-    printf("\n");
-
-    /* check that input file is within size */
-    int k = (n - 1) * p;
-    if ((int)icc > k) {
-        printf("ERROR: intput message is too long for k\n");
-        printf("input message is length %d while k is %d\n", (int)icc, k);
-    }
-
-
-    /* set up basic encryption primitives */
-    crypt = mceliece_init_cpu(n, p, w, t, seed);
-    msg = mat_init_cpu(1, k);
-    for(int i = 0; i < k; i++) {
-        set_matrix_element_cpu(msg, 0, i,
-                (HAMC_DATA_TYPE_t)strtoul(input_message, NULL, 0));
-    }
-
-    printf("\n");
-    /* run CPU based encryption code */
-    m = encrypt_cpu(msg, crypt);
-    printf("Encrypted data (HAMC_DATA_TYPE_t):\n");
-    for (int i = 0; i < m->cols; i++)
-        printf("%hu", m->data[i]);
-    printf("\n");
-
-    /* decrypt the ciphertext */
-    bin_matrix d = decrypt_cpu(m, crypt);
-
-    printf("Decrypted text:\n");
-    for(int i = 0; i < d->cols; i++)
-        printf("%c", (char)d->data[i]);
-
-
-    /* write cipher.text to file */
-    for( int i = 0; i < m->cols; i++) {
-        fprintf(out_file, "%hu", get_matrix_element_cpu(m, 0, i));
-    }
-
-cleanup:
-    fclose(in_file);
-    fclose(out_file);
-}
-
 //Checks if two matrices are equal
 int mat_is_equal_cpu(bin_matrix A, bin_matrix B)
 {
@@ -882,6 +774,12 @@ void delete_mceliece_cpu(mcc A)
 {
     free(A->code);
     free(A->public_key);
+    free(A);
+}
+
+void delete_bin_matrix(bin_matrix A)
+{
+    free(A->data);
     free(A);
 }
 

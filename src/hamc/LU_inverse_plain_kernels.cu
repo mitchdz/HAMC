@@ -61,63 +61,6 @@ __global__ void GF2_Forward_substitutev2(HAMC_DATA_TYPE_t *A,
     }
 }
 
-// Forward Substitution to be used after LU Decomposition
-//  A - input matrix (modified from LU decomposition)
-//  B - identity matrix of size n
-//  n - size of matrix A
-//  i - row to operate on
-//  j - column to operate on
-// call GF2_Forward_substitute_element_store before this w/ same parameters
-__global__ void GF2_Forward_substitute_element(HAMC_DATA_TYPE_t *A,
-    HAMC_DATA_TYPE_t *B, int n, int i, int j)
-{
-    int tid = threadIdx.x + blockIdx.x * blockDim.x;
-
-
-    
-    if (tid == 0) {
-        for (int k = i+1; k < j; k++) {
-            B[i*n + j] ^= B[k*n + j] & A[i*n + k];
-        }
-    }
-    
-
-    // example code below:
-    //   for (int k = i+1; k < j; k++) {
-    //      B[i*n + j] ^= B[k*n + j] & A[i*n + k];
-    //   }
-
-
-    /*
-    if (tid == 0) {
-        printf("i: %d j: %d\n", i, j);
-    }
-
-    if ((tid < j) && (tid >= i + 1)) {
-        printf("tid: %d\n",tid);
-        B[i*n + j] ^= B[tid*n + j] & A[i*n + tid];
-    }
-    */
-
-
-}
-
-// Forward Substitution to be used after LU Decomposition
-//  A - input matrix (modified from LU decomposition)
-//  B - identity matrix of size n
-//  n - size of matrix A
-//  i - row to operate on
-//  j - column to operate on
-__global__ void GF2_Forward_substitute_element_store(HAMC_DATA_TYPE_t *A,
-    HAMC_DATA_TYPE_t *B, int n, int i, int j)
-{
-    int tid = threadIdx.x + blockIdx.x * blockDim.x;
-
-    if (tid == 0) {
-        B[i*n + j] = A[i*n + j];
-    }
-}
-
 // Backward Substition to be used after Forward Substitution
 __global__ void GF2_Backward_substitute(HAMC_DATA_TYPE_t *A,
     HAMC_DATA_TYPE_t *B, int n)
@@ -147,21 +90,6 @@ __global__ void GF2_Backward_substitutev2(HAMC_DATA_TYPE_t *A,
             for (int k = col+1; k < n; k++) {
                 B[tid*n + col] ^= B[tid*n + k] & A[k*n + col];
             }
-        }
-    }
-}
-
-// Backward Substition to be used after Forward Substitution
-__global__ void GF2_Backward_substitute_row(HAMC_DATA_TYPE_t *A,
-    HAMC_DATA_TYPE_t *B, int n, int j)
-{
-    int tid = threadIdx.x + blockIdx.x * blockDim.x;
-
-    if (tid < n) { // rows from top to bottom
-        int col = n - 1 - j;
-        //IA->data[i*n + j] = A->data[i*n + j];
-        for (int k = col+1; k < n; k++) {
-            B[tid*n + col] ^= B[tid*n + k] & A[k*n + col];
         }
     }
 }
@@ -255,8 +183,6 @@ __global__ void GF2_LU_decompose_update_trailing_row_index( HAMC_DATA_TYPE_t *A,
 __global__ void GF2_LU_decompose_find_max_row( HAMC_DATA_TYPE_t *A, int *IPIV, 
     int n, int k)
 {
-    bool verbose = true;
-
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
 
     // find max
@@ -277,8 +203,6 @@ __global__ void GF2_LU_decompose_find_max_row( HAMC_DATA_TYPE_t *A, int *IPIV,
 __global__ void GF2_LU_decompose_pivot_row( HAMC_DATA_TYPE_t *A, int *IPIV, 
     int n, int k)
 {
-    bool verbose = true;
-
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
 
     // if pivot row is changed for kth row, swap row k with pivot row

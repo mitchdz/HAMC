@@ -23,6 +23,8 @@ mcc mceliece_init_gpu(int n0, int p, int w, int t, unsigned seed)
 
 bin_matrix generator_matrix_gpu(mdpc code)
 {
+    bool verbose = false;
+
     clock_t start, end, 
             inverse_start, inverse_end,
             multiply_start, multiply_end,
@@ -35,18 +37,14 @@ bin_matrix generator_matrix_gpu(mdpc code)
            transpose_time_used,
            concat_time_used;
 
-
     start = clock();
-
 
     bin_matrix H = make_matrix_cpu(code->p,
                     code->p,
                     splice_cpu(code->row, (code->n0 - 1) * code->p, code->n),
                     1);
-    printf("Construction of G started...\n");
 
-    inverse_start = clock();
-
+    if (verbose) printf("Construction of G started...\n");
     //End of modified code
     //TODO: call GPU inverse
     inverse_start = clock();

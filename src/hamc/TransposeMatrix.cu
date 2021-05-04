@@ -45,6 +45,46 @@ bin_matrix run_transpose_kernel(bin_matrix A)
     return C;
 }
 
+bin_matrix run_transpose_kernel_naive(bin_matrix A)
+{
+    /* transpose so rows/cols flipped */
+    bin_matrix C = mat_init_cpu(A->cols, A->rows);
+
+    /* allocate device memory */
+    HAMC_DATA_TYPE_t *deviceA;
+    HAMC_DATA_TYPE_t *deviceB;
+    cudaMalloc((void **) &deviceA, A->rows * A->cols * sizeof(HAMC_DATA_TYPE_t));
+    cudaMalloc((void **) &deviceB, A->rows * A->cols * sizeof(HAMC_DATA_TYPE_t));
+
+    /* transfer host data to device */
+    cudaMemcpy(deviceA, A->data, A->rows * A->cols * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyHostToDevice);
+
+    //printf("Starting Transpose matrix kernel...\n");
+
+     /* determine block and grid dimensions */
+    dim3 DimBlock(TRANSPOSE_TILE_WIDTH, TRANSPOSE_TILE_WIDTH, 1);
+    int x_blocks = ((A->rows - 1)/TRANSPOSE_TILE_WIDTH) + 1;
+    int y_blocks = ((A->cols - 1)/TRANSPOSE_TILE_WIDTH) + 1;
+    dim3 DimGrid(x_blocks, y_blocks, 1);
+
+    transpose_naive<<<DimGrid, DimBlock>>> (deviceA, deviceB, A->rows, A->cols);
+
+    cudaError_t cudaerr = cudaDeviceSynchronize();
+    if (cudaerr != cudaSuccess)
+        printf("kernel launch failed with error \"%s\".\n", cudaGetErrorString(cudaerr));
+
+    cudaMemcpy(C->data, deviceB, A->rows * A->cols * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyDeviceToHost);
+
+    cudaFree(deviceA);
+    cudaFree(deviceB);
+
+    return C;
+}
+
+
+
+
+
 __global__ void transpose_no_bank_conflicts(HAMC_DATA_TYPE_t *idata, HAMC_DATA_TYPE_t *odata, int width, int height)
 {
     __shared__ float block[BLOCK_DIM][BLOCK_DIM+1];

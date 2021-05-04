@@ -171,26 +171,23 @@ static void create_dataset(int datasetNum, int n, int p, int t, int w, int seed)
 int main()
 {
     base_dir = wbPath_join(wbDirectory_current(), "inverse", "Dataset");
-
-      //create_dataset(0, 2, 6, 10, 30, 10);
-      //create_dataset(1, 2, 200, 10, 30, 10);
-      //create_dataset(2, 2, 500, 10, 30, 10);
-      //create_dataset(3, 2, 512, 10, 30, 10);
-      //create_dataset(4, 2, 1024, 10, 30, 10);
-      //create_dataset(5, 2, 2000, 10, 120, 10);
-      //create_dataset(6, 2, 3050, 20, 60, 10);
-      //create_dataset(7, 2, 4000, 20, 60, 10);
-      //create_dataset(8, 2, 4200, 20, 60, 10);
-      //create_dataset(9, 2, 4400, 20, 60, 10);
-      //create_dataset(10, 2, 4600, 20, 60, 10);
-      create_dataset(11, 2, 4800, 20, 60, 10);
-      create_dataset(12, 2, 5000, 20, 60, 10);
-
-
-      //create_dataset(7, 2, 6000, 20, 60, 10);
-      //create_dataset(8, 2, 12000, 20, 60, 10);
-      //create_dataset(9, 2, 24000, 264, 274, 10);
-      //create_dataset(10, 2, 32771, 264, 274, 10);
+      //create_dataset(6, 2, 6, 10, 30, 10);
+      //create_dataset(200, 2, 200, 10, 30, 10);
+      //create_dataset(500, 2, 500, 10, 30, 10);
+      //create_dataset(512, 2, 512, 10, 30, 10);
+      //create_dataset(1024, 2, 1024, 10, 30, 10);
+      //create_dataset(2000, 2, 2000, 10, 120, 10);
+      //create_dataset(3050, 2, 3050, 20, 60, 10);
+      //create_dataset(4000, 2, 4000, 20, 60, 10);
+      //create_dataset(4200, 2, 4200, 20, 60, 10);
+      //create_dataset(4400, 2, 4400, 20, 60, 10);
+      //create_dataset(4600, 2, 4600, 20, 60, 10);
+      //create_dataset(4800, 2, 4800, 20, 60, 10);
+      //create_dataset(5000, 2, 5000, 20, 60, 10);
+      //create_dataset(6000, 2, 6000, 20, 60, 10);
+      create_dataset(12000, 2, 12000, 20, 60, 10);
+      //create_dataset(24000, 2, 24000, 264, 274, 10);
+      //create_dataset(32771, 2, 32771, 264, 274, 10);
 
   return 0;
 }

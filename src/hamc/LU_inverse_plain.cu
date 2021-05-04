@@ -72,11 +72,6 @@ bin_matrix inverse_GF2_LU_gpu(bin_matrix A, bool verbose)
 
         GF2_LU_decompose_update_trailing_row
             <<<dimGrid, dimThreads, 0, stream1>>>(deviceA, A->rows, i);
-
-        //for (int j = 0; j < A->rows - i - 1; j++) { // rows
-        //    GF2_LU_decompose_update_trailing_row_index
-        //        <<<dimGrid, dimThreads, 0, stream1>>>(deviceA, A->rows, i, j);
-        //}
     }
     cudaStreamDestroy(stream0);
     cudaStreamDestroy(stream1);
@@ -92,63 +87,49 @@ bin_matrix inverse_GF2_LU_gpu(bin_matrix A, bool verbose)
          cudaGetErrorString(cudaerr));
 
     /******************** Forward Substitution ********************************/
-
     clock_t LU_forward_start = clock();
     if (verbose) printf("Performing Forward Substitution...\n");
     GF2_Forward_substitute<<<dimGrid, dimThreads>>> (deviceA, deviceB, A->rows);
-    //GF2_Forward_substitutev2<<<dimGrid, dimThreads>>> (deviceA, deviceB, A->rows);
 
-    //for (int j = 0; j < A->cols; j++) { // cols
-    //    for (int i = j - 1; i >= 0; i--) { // rows from bottom to top
-    //            GF2_Forward_substitute_element_store<<<dimGrid, dimThreads>>>(deviceA, deviceB, A->rows, i, j);
-    //            GF2_Forward_substitute_element<<<dimGrid, dimThreads>>>(deviceA, deviceB, A->rows, i, j);
-    //    }
-    //}
 
+    cudaerr = cudaDeviceSynchronize();
+    if (cudaerr != cudaSuccess)
+        printf("kernel launch failed with error \"%s\".\n",
+         cudaGetErrorString(cudaerr));
+ 
     clock_t LU_forward_end = clock();
     double LU_forward_time = 
         ((double) (LU_forward_end - LU_forward_start))/ CLOCKS_PER_SEC;
 
 
+    /******************** Backward Substitution *******************************/
+    clock_t LU_backward_start = clock();
+    if (verbose) printf("Performing Backward Substitution...\n");
+    GF2_Backward_substitute<<<dimGrid, dimThreads>>> (deviceA, deviceB, A->rows);
+
     cudaerr = cudaDeviceSynchronize();
     if (cudaerr != cudaSuccess)
         printf("kernel launch failed with error \"%s\".\n",
          cudaGetErrorString(cudaerr));
 
-    /******************** Backward Substitution *******************************/
-    clock_t LU_backward_start = clock();
-
-    if (verbose) printf("Performing Backward Substitution...\n");
-    GF2_Backward_substitute<<<dimGrid, dimThreads>>> (deviceA, deviceB, A->rows);
-    //GF2_Backward_substitutev2<<<dimGrid, dimThreads>>> (deviceA, deviceB, A->rows);
-
-    //for (int i = 0; i < A->cols; i++)
-    //    GF2_Backward_substitute_row<<<dimGrid, dimThreads>>> (deviceA, deviceB, A->rows, i);
 
     clock_t LU_backward_end = clock();
     double LU_backward_time = 
         ((double) (LU_backward_end - LU_backward_start))/ CLOCKS_PER_SEC;
 
+    /******************** Final Swap ******************************************/
+    clock_t LU_final_swap_start = clock();
+    if (verbose) printf("Performing Final swap...\n");
+    GF2_swap_cols<<<dimGrid, dimThreads>>>(deviceB, deviceIPIV, A->rows);
+
     cudaerr = cudaDeviceSynchronize();
     if (cudaerr != cudaSuccess)
         printf("kernel launch failed with error \"%s\".\n",
          cudaGetErrorString(cudaerr));
 
-    /******************** Final Swap ******************************************/
-    clock_t LU_final_swap_start = clock();
-
-    if (verbose) printf("Performing Final swap...\n");
-    GF2_swap_cols<<<dimGrid, dimThreads>>>(deviceB, deviceIPIV, A->rows);
     clock_t LU_final_swap_end = clock();
     double LU_final_swap_time = 
         ((double) (LU_final_swap_end - LU_final_swap_start))/ CLOCKS_PER_SEC;
-
-    cudaerr = cudaDeviceSynchronize();
-    if (cudaerr != cudaSuccess)
-        printf("kernel launch failed with error \"%s\".\n",
-         cudaGetErrorString(cudaerr));
-
-
     if (verbose) printf("Done!\n");
 
     cudaMemcpy(B->data, deviceB, A->rows * A->cols * sizeof(HAMC_DATA_TYPE_t), 
@@ -157,7 +138,6 @@ bin_matrix inverse_GF2_LU_gpu(bin_matrix A, bool verbose)
     clock_t LU_end = clock();
     double LU_time = 
         ((double) (LU_end - LU_start))/ CLOCKS_PER_SEC;
-
 
     if (verbose) {
         printf("Total time for LU inverse (GPU): %.7lf\n", LU_time);
@@ -170,8 +150,6 @@ bin_matrix inverse_GF2_LU_gpu(bin_matrix A, bool verbose)
         printf("\tFinal Swap:                %.7lf - %.2lf%%\n",
             LU_final_swap_time, 100*(LU_final_swap_time/LU_time));
     }
-
-
     cudaFree(deviceA);
     cudaFree(deviceB);
 
@@ -179,8 +157,6 @@ bin_matrix inverse_GF2_LU_gpu(bin_matrix A, bool verbose)
 
     return B;
 }
-
-
 
 
 #endif /* REFERENCE_GPU_CU */

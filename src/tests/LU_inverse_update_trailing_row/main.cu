@@ -61,7 +61,6 @@ int main(int argc, char *argv[]){
 
     int n = 2;
     int p = 512;
-    int N = p;
     int t = 10;
     int w = 30;
     int seed = 10;
@@ -80,9 +79,6 @@ int main(int argc, char *argv[]){
     bin_matrix invertible_matrix;
 
     mdpc code;
-
-    // set N to p if it is changed from the user.
-    N = p;
 
     code = qc_mdpc_init_cpu(n, p, t, w, seed);
     invertible_matrix = make_matrix_cpu(

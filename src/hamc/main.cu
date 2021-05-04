@@ -44,6 +44,8 @@ int main(int argc, char *argv[]) {
     int n = 2, p = 500, w = 30, t = 10, seed = 10;
     char *outputFileName = NULL, *inputFileName = NULL, *action = NULL;
 
+    char *keyFile = NULL;
+
     /* determines whether to run CPU based implementation, default no */
     bool cpu = false;
 
@@ -51,9 +53,12 @@ int main(int argc, char *argv[]) {
 
     int c;
     opterr = 0;
-    while ((c = getopt (argc, argv, "a:n:p:w:t:i:o:hs:cs:v")) != -1)
+    while ((c = getopt (argc, argv, "a:n:p:w:t:i:o:hs:cs:vk:")) != -1)
         switch(c)
         {
+            case 'k':
+                keyFile = strdup(optarg);
+                break;
             case 'v':
                 verbose = true;
                 break;
@@ -77,11 +82,9 @@ int main(int argc, char *argv[]) {
                 break;
             case 'i':
                 inputFileName = strdup(optarg);
-                //strcpy(inputFileName, (const char*)optarg);
                 break;
             case 'o':
                 outputFileName = strdup(optarg);
-                //strcpy(outputFileName, (const char*)optarg);
                 break;
             case 'a':
                 action = strdup(optarg);
@@ -118,22 +121,16 @@ int main(int argc, char *argv[]) {
 
     //TODO: make sure action is null-terminated before passing into strcmp
     if (!strcmp(action, (const char*)"keygen")) {
-        if (cpu) 
-            run_keygen_cpu(n, p, t, w, seed);
-        else 
-            run_keygen_gpu(n, p, t, w, seed);
+            run_keygen(n, p, t, w, seed, cpu, verbose);
     }
     else if (!strcmp(action, (const char*)"encrypt")) {
-        if (cpu) 
-            run_encryption_cpu(inputFileName, outputFileName, n, p, t, w, seed);
-        else 
-            run_encryption_gpu(inputFileName, outputFileName, n, p, t, w, seed);
+        run_encryption_from_key(inputFileName, keyFile, outputFileName, n, t, cpu, verbose);
     }
     else if (!strcmp(action, (const char*)"decrypt")) {
-        if (cpu) 
-            run_decryption_cpu(inputFileName, outputFileName, n, p, t, w, seed);
-        //else 
-            //decrypt_gpu(outputFileName, n, p, t, w, seed);
+        //run_decrypt(inputFileName, outputFileName, n, p, t, w, seed, cpu, verbose);
+    }
+    else if (!strcmp(action, (const char*)"generate-message")) {
+        generate_message(outputFileName, k);
     }
     else if (test) {
         test_hamc_e2e(n, p, t, w, seed, cpu, true);
