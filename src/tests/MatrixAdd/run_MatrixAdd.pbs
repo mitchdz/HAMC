@@ -30,7 +30,7 @@
 module load openmpi
 module load cuda91/toolkit/9.1.85
 ### set directory for job execution, ~netid = home directory path
-cd ~mcrussell/ece569/build_dir
+### cd ~mcrussell/ece569/build_dir
 
 ###
 ###setenv MPI_DSM_DISTRIBUTE
