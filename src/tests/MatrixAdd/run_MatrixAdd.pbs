@@ -1,0 +1,50 @@
+#!/bin/bash
+
+### script to run an mpi job using 28 cores or less (using only one 28-core node)
+
+### Set the job name
+#PBS -N FP
+
+### Specify the group for this job
+### List of PI groups available to each user can be found with "va" command
+#PBS -W group_list=ece569
+
+### Set the queue for this job as windfall or standard (adjust ### and #)
+#PBS -q standard
+
+### Set the number of nodes, cores and memory that will be used for this job
+### select=1 is the node count, ncpus=28 are the cores in each node, 
+### mem=168gb is memory per node, pcmem=6gb is the memory per core - optional
+
+###PBS -l select=1:ncpus=28:mem=168gb:ngpus1
+#PBS -l select=1:ncpus=2:mem=12gb:ngpus=1
+### Specify "wallclock time", hhh:mm:ss. Required field
+#PBS -l walltime=000:01:00
+
+### Specify total cpu time, hhh:mm:ss. Calculated for you if left out
+### total cputime = walltime * ncpus
+#PBS -l cput=00:01:00
+
+### Load required modules/libraries if needed (openmpi example)
+### Use "module avail" command to list all available modules
+module load openmpi
+module load cuda91/toolkit/9.1.85
+### set directory for job execution, ~netid = home directory path
+cd ~mcrussell/ece569/build_dir
+
+###
+###setenv MPI_DSM_DISTRIBUTE
+
+#count=0
+#for size in 200 500 512 1024 2000 3050 4000 5000 6000 10000 15000 20000 32000
+#do
+  # file=output$((count)).txt
+   size=5000
+  # /usr/bin/time mpirun -n 1 ./MatrixAdd_test -t "test" -x $size -y $size  > MatrixAdd_output/$file
+   ./MatrixAdd_test -t "test" -x $size -y $size  > MatrixAdd_output.txt
+#   /usr/bin/time mpirun -n 1 ./MatrixAdd_test -s $r/output.raw -i $r/input0.raw -j $r/input1.raw > MatrixAdd_output/$file
+ #count=$((count+1))
+#done
+
+
+
