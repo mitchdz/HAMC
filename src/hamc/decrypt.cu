@@ -9,7 +9,7 @@
 #include "MultiplyMatrix.cu"
 #include "encrypt.cu"
 #include "TransposeMatrix.cu"
-
+#include "MatrixAdd.cu"
 
 // read either public or private key
 bin_matrix read_code_from_file()
@@ -57,7 +57,7 @@ bin_matrix decode_gpu(bin_matrix word, mdpc code)
         for(j = 0; j < word->cols; j++) {
             if(unsatisfied[j] >= b) {
                 set_matrix_element_cpu(word, 0, j, (get_matrix_element_cpu(word, 0, j) ^ 1));
-                syn = add_matrix_cpu(syn, mat_splice_cpu(H, 0, H->rows - 1, j, j));
+                syn = run_matrix_add_kernel(syn, mat_splice_cpu(H, 0, H->rows - 1, j, j));
 
 
             }

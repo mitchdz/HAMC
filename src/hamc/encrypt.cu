@@ -9,7 +9,7 @@
 #include "MultiplyMatrix.cu"
 #include "hamc_common.h"
 #include "hamc_cpu_code.c"
-
+#include "MatrixAdd.cu"
 
 
 bin_matrix encrypt_gpu(bin_matrix msg, mcc crypt)
@@ -19,7 +19,7 @@ bin_matrix encrypt_gpu(bin_matrix msg, mcc crypt)
         return NULL;
     }
     bin_matrix error = get_error_vector_cpu(crypt->code->n, crypt->code->t);
-    bin_matrix word = add_matrix_cpu(run_mult_kernel(msg, crypt->public_key, 16), error);
+    bin_matrix word = run_matrix_add_kernel(run_mult_kernel(msg, crypt->public_key, 16), error);
     return word;
 }
 

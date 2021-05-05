@@ -31,7 +31,7 @@ bin_matrix run_matrix_add_kernel(bin_matrix A, bin_matrix B)
     cudaMemcpy(deviceA, A->data, A->cols * A->rows * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyHostToDevice);
     cudaMemcpy(deviceB, B->data, B->cols * B->rows * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyHostToDevice);
     
-    printf("TILE_WIDTH -> %i \n", TILE_WIDTH);
+    //printf("TILE_WIDTH -> %i \n", TILE_WIDTH);
     dim3 DimBlock(TILE_WIDTH, TILE_WIDTH, 1);
     int x_blocks = ((B->cols - 1)/TILE_WIDTH) + 1;
     int y_blocks = ((A->rows - 1)/TILE_WIDTH) + 1;

@@ -17,6 +17,9 @@ CC=gcc cmake3 ../src/
 
 # build HAMC
 make hamc
+# note: sometimes initial build fails for some reason. If that happens, run `CC=gcc cmake3 ../src/` one more time and then run `make hamc`.
+
+
 
 # copy pbs job script to build directory
 cp ../run_hamc.pbs ./
