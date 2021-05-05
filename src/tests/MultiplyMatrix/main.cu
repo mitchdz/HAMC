@@ -72,7 +72,7 @@ void run_time(int x, int y)
     
     start = clock();
     
-    bin_matrix G = run_mult_kernel(A, B);
+    bin_matrix G = run_mult_kernel_test(A, B);
     
     end = clock();
     time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
