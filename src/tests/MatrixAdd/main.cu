@@ -98,7 +98,6 @@ bin_matrix run_kernel(bin_matrix A, bin_matrix B)
     cudaMemcpy(deviceA, A->data, A->cols * A->rows * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyHostToDevice);
     cudaMemcpy(deviceB, B->data, B->cols * B->rows * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyHostToDevice);
     
-    printf("TILE_WIDTH -> %i \n", TILE_WIDTH);
     dim3 DimBlock(TILE_WIDTH, TILE_WIDTH, 1);
     int x_blocks = ((B->cols - 1)/TILE_WIDTH) + 1;
     int y_blocks = ((A->rows - 1)/TILE_WIDTH) + 1;
@@ -136,21 +135,21 @@ void run_test(int x, int y)
     double cpu_time_used;
     
     
-    printf("X var = %i \n", x);
-    printf("Y var = %i \n", y);
+    printf("Tester Matrix Columns = %i \n", x);
+    printf("Tester Matrix Rows = %i \n", y);
     
     // Matrix A
     HAMC_DATA_TYPE_t *raw_data0 = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * x * y);
-    raw_data0 = generate_data(x, y);
+    raw_data0 = generate_data(y, x);
 
-    bin_matrix input0 = mat_init_cpu(x,y);
+    bin_matrix input0 = mat_init_cpu(y,x);
     input0->data = raw_data0;
     
     //Matrix B
     HAMC_DATA_TYPE_t *raw_data1 = (HAMC_DATA_TYPE_t *)malloc(sizeof(HAMC_DATA_TYPE_t) * x * y);
-    raw_data1 = generate_data(x, y);
+    raw_data1 = generate_data(y,x);
 
-    bin_matrix input1 = mat_init_cpu(x,y);
+    bin_matrix input1 = mat_init_cpu(y,x);
     input1->data = raw_data1;
     
     
@@ -164,7 +163,14 @@ void run_test(int x, int y)
         
         cpu_time_used = ((double) (end - start))/ CLOCKS_PER_SEC;
         printf("CPU time: %lf \n", cpu_time_used);
-    
+        
+        printf("CPU Matrix Add Output: \n");
+        // Verbose Proof
+        for(int i = 0; i < x*y; i++)
+        {
+            printf("%i",CPU_BIN->data[i]);
+        }
+        printf("\n");
 
     /* GPU execution time */
     start = clock();
@@ -174,6 +180,14 @@ void run_test(int x, int y)
     end = clock();
     cpu_time_used = ((double) (end - start))/ CLOCKS_PER_SEC;
     printf("GPU time: %lf \n", cpu_time_used);
+    
+    // Verbose Proof
+        printf("GPU Matrix Add Output: \n");
+        for(int i = 0; i < x*y; i++)
+        {
+            printf("%i",GPU_BIN->data[i]);
+        }
+        printf("\n");
     
     char * tester = "SUCCESS!";
     
@@ -351,24 +365,6 @@ int main(int argc, char *argv[])
         hostC = run_kernel(hostABin,hostBBin);
         
     }
-        
-    // Check Solution
-    
-   
-    //wbSolution(args, hostC, numARows, numAColumns);
-    
-//    for(int i = 0; i < numARows*numAColumns; i++)
-//    {
-//    	if(hostC->data[i] != hostOutput[i])
-//    	{
-//    	   printf("Index: %i \n", i);
-//    	   printf("Kernel Output: %i \n", hostC->data[i]);
-//    	   printf("Expected: %i \n", hostOutput[i]);
-//    	}
-//    	printf("%i \n", i);
-//        printf("hostC->data[%i] -> %i \n",i, hostC->data[i]);
-//        printf("hostOutput[%i] -> %i \n",i, hostOutput[i]);
-   // }
 
     
     free(hostABin);
