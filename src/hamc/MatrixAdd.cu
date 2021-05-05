@@ -4,7 +4,6 @@
 #include "hamc_cpu_code.c"
 #include "hamc_common.h"
 
-#define BLOCK_DIM 16
 #define ADD_TILE_WIDTH 16
 
 __global__ void MatrixAdd(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C,
@@ -31,18 +30,12 @@ bin_matrix run_matrix_add_kernel(bin_matrix A, bin_matrix B)
     cudaMemcpy(deviceA, A->data, A->cols * A->rows * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyHostToDevice);
     cudaMemcpy(deviceB, B->data, B->cols * B->rows * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyHostToDevice);
     
-    //printf("TILE_WIDTH -> %i \n", TILE_WIDTH);
-    dim3 DimBlock(TILE_WIDTH, TILE_WIDTH, 1);
-    int x_blocks = ((B->cols - 1)/TILE_WIDTH) + 1;
-    int y_blocks = ((A->rows - 1)/TILE_WIDTH) + 1;
+    dim3 DimBlock(ADD_TILE_WIDTH, ADD_TILE_WIDTH, 1);
+    int x_blocks = ((B->cols - 1)/ADD_TILE_WIDTH) + 1;
+    int y_blocks = ((A->rows - 1)/ADD_TILE_WIDTH) + 1;
     dim3 DimGrid(x_blocks, y_blocks, 1);
   
-    MatrixAdd<<<DimGrid, DimBlock>>>(deviceA, deviceB, deviceC, A->rows, A->cols);
-
-    //printf("\n");
-    //printf("Total compute time (ms) %f for Matrix Add GPU\n\n",aelapsedTime);
-    //printf("\n");
-    
+    MatrixAdd<<<DimGrid, DimBlock>>>(deviceA, deviceB, deviceC, A->rows, A->cols);    
 
     cudaMemcpy(C->data, deviceC, B->cols * A->rows * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyDeviceToHost);
 
