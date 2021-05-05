@@ -140,6 +140,7 @@ int main(int argc, char *argv[]) {
     }
 }
 
+
 void printHelp(){
     printf("\n\nHAMC - Hardware Accelerated Mceliece Cryptosystem\n\n");
 
@@ -152,6 +153,7 @@ void printHelp(){
     printf("\t-c : Run CPU based execution\n\n");
     printf("\t-h : Print this help menu\n\n");
     printf("\t-i [X] : input filename\n\n");
+    printf("\t-k [X] : key filename\n\n");
     printf("\t-n [X] : Weight of generator matrix rows \n\n");
     printf("\t-o [X] : output filename\n\n");
     printf("\t-p [X] : Size of matrix during key generation\n\n");

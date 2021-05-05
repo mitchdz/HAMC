@@ -19,7 +19,7 @@ bin_matrix encrypt_gpu(bin_matrix msg, mcc crypt)
         return NULL;
     }
     bin_matrix error = get_error_vector_cpu(crypt->code->n, crypt->code->t);
-    bin_matrix word = run_matrix_add_kernel(run_mult_kernel(msg, crypt->public_key, 16), error);
+    bin_matrix word = run_matrix_add_kernel(run_mult_kernel(msg, crypt->public_key), error);
     return word;
 }
 
@@ -73,7 +73,7 @@ void run_encryption_from_key(const char* messagePath, const char* publicKeyPath,
     if (cpu)
         cipher = add_matrix_cpu(matrix_mult_cpu(msg, G), error);
     else
-        cipher = add_matrix_cpu(run_mult_kernel(msg, G, 16), error);
+        cipher = add_matrix_cpu(run_mult_kernel(msg, G), error);
 
     clock_t encryption_end = clock();
     double encryption_time = ((double) (encryption_end - encryption_start)) 
