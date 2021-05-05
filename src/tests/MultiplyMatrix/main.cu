@@ -8,7 +8,7 @@
 #include <iostream>
 
 #include "../../hamc/hamc_cpu_code.c"
-#include "../../hamc/MultiplyMatrix.cu"
+#include "../../hamc/MultiplyMatrixTesting.cu"
 
 #define TILE_WIDTH 16
 
