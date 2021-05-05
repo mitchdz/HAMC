@@ -31,7 +31,7 @@ void printHelp();
 void printWelcome()
 {
     printf("HAMC Version %s0.1%s\n", YELLOW, NC);
-    printf("Developed by Mitchell Dzurick, Mitchell Russel, James Kuban");
+    printf("Developed by Mitchell Dzurick, Mitchell Russell, James Kuban");
 }
 
 
