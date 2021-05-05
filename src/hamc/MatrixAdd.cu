@@ -5,7 +5,7 @@
 #include "hamc_common.h"
 
 #define BLOCK_DIM 16
-#define ADD_TILE_WIDTH 16
+#define TILE_WIDTH 16
 
 __global__ void MatrixAdd(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C,
         int rows, int cols);
