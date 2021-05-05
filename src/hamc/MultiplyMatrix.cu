@@ -88,46 +88,6 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
     }
 }
 
-bin_matrix run_mult_kernel(bin_matrix A, bin_matrix B)
-{    
-    if (A->cols != B->rows){
-        printf("Matrices are incompatible, check dimensions...\n");
-        exit(0);
-    }
-
-    HAMC_DATA_TYPE_t *deviceA;
-    HAMC_DATA_TYPE_t *deviceB;
-    HAMC_DATA_TYPE_t *deviceC;
-    
-    bin_matrix C = mat_init_cpu(A->rows, B->cols);
-    
-    cudaMalloc((void **) &deviceA, A->cols * A->rows * sizeof(HAMC_DATA_TYPE_t));
-    cudaMalloc((void **) &deviceB, B->cols * B->rows * sizeof(HAMC_DATA_TYPE_t));
-    cudaMalloc((void **) &deviceC, B->cols * A->rows * sizeof(HAMC_DATA_TYPE_t));
-    
-    cudaMemcpy(deviceA, A->data, A->cols * A->rows * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyHostToDevice);
-    cudaMemcpy(deviceB, B->data, B->cols * B->rows * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyHostToDevice);
-    
-    dim3 DimBlock(TILE_WIDTH, TILE_WIDTH, 1);
-    int x_blocks = ((B->cols - 1)/TILE_WIDTH) + 1;
-    int y_blocks = ((A->rows - 1)/TILE_WIDTH) + 1;
-    dim3 DimGrid(x_blocks, y_blocks, 1);
-    
-    mult_kernel_compressed_data<<<DimGrid, DimBlock, (2 * TILE_WIDTH * TILE_WIDTH + TILE_WIDTH) * sizeof(float)>>>(deviceA, deviceB, deviceC, A->rows, B->rows, A->cols, B->cols);
-    
-    cudaError_t cudaerr = cudaDeviceSynchronize();
-    if (cudaerr != cudaSuccess)
-        printf("kernel launch failed with error \"%s\".\n", cudaGetErrorString(cudaerr));
-    
-    cudaMemcpy(C->data, deviceC, C->cols * C->rows * sizeof(HAMC_DATA_TYPE_t), cudaMemcpyDeviceToHost);
-    
-    cudaFree(deviceA);
-    cudaFree(deviceB);
-    cudaFree(deviceC);
-
-    return C;
-}
-
 bin_matrix run_mult_kernel(bin_matrix A, bin_matrix B, int hmm)
 {    
     if (A->cols != B->rows){
