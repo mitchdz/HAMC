@@ -10,7 +10,7 @@
 __global__ void MatrixAdd(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_t *B, HAMC_DATA_TYPE_t *C,
         int rows, int cols);
 
-bin_matrix run_kernel(bin_matrix A, bin_matrix B)
+bin_matrix run_matrix_add_kernel(bin_matrix A, bin_matrix B)
 {
     if (A->rows != B->rows || A->cols != B->cols){
         printf("Matrices are incompatible, check dimensions...\n");
