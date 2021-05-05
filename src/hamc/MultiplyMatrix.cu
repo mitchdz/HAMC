@@ -88,7 +88,7 @@ __global__ void mult_kernel_compressed_data(HAMC_DATA_TYPE_t *A, HAMC_DATA_TYPE_
     }
 }
 
-bin_matrix run_mult_kernel(bin_matrix A, bin_matrix B, int hmm)
+bin_matrix run_mult_kernel(bin_matrix A, bin_matrix B)
 {    
     if (A->cols != B->rows){
         printf("Matrices are incompatible, check dimensions...\n");
