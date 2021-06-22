@@ -2,29 +2,17 @@
 
 CUDA based implementation of https://github.com/Varad0612/The-McEliece-Cryptosystem
 
-
-## How to build and run on UAHPC ocelote:
+## Bootstrapping
+To bootstrap the project makes sure to change the compute capability
+in the file src/CMakelists.txt to whatever the GPU are running.
 ```bash
-# create build directory
-mkdir -p build && cd build
+source bootstrap.sh
+```
 
-# load CUDA modules
-module load openmpi
-module load cuda91/toolkit/9.1.85
-
-# set up build directory
-CC=gcc cmake3 ../src/
-
-# build HAMC
+## Building
+You can build just the `hamc` executable by itself like so:
+```bash
 make hamc
-# note: sometimes initial build fails for some reason. If that happens, run `CC=gcc cmake3 ../src/` one more time and then run `make hamc`.
-
-# copy pbs job script to build directory
-cp ../run_hamc.pbs ./
-# !! make sure to modify run_hamc.pbs so the BUILD_DIR is correct for you.
-
-# run the pbs script
-qsub run_hamc.pbs
 ```
 ---
 ## Timing Analysis
@@ -72,3 +60,6 @@ $ ./hamc -a test -c
 * Mitchell Dzurick
 * Mitchell Russel
 * James Kuban
+
+## More
+* [Running on UAHPC Ocelot](/docs/UAHPC_OCELOTE.md)
