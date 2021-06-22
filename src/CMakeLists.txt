@@ -43,7 +43,7 @@ set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} --verbose")
 # with 'set' and change the value of COMPUTE_CAPABILITY to one of the following
 # hardware architectures: Tesla-class '11', '12', or '13'; Fermi-class '20'
 # or '21'; Kepler-class '30', '32', '35'; or Maxwell-class '50' or '52'
-set(COMPUTE_CAPABILITY 60)
+set(COMPUTE_CAPABILITY 52)
 # set(CUDA_SEPARABLE_COMPILATION TRUE)
 set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} --gpu-architecture;sm_${COMPUTE_CAPABILITY}")
 # list(APPEND CUDA_NVCC_FLAGS -arch=sm_35)
